@@ -64,7 +64,32 @@ void *dict_find(XMLDICT *dict, char *name)
   return NULL;
 }
 
-void dict_add(XMLDICT *dict, char *name, void *data)
+int dict_add(XMLDICT *dict, char *name, void *data)
+{
+  unsigned h,d;
+
+  if(!dict || !name)
+    return;
+  if(dict->used >= dict->allocated) {
+    dict->allocated += 100;
+    dict->entries = realloc(dict->entries,dict->allocated * sizeof(XMLDICTENTRY));
+  }
+  h = (unsigned)(long)name;
+  d = h = 127 & (h>>5 ^ h>>11 ^ h);
+  for(h=dict->hash[h];h;) {
+    --h;
+    if(dict->entries[h].name == name)
+      return 0; // already have this
+    h = dict->entries[h].next;
+  }
+  dict->entries[dict->used].name = name;
+  dict->entries[dict->used].data = data;
+  dict->entries[dict->used].next = dict->hash[d];
+  dict->hash[d] = ++dict->used;
+  return 1;
+}
+
+void dict_replace(XMLDICT *dict, char *name, void *data)
 {
   unsigned h;
 
