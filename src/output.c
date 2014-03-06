@@ -3,9 +3,9 @@
  *  XML nodeset to text convertor,
  *  file output.
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: output.c 34247 2014-03-05 14:48:37Z evozn $
+ *  $Id$
  *
 **/
 

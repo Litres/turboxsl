@@ -3,9 +3,9 @@
  *  RVALUE processing. part of XPATH compiler
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: rvalue.c 34247 2014-03-05 14:48:37Z evozn $
+ *  $Id$
  *
 **/
 

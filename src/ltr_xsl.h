@@ -3,9 +3,9 @@
  *  Main include for internal use. Interface functions and types
  *  are in global turboxsl.h include
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: ltr_xsl.h 34255 2014-03-05 17:33:01Z evozn $
+ *  $Id$
  *
 **/
 
@@ -13,6 +13,7 @@
 
 #include "turboxsl.h"
 #include "xmldict.h"
+#include "threadpool.h"
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
 XPATH_NODE_OR, XPATH_NODE_AND, XPATH_NODE_EQ, XPATH_NODE_NE, XPATH_NODE_LT, XPATH_NODE_GT, XPATH_NODE_CALL, KEY_NODE,
@@ -68,17 +69,33 @@ typedef struct _var {
 } XSL_VARIABLE;
 
 struct _globaldata {
-  unsigned global_flags;
+  unsigned nthreads;
+  struct threadpool *pool;
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;
-} XMLGLOBALDATA;
+  unsigned initialized:1;
+};
+
+typedef struct {
+  char *name;
+  char *match;
+  char *mode;
+  XMLNODE *expr;
+  enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_EXACT, TMATCH_START, TMATCH_ROOT, TMATCH_SELECT} matchtype;
+  XMLNODE *content;
+  double priority;
+} TEMPLATE;
 
 struct _context {
   XSLTGLOBALDATA *gctx;
   char *docname;
   char *fnbuf;
   char *local_part;
+  TEMPLATE *templtab;
+  unsigned templno;
+  unsigned templcnt;
+  XMLDICT *named_templ;
   XMLNODE *root_node;
   XMLNODE *stylesheet;
   CB_TABLE *functions;

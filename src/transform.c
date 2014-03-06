@@ -1,8 +1,18 @@
+/*
+ *  TurboXSL XML+XSLT processing library
+ *  Main transformation loop + interface functions
+ *
+ *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
+ *
+ *  $Id$
+ *
+**/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "threadpool.h"
 #include "ltr_xsl.h"
 #define XSL_MAIN
 #include "xslglobs.h"
@@ -13,10 +23,10 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
 void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, char *mode);
 void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *templ, XMLNODE *params, XMLNODE *locals);
 
-static
-void init_processor()
+static void init_processor(XSLTGLOBALDATA *gctx)
 {
-  if(!initialized) {
+  if(!gctx->initialized) {
+    gctx->nthreads = 4;
     init_hash();
     xsl_stylesheet = hash("xsl:stylesheet",-1,0);
     xsl_template   = hash("xsl:template",-1,0);
@@ -69,8 +79,8 @@ void init_processor()
     xsl_a_elements = hash("elements",-1,0);
     xsl_a_xmlns    = hash("xmlns",-1,0);
     xsl_a_use      = hash("use",-1,0);
-//    xsltThreadPool = threadpool_init(4);
-    initialized = 1;
+    gctx->pool = threadpool_init(gctx->nthreads);
+    gctx->initialized = 1;
   }
 }
 
@@ -616,7 +626,7 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 /*********** precompile expressions where they are used ************/
     if(node->name==xsl_if||node->name==xsl_when) {
       name = xml_get_attr(node, xsl_a_test);
-      tmp->compiled = xpath_find_expr(pctx, name);
+      node->compiled = xpath_find_expr(pctx, name);
     }
 /*********** process xsl:key instructions ************/
     else if(node->name==xsl_key) {
@@ -653,7 +663,7 @@ XSLTGLOBALDATA *XSLTInit()
 {
   XSLTGLOBALDATA *ret = malloc(sizeof(XSLTGLOBALDATA));
   memset(ret,0,sizeof(XSLTGLOBALDATA));
-  init_processor();
+  init_processor(ret);
   return ret;
 }
 
@@ -665,6 +675,9 @@ void XMLFreeDocument(XMLNODE *doc)
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   XMLNODE *tmp,*next;
+
+
+  dict_free(pctx->named_templ);
   if(pctx->keys)
     xml_free_node(NULL,pctx->keys);
   if(pctx->formats)
@@ -716,6 +729,8 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
 
   ret->m_exprs = 200;
   ret->compiled = malloc(ret->m_exprs*sizeof(EXPTAB));
+
+  ret->named_templ = dict_new(300);
 
   ret->stylesheet = xsl_preprocess(ret, ret->stylesheet);  //root node is always empty
   precompile_templates(ret, ret->stylesheet);

@@ -3,9 +3,9 @@
  *  Template precompiler / match routines
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: templates.c 34192 2014-03-04 16:05:40Z evozn $
+ *  $Id$
  *
 **/
 
@@ -17,19 +17,7 @@
 #include "ltr_xsl.h"
 #include "xslglobs.h"
 
-typedef struct {
-  char *name;
-  char *match;
-  char *mode;
-  XMLNODE *expr;
-  enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_EXACT, TMATCH_START, TMATCH_RE, TMATCH_ROOT, TMATCH_SELECT} matchtype;
-  XMLNODE *content;
-  unsigned subtempl;
-} TEMPLATE;
 
-TEMPLATE *templtab = NULL;
-unsigned templno = 0;
-unsigned templcnt = 0;
 static XMLNODE enode;
 char *fn_text = NULL;
 char *fn_node = NULL;
@@ -38,24 +26,24 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 {
 unsigned r;
 
-  if(templcnt>=templno) {
+  if(pctx->templcnt>=pctx->templno) {
     if(fn_text==NULL) {
       xml_clear_node(pctx,&enode);
       fn_text = hash("text",-1,0);
       fn_node = hash("node",-1,0);
     }
-    templno += 100;
-    templtab = realloc(templtab, templno*sizeof(TEMPLATE));
+    pctx->templno += 100;
+    pctx->templtab = realloc(pctx->templtab, pctx->templno*sizeof(TEMPLATE));
   }
 //fprintf(stderr,"add template %s match %s\n",name?name:"",match?match:"*");
-  templtab[templcnt].name = hash(name,-1,0);
-  templtab[templcnt].content = content;
-  templtab[templcnt].match = NULL;
-  templtab[templcnt].mode = NULL;
-  templtab[templcnt].expr = NULL;
-  templtab[templcnt].subtempl = 0;
-  templtab[templcnt].matchtype = TMATCH_NONE;
-  r = templcnt++;
+  r = pctx->templcnt++;
+  pctx->templtab[r].name = hash(name,-1,0);
+  pctx->templtab[r].content = content;
+  pctx->templtab[r].match = NULL;
+  pctx->templtab[r].mode = NULL;
+  pctx->templtab[r].expr = NULL;
+  pctx->templtab[r].priority = 0.0;
+  pctx->templtab[r].matchtype = TMATCH_NONE;
   return r;
 }
 
@@ -73,30 +61,28 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
       break;
     }
   }
-// exact node name match
-//fprintf(stderr,"add match %s:%s\n",match,mode);
+
+  if(!content)  // if template match is empty, return empty node on match, not NULL
+    content = &enode;
 
   mode = hash(mode,-1,0);
   m1 = hash(match,-1,0);
-//  for(r=0; r<templcnt; ++r) {
-//    if(templtab[r].mode == mode && templtab[r].match == m1)
-//      return 0;
-//  }
+
   r = templtab_add(pctx, content, NULL);
-  templtab[r].match = m1;
-  templtab[r].mode = mode;
+  pctx->templtab[r].match = m1;
+  pctx->templtab[r].mode = mode;
   if(match[0]=='*' && match[1]==0) {
-    templtab[r].matchtype = TMATCH_ALWAYS;
+    pctx->templtab[r].matchtype = TMATCH_ALWAYS;
   } else if (strchr(match,'/')||strchr(match,'[')||strstr(match,"::")) { // looks like select match
     if(strchr(match+1,'/')||strchr(match+1,'[')||strstr(match,"::")) { // XXX not checking if first char is [ -- but this will probably never happen
-      templtab[r].matchtype = TMATCH_SELECT;
-      templtab[r].expr = xpath_find_expr(pctx,m1);
+      pctx->templtab[r].matchtype = TMATCH_SELECT;
+      pctx->templtab[r].expr = xpath_find_expr(pctx,m1);
     } else {
-      templtab[r].match = hash(match+1,-1,0);
-      templtab[r].matchtype = TMATCH_ROOT;
+      pctx->templtab[r].match = hash(match+1,-1,0);
+      pctx->templtab[r].matchtype = TMATCH_ROOT;
     }
   } else {
-    templtab[r].matchtype = TMATCH_EXACT;
+    pctx->templtab[r].matchtype = TMATCH_EXACT;
   }
   return r;
 }
@@ -124,6 +110,7 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
       }
     }
   } else {
+//    dict_add(pctx->named_templ, name, content);
     templtab_add(pctx, content, name);
   }
 }
@@ -186,77 +173,51 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
   }
 }
 
-XMLNODE *tmpl_match(TRANSFORM_CONTEXT *pctx,XMLNODE *node, char *mode) // name here is node name, so is already hashed
+XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // name here is node name, so is already hashed
 {
   XMLNODE *tmp = NULL;
   XMLNODE *selection;
 
   char *name = node->name;
   int i;
-  for(i=0;i<templcnt;++i) {
-    if(templtab[i].mode!=mode)
+  for(i=0;i<pctx->templcnt;++i) {
+    if(pctx->templtab[i].mode!=mode)
       continue;
-//    if(templtab[i].matchtype==TMATCH_ALWAYS && node!=pctx->root_node) {
-//      tmp = templtab[i].content?templtab[i].content:&enode;
-//fprintf(stderr,"match %s -> %s:%s\n",name,templtab[i].match,mode);
-//      return tmp;
-//    }
-    switch (templtab[i].matchtype) {
+    switch (pctx->templtab[i].matchtype) {
       case TMATCH_ROOT:
-//fprintf(stderr,"match %s -> /%s:%s\n",name,templtab[i].match,mode);
-        if(templtab[i].match[0]==0 && node==pctx->root_node) {
-          tmp = templtab[i].content?templtab[i].content:&enode;
-          return tmp;
+        if(pctx->templtab[i].match[0]==0 && node==pctx->root_node) {  // matches "/"
+          return pctx->templtab[i].content;
         }
         if(node->parent!=pctx->root_node)
           continue;
-        if(templtab[i].match[0]=='*') {
-          tmp = templtab[i].content?templtab[i].content:&enode;
-          return tmp;
+        if(pctx->templtab[i].match[0]=='*') { // matches "/*"
+          return pctx->templtab[i].content;
         }
     /*** or if it is a child of root, fall thru to exact name match ***/
       case TMATCH_EXACT:
-        if(name == templtab[i].match) {
-          tmp = templtab[i].content?templtab[i].content:&enode;
-//fprintf(stderr,"match %s -> %s:%s\n",name,templtab[i].match,mode);
-          return tmp;
+        if(name == pctx->templtab[i].match) {
+          return pctx->templtab[i].content;
         }
         break;
       case TMATCH_SELECT:
-        if(select_match(pctx, node, templtab[i].expr)) {
-          tmp = templtab[i].content?templtab[i].content:&enode;
-//fprintf(stderr,"match * -> %s:%s\n",templtab[i].match,mode);
-          return tmp;
+        if(select_match(pctx, node, pctx->templtab[i].expr)) {
+          return pctx->templtab[i].content;
         }
         break;
     }
   }
 
   if(node!=pctx->root_node) {
-    for(i=0;i<templcnt;++i) {
-      if(templtab[i].mode==mode && templtab[i].matchtype==TMATCH_ALWAYS) {
-        tmp = templtab[i].content?templtab[i].content:&enode;
-//fprintf(stderr,"match %s -> %s:%s\n",name,templtab[i].match,mode);
-        return tmp;
+    for(i=0;i<pctx->templcnt;++i) {
+      if(pctx->templtab[i].mode==mode && pctx->templtab[i].matchtype==TMATCH_ALWAYS) {
+        return pctx->templtab[i].content;
       }
     }
   }
-//fprintf(stderr,"no match\n");
+
   return NULL;
 }
 
-
-XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *source, char *mode)
-{
-XMLNODE *match;
-
-  match = tmpl_match(pctx, source, mode);
-//fprintf(stderr,"templ %p for %s\n",match,source->name);
-  if(match) {
-    return match;
-  }
-  return NULL;
-}
 
 XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, char *name)
 {
@@ -264,20 +225,24 @@ XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, char *name)
 
   if(name==NULL)
     return NULL;
-  for(i=0;i<templcnt;++i) {
-    if(NULL == templtab[i].name)
+  name = hash(name,-1,0);
+//  return dict_find(pctx->named_templ,name);
+    
+  for(i=0;i<pctx->templcnt;++i) {
+    if(NULL == pctx->templtab[i].name)
       continue;
-    if((name == templtab[i].name) || (!strcmp(name, templtab[i].name)))
-      return templtab[i].content;
+    if(name == pctx->templtab[i].name)
+      return pctx->templtab[i].content;
   }
   return NULL;
+
 }
 
 void  precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
   for(;node;node=node->next) {
     if(node->type==ELEMENT_NODE && node->name==xsl_template) {
-      char *name = xml_get_attr(node,xsl_a_name);
+      char *name = hash(xml_get_attr(node,xsl_a_name),-1,0);
       char *match = xml_get_attr(node,xsl_a_match);
       char *mode = xml_get_attr(node,xsl_a_mode);
       add_template(pctx, node->children,name,match,mode);

@@ -3,9 +3,9 @@
  *  XMLNODE operations
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: nodes.c 34255 2014-03-05 17:33:01Z evozn $
+ *  $Id$
  *
 **/
 

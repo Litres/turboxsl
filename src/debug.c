@@ -3,9 +3,9 @@
  *  Debug and error display functions
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: utils.c 34151 2014-03-03 18:41:50Z evozn $
+ *  $Id$
  *
 **/
 
@@ -65,3 +65,6 @@ void print_rval(RVALUE *rv)
   }
 }
 
+void  dbg_hash_usage()
+{
+}

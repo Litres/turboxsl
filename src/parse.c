@@ -3,9 +3,9 @@
  *  XML parser
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: parse.c 34247 2014-03-05 14:48:37Z evozn $
+ *  $Id$
  *
 **/
 

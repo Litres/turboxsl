@@ -3,9 +3,9 @@
  *  Thread pool library
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: threadpool.c 34151 2014-03-03 18:41:50Z evozn $
+ *  $Id$
  *
 **/
 

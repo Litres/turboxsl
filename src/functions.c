@@ -3,9 +3,9 @@
  *  XPATH functions including ltr: and dbg: namespace extensions
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: functions.c 34247 2014-03-05 14:48:37Z evozn $
+ *  $Id$
  *
 **/
 

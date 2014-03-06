@@ -3,9 +3,9 @@
  *  Dictionary for hashed names -> pointers conversion
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: xmldict.c 34151 2014-03-03 18:41:50Z evozn $
+ *  $Id$
  *
 **/
 

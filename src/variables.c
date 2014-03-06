@@ -3,9 +3,9 @@
  *  XSLT/XPATH variables
  *
  *
+ *  (c) Egor Voznessenski, voznyak@mail.ru
  *
- *
- *  $Id: variables.c 34247 2014-03-05 14:48:37Z evozn $
+ *  $Id$
  *
 **/
 
