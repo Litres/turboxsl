@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([xsltest],[0.1])
-AC_CONFIG_SRCDIR([src/main.c])
+AC_CONFIG_SRCDIR([src/transform.c])
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
@@ -24,10 +24,10 @@ AC_SUBST(XSLT_LIBS)
 AC_SUBST(EXTRA_LIBS)
 AC_SUBST(M_LIBS)
 
+dnl These are for debug -O2 disabling 
 CPPFLAGS="-g ${CXXFLAGS}"
 CXXFLAGS="-g ${CPPFLAGS}"
 CFLAGS="-g"
-
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(CLAGS)
