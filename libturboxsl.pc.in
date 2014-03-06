@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+
+Name: libturboxsl
+Version: @VERSION@
+Description: TurboXSLT library.
+Libs: @XSLT_LIBDIR@ @XSLT_LIBS@ @EXTRA_LIBS@
+Cflags: @XSLT_INCLUDEDIR@
