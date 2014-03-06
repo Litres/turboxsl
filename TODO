@@ -1,0 +1,21 @@
+LIMITATIONS AND UNSUPPORTED FEATURES:
+  - ONLY UTF-8!!! (other 8-bit codes work but string functions may return incorrect values)
+  - XML namespaces not supported;
+  - Entities and DTD instructions not supported
+  - Comments and PI are discarded at parse time
+  - No support for either strip-space or preserve-space
+
+KNOWN BUGS:
+  - leaks sometimes
+  - format-number is rudimental, needs to be rewritten for full compliancy
+  - possibly, incorrect == != operations on nodesets
+  - not all standard functions are supported properly
+
+WISHLIST:
+  - implement callbacks in Perl module!
+  - more multithreading  
+  - implement control over threadpool
+  - better string hashing?
+  - implement better match strategies where linear search is used
+  - optimize XPath evaluation
+  - do not use EMPTY_NODE's where it is possible
