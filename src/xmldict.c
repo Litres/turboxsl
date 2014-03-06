@@ -1,0 +1,83 @@
+/*
+ *  TurboXSL XML+XSLT processing library
+ *  Dictionary for hashed names -> pointers conversion
+ *
+ *
+ *
+ *
+ *  $Id: xmldict.c 34151 2014-03-03 18:41:50Z evozn $
+ *
+**/
+
+#include "xmldict.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
+XMLDICT *dict_new(unsigned size)
+{
+  XMLDICT *dict;
+  dict = malloc(sizeof(XMLDICT));
+  if(!size) size = 100;
+
+  if(dict) {
+    memset(dict,0,sizeof(XMLDICT));
+    dict->allocated = size;
+    dict->entries = malloc(size * sizeof(XMLDICTENTRY));
+    if(!dict->entries) {
+      free(dict);
+      dict = 0;
+    }
+  }
+  if(!dict) {
+    fprintf(stderr,"XMLDICT: failed to allocate storage\n");
+  }
+  return dict;
+}
+
+void dict_free(XMLDICT *dict)
+{
+  if(dict) {
+    if(dict->entries)
+      free(dict->entries);
+    free(dict);
+  }
+}
+
+void *dict_find(XMLDICT *dict, char *name)
+{
+  unsigned h;
+
+  if(!dict || !name)
+    return NULL;
+
+  h = (unsigned)(long)name;
+  h = 127 & (h>>5 ^ h>>11 ^ h);
+  for(h=dict->hash[h];h;) {
+    --h;
+    if(dict->entries[h].name == name)
+      return dict->entries[h].data;
+    h = dict->entries[h].next;
+  }
+  return NULL;
+}
+
+void dict_add(XMLDICT *dict, char *name, void *data)
+{
+  unsigned h;
+
+  if(!dict || !name)
+    return;
+  if(dict->used >= dict->allocated) {
+    dict->allocated += 100;
+    dict->entries = realloc(dict->entries,dict->allocated * sizeof(XMLDICTENTRY));
+  }
+  dict->entries[dict->used].name = name;
+  dict->entries[dict->used].data = data;
+  h = (unsigned)(long)name;
+  h = 127 & (h>>5 ^ h>>11 ^ h);
+  dict->entries[dict->used].next = dict->hash[h];
+  dict->hash[h] = ++dict->used;
+}

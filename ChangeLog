@@ -1,0 +1,43 @@
+2012-11-16  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* configure.ac (AC_OUTPUT): Add po/Makefile.in.
+
+2012-11-05  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* configure.ac (AC_OUTPUT): Add po/Makefile.in.
+
+2012-11-05  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* configure.ac (AC_OUTPUT): Add po/Makefile.in.
+
+2012-11-05  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* configure.ac (AC_OUTPUT): Add po/Makefile.in.
+
+2012-11-05  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* m4/codeset.m4: New file, from gettext-0.18.1.
+	* m4/fcntl-o.m4: New file, from gettext-0.18.1.
+	* m4/glibc2.m4: New file, from gettext-0.18.1.
+	* m4/glibc21.m4: New file, from gettext-0.18.1.
+	* m4/intdiv0.m4: New file, from gettext-0.18.1.
+	* m4/intl.m4: New file, from gettext-0.18.1.
+	* m4/intldir.m4: New file, from gettext-0.18.1.
+	* m4/intmax.m4: New file, from gettext-0.18.1.
+	* m4/inttypes_h.m4: New file, from gettext-0.18.1.
+	* m4/inttypes-pri.m4: New file, from gettext-0.18.1.
+	* m4/lcmessage.m4: New file, from gettext-0.18.1.
+	* m4/lock.m4: New file, from gettext-0.18.1.
+	* m4/longlong.m4: New file, from gettext-0.18.1.
+	* m4/printf-posix.m4: New file, from gettext-0.18.1.
+	* m4/size_max.m4: New file, from gettext-0.18.1.
+	* m4/stdint_h.m4: New file, from gettext-0.18.1.
+	* m4/threadlib.m4: New file, from gettext-0.18.1.
+	* m4/uintmax_t.m4: New file, from gettext-0.18.1.
+	* m4/visibility.m4: New file, from gettext-0.18.1.
+	* m4/wchar_t.m4: New file, from gettext-0.18.1.
+	* m4/wint_t.m4: New file, from gettext-0.18.1.
+	* m4/xsize.m4: New file, from gettext-0.18.1.
+	* Makefile.am (SUBDIRS): Add intl.
+	* configure.ac (AC_OUTPUT): Add intl/Makefile.
+
