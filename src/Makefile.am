@@ -7,8 +7,6 @@ DEPS = $(top_builddir)/src/libturboxsl.la
 
 LDADDS = $(top_builddir)/src/libturboxsl.la
 
-xsltest_LDADD = $(LDADDS) -lpthread -lm
-
 lib_LTLIBRARIES = libturboxsl.la
 
 libturboxsl_la_SOURCES = \
