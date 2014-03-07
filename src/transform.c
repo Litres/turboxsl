@@ -227,10 +227,12 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       XMLNODE *param = NULL;
 
       if(sval) {
-        tofree = iter = xpath_eval_selection(pctx, locals, source, sval);
+        if(!instr->compiled) {
+          instr->compiled = xpath_find_expr(pctx, sval);
+        }
+        tofree = iter = xpath_eval_selection(pctx, locals, source, instr->compiled);
       } else {
         iter = source->children;
-//fprintf(stderr,"apply templ at %s (%s)\n",source->name,mode);
       }
       for(child=instr->children;child;child=child->next) {
         if(child->type==EMPTY_NODE)
@@ -242,14 +244,11 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
           tmp->next = param;
           param = tmp;
           if(!expr) {
-//fprintf(stderr,"apply with %s \n",pname);
             tmp->extra.v.nodeset = xml_new_node(pctx,NULL, EMPTY_NODE);
             tmp->extra.type = VAL_NODESET;
             apply_xslt_template(pctx, tmp->extra.v.nodeset, source, child->children, NULL, locals);
           } else {
-//fprintf(stderr,"apply with %s = %s \n",pname,expr);
             xpath_eval_node(pctx, locals, source, expr, &(tmp->extra));
-//      print_rval(&(tmp->extra));
           }
           continue;
         }
@@ -262,9 +261,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       }
 
       for(;iter;iter=iter->next) {
-        if(!sval) {
-//fprintf(stderr,"apply templ at %s/%s\n",source->name,iter->name);
-        }
         xml_clear_node(pctx,&vars);
         tmp = xml_append_child(pctx,ret,EMPTY_NODE);
         process_one_node(pctx, tmp, iter, param?param:params, &vars, mode);
@@ -346,8 +342,11 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
 /************************** <xsl:for-each> *****************************/
     } else if(instr->name == xsl_foreach) {
       XMLNODE *child;
-      iter = xpath_eval_selection(pctx, locals, source, xml_get_attr(instr,xsl_a_select));
-//fprintf(stderr,"foreach %s\n",xml_get_attr(instr,xsl_a_select));
+      if(!instr->compiled) {
+        instr->compiled = xpath_find_expr(pctx, xml_get_attr(instr,xsl_a_select));
+      }
+      iter = xpath_eval_selection(pctx, locals, source, instr->compiled);
+
       for(child=instr->children;child;child=child->next) {
         if(child->type==EMPTY_NODE)
           continue;
@@ -623,13 +622,8 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
         node->flags |= XML_FLAG_NOESCAPE;
       }
     }
-/*********** precompile expressions where they are used ************/
-    if(node->name==xsl_if||node->name==xsl_when) {
-      name = xml_get_attr(node, xsl_a_test);
-      node->compiled = xpath_find_expr(pctx, name);
-    }
 /*********** process xsl:key instructions ************/
-    else if(node->name==xsl_key) {
+    if(node->name==xsl_key) {
       name = xml_get_attr(node, xsl_a_name);
       tmp = xml_new_node(pctx, name, KEY_NODE);
       tmp->content = xml_strdup(xml_get_attr(node, xsl_a_match));
@@ -785,7 +779,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 
   if(pctx->outmode==MODE_HTML) {
     XMLNODE *sel;
-    sel = xpath_eval_selection(pctx, &locals, t, "head");
+    sel = xpath_eval_selection(pctx, &locals, t, xpath_find_expr(pctx,"head"));
     if(sel) {
       XMLNODE *meta = xml_new_node(pctx, NULL,TEXT_NODE);
       meta->content = strdup("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");

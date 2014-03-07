@@ -874,55 +874,55 @@ void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fn
 {
   unsigned i;
 
-  if(!pctx->functions) {
-    add_function(pctx,"concat",xf_concat);
-    add_function(pctx,"normalize-space",xf_normalize);
-    add_function(pctx,"string-length",xf_strlen);
-    add_function(pctx,"format-number",xf_format);
-    add_function(pctx,"contains",xf_contains);
-    add_function(pctx,"string",xf_tostr);
-    add_function(pctx,"number",xf_tonum);
-    add_function(pctx,"boolean",xf_tobool);
-    add_function(pctx,"round",xf_round);
-    add_function(pctx,"floor",xf_floor);
-    add_function(pctx,"ceiling",xf_ceil);
-    add_function(pctx,"sum",xf_sum);
-    add_function(pctx,"name",xf_name);
-    add_function(pctx,"position",xf_position);
-    add_function(pctx,"count",xf_count);
-    add_function(pctx,"translate",xf_translate);
-    add_function(pctx,"substring",xf_substr);
-    add_function(pctx,"last",xf_last);
-    add_function(pctx,"true",xf_true);
-    add_function(pctx,"false",xf_false);
-    add_function(pctx,"substring-before",xf_sub_before);
-    add_function(pctx,"substring-after",xf_sub_after);
-    add_function(pctx,"document",xf_document);
-    add_function(pctx,"text",xf_text);
-    add_function(pctx,"generate-id",xf_getid);
-    add_function(pctx,"current",xf_current);
-    add_function(pctx,"exsl:node-set",xf_exnodeset);
-    add_function(pctx,"starts-with",xf_starts);
-    add_function(pctx,"local-name",xf_lname);
-    add_function(pctx,"node",xf_node);
-    add_function(pctx,"system-property",xf_stub);
-    add_function(pctx,"key",xf_key);
+  if(!pctx->functions) {  // Linear search is used for functions, sort adding by usage - more frequent first
+    add_function(pctx,"ltr:url_code",xf_urlcode); // 2132!!!
+    add_function(pctx,"ltr:veristat_local",xf_veristatl); // 642
+    add_function(pctx,"position",xf_position); // 356
+    add_function(pctx,"count",xf_count); // 288
+    add_function(pctx,"chk:check_rights",xf_check); // 202
+    add_function(pctx,"substring",xf_substr); // 180
+    add_function(pctx,"name",xf_name); // 168
+    add_function(pctx,"normalize-space",xf_normalize);  // 112
+    add_function(pctx,"last",xf_last); // 128
+    add_function(pctx,"string-length",xf_strlen); // 108
+    add_function(pctx,"concat",xf_concat); // 92
+    add_function(pctx,"number",xf_tonum); // 52
+    add_function(pctx,"ltr:veristat",xf_veristat); // 68
+    add_function(pctx,"format-number",xf_format); // 46
+    add_function(pctx,"contains",xf_contains);  // 50
+    add_function(pctx,"round",xf_round);    //46
+    add_function(pctx,"ceiling",xf_ceil); // 44
+    add_function(pctx,"sum",xf_sum);  // 86
+    add_function(pctx,"translate",xf_translate); // 56
+    add_function(pctx,"true",xf_true); // 46
+    add_function(pctx,"substring-before",xf_sub_before); // 34
+    add_function(pctx,"substring-after",xf_sub_after); // 16
+    add_function(pctx,"false",xf_false); // 20
+    add_function(pctx,"generate-id",xf_getid); // 48
+    add_function(pctx,"current",xf_current); // 30
 
 //----------- litres-specific
 
-    add_function(pctx,"chk:check_rights",xf_check);
-    add_function(pctx,"ltr:existsOnHost",xf_exists);
-    add_function(pctx,"ltr:str_escape",xf_strescape);
-    add_function(pctx,"ltr:md5_hex",xf_md5);
-    add_function(pctx,"ltr:encode_base64",xf_base64);
-    add_function(pctx,"ltr:url_code",xf_urlcode);
-    add_function(pctx,"ltr:veristat_local",xf_veristatl);
-    add_function(pctx,"ltr:veristat",xf_veristat);
-    add_function(pctx,"ltr:baner_code",xf_banner);
-    add_function(pctx,"ltr:url_encode",xf_urlenc);
+    add_function(pctx,"floor",xf_floor);  // 10
+    add_function(pctx,"key",xf_key); // 10
+    add_function(pctx,"ltr:str_escape",xf_strescape); // 8
+    add_function(pctx,"text",xf_text); // 12
+    add_function(pctx,"ltr:baner_code",xf_banner); // 10
+    add_function(pctx,"ltr:url_encode",xf_urlenc); // 10
+    add_function(pctx,"boolean",xf_tobool); // 2
+    add_function(pctx,"ltr:md5_hex",xf_md5); // 2
+    add_function(pctx,"document",xf_document); // 1
+    add_function(pctx,"ltr:encode_base64",xf_base64); // 2
+    add_function(pctx,"exsl:node-set",xf_exnodeset); // 2
+    add_function(pctx,"starts-with",xf_starts); // 0
+    add_function(pctx,"local-name",xf_lname); // 2
+    add_function(pctx,"node",xf_node); // 0
+    add_function(pctx,"string",xf_tostr); // 0 ?
+    add_function(pctx,"system-property",xf_stub); // 0
+    add_function(pctx,"ltr:existsOnHost",xf_exists); // 0
 /*    
-    add_function(pctx,"ltr:mobile_google_ads",xf_stub);
-    add_function(pctx,"ltr:get_onetime_sid",xf_stub);
+    add_function(pctx,"ltr:mobile_google_ads",xf_stub); // 0 -- Currently unused, need to implement???
+    add_function(pctx,"ltr:get_onetime_sid",xf_stub); // 0
 */
   }
   for(i=0;i<pctx->cb_ptr;++i) {

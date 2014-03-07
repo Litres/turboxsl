@@ -10,3 +10,4 @@ bin_SCRIPTS = turboxsl-config
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = libturboxsl.pc
+

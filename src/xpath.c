@@ -1,3 +1,4 @@
+
 /*
  *  TurboXSL XML+XSLT processing library
  *  XPATH language parser and evaluator
@@ -698,25 +699,18 @@ static void _pr_sel(XMLNODE *node)
   }
 }
 
-XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr)
+XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *etree)
 {
-  XMLNODE *etree;
   RVALUE rval;
   rval_init(&rval);
-  if(expr==NULL)
-    return NULL;
-//fprintf(stderr,"eval selection(%s) at %s\n",expr,_name(current));
-  etree = xpath_find_expr(pctx, expr);
 
   if(etree) {
     xpath_execute_scalar(pctx,locals,etree,current,&rval);
     if(rval.type == VAL_NODESET) {
-//_pr_sel(rval.v.nodeset);
       return rval.v.nodeset;
     }
   }
   return NULL;
-
 }
 
 void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *this)

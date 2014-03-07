@@ -92,34 +92,34 @@ struct _context {
   char *docname;
   char *fnbuf;
   char *local_part;
-  TEMPLATE *templtab;
+  TEMPLATE *templtab;   // templates used in matching
   unsigned templno;
   unsigned templcnt;
-  XMLDICT *named_templ;
+  XMLDICT *named_templ; // templates for call'ing
   XMLNODE *root_node;
   XMLNODE *stylesheet;
-  CB_TABLE *functions;
+  CB_TABLE *functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned cb_max;
   unsigned cb_ptr;
   enum {XSL_FLAG_OUTPUT=1, XSL_FLAG_OMIT_DESC=2, XSL_FLAG_STANDALONE=4, XSL_FLAG_INDENT=8, XSL_FLAG_MODE_SET=16} flags;
   unsigned rawout;
-  XSL_VARIABLE *vars;
-  unsigned var_max;
-  unsigned var_pos;
-  EXPTAB *compiled;
-  unsigned n_exprs;
-  unsigned m_exprs;
-  char **sort_keys;
-  XMLNODE **sort_nodes;
-  unsigned sort_size;
-  char *charset;
-  char *doctype_public;
-  char *doctype_system;
-  char *media_type;
-  char *encoding;
-  XMLNODE *keys;
-  XMLNODE *formats;
-  XMLNODE *node_cache;
+  XSL_VARIABLE *vars;   // Global (per conversion context) variables
+  unsigned var_max;     // +
+  unsigned var_pos;     // +
+  EXPTAB *compiled;     // Compiled XPaths storage
+  unsigned n_exprs;     // +
+  unsigned m_exprs;     // +
+  char **sort_keys;     // sort tables for reuse. XXX must be rewritten to avoid conflicts (currently works because of rare use)
+  XMLNODE **sort_nodes; // +
+  unsigned sort_size;   // +
+  char *charset;        // Just links to strings allocated and freed with global hash. No need to free
+  char *doctype_public; // +
+  char *doctype_system; // +
+  char *media_type;     // +
+  char *encoding;       // + -- This one is not really useful now since only UTF-8 is supported
+  XMLNODE *keys;        // xsl:key data
+  XMLNODE *formats;     // xsl:decimal-format data
+  XMLNODE *node_cache;  // freed nodes are here for fast reuse
   pthread_mutex_t lock;
   enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} outmode;
 };
@@ -170,7 +170,7 @@ char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second);
 /************************* xpath.c -- xpath compilator ************************/
 int xpath_eval_boolean(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
 char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr);
-XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr);
+XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
 void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *this);
 
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr);

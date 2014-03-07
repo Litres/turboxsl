@@ -111,8 +111,6 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
     }
   } else {
     dict_add(pctx->named_templ, name, content);
-    templtab_add(pctx, content, name);
-fprintf(stderr,"add templ: %s(%p)=%p\n",name,name,content);
   }
 }
 
@@ -228,21 +226,7 @@ XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, char *name)
   if(name==NULL)
     return NULL;
   name = hash(name,-1,0);
-  r = dict_find(pctx->named_templ,name);
-    
-  for(i=0;i<pctx->templcnt;++i) {
-    if(NULL == pctx->templtab[i].name)
-      continue;
-    if(name == pctx->templtab[i].name) {
-      if(!r) {
-        fprintf(stderr,"not found: %s(%p)\n",name,name);
-        r = dict_find(pctx->named_templ,name);
-      }
-      return pctx->templtab[i].content;
-    }
-  }
-  return NULL;
-
+  return dict_find(pctx->named_templ,name);
 }
 
 void  precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
