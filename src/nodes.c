@@ -100,19 +100,23 @@ static char nuid = 0;
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
-XMLNODE *ret;
-  if(pctx && pctx->node_cache) {
+XMLNODE *ret = NULL;
+  if(pctx) {
     pthread_mutex_lock(&(pctx->lock));
-    ret = pctx->node_cache;
-    pctx->node_cache = ret->next;
-    pthread_mutex_unlock(&(pctx->lock));
-  } else {
+    if(pctx->node_cache) {
+      ret = pctx->node_cache;
+      pctx->node_cache = ret->next;
+    }
+  }
+  if(!ret) {
     ret = (XMLNODE *)malloc(sizeof(XMLNODE));
   }
   memset(ret,0,sizeof(XMLNODE));
   ret->type = type;
   ret->name = name;
   ret->uid = nuid++;
+  if(pctx)
+    pthread_mutex_unlock(&(pctx->lock));
   return ret;
 }
 

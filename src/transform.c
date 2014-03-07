@@ -182,7 +182,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     if(instr->name==NULL || instr->name[0]!='x') { // hack, speeding up copying of non-xsl elements
       tmp = copy_node_to_result(pctx,locals,source,ret,instr);
       if(instr->children) {
-        apply_xslt_template(pctx,tmp,source,instr->children,params,locals);
+        threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
       }
       continue;
     }
@@ -293,7 +293,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         iter->content = name;
         tmp->attributes = iter;
       }
-      apply_xslt_template(pctx,tmp,source,instr->children,params,locals);
+      threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
 /************************** <xsl:if> *****************************/
     } else if(instr->name == xsl_if) {
       if(!instr->compiled) {
@@ -357,7 +357,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       tmp = iter;
       for(;iter;iter=iter->next) {
         newtempl = xml_append_child(pctx,ret,EMPTY_NODE);
-        apply_xslt_template(pctx,newtempl,iter,child,params,locals);
+        threadpool_start_full(apply_xslt_template,pctx,newtempl,iter,child,params,locals);
       }
       xpath_free_selection(tmp);
 /************************** <xsl:copy-of> *****************************/
@@ -417,7 +417,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         fprintf(stderr,"=== ERROR ===\n");
       }
 /************************** <xsl:number> ***********************/
-    } else if(instr->name == xsl_number) {
+    } else if(instr->name == xsl_number) { // currently unused by litres
       tmp = xml_append_child(pctx,ret,TEXT_NODE);
       tmp->content = strdup("1.");
 /************************** <xsl:comment> ***********************/
@@ -436,7 +436,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     } else {
       tmp = copy_node_to_result(pctx,locals,source,ret,instr);
       if(instr->children) {
-        apply_xslt_template(pctx,tmp,source,instr->children,params,locals);
+        threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
       }
     }
   }
@@ -461,7 +461,7 @@ void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *sourc
         break;
       default:
         tmp = xml_append_child(pctx,ret,EMPTY_NODE);
-        process_one_node(pctx,tmp,child,params,locals,mode);
+        threadpool_start_full(process_one_node,pctx,tmp,child,params,locals,mode);
     }
   }
 }
@@ -473,8 +473,7 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
   if(!source)
     return;
   templ = find_template(pctx, source, mode);
-//  if(0==xml_strcmp(mode,"og_meta"))
-//fprintf(stderr,"m:og_meta %p, %s\n",templ, source->name);
+
   if(templ) {
     apply_xslt_template(pctx, ret, source, templ, params, locals);
   } else {
@@ -751,20 +750,21 @@ XMLNODE *find_first_node(XMLNODE *n)
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 {
   XMLNODE *ret;
-  XMLNODE locals;
+  XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
   XMLNODE *t;
   RVALUE rv;
 
   if(!pctx) {
     return NULL;
   }
-  xml_clear_node(pctx,&locals);
+
   ret = xml_new_node(pctx, "out",EMPTY_NODE);
   pctx->root_node = document;
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
 //fprintf(stderr,"----- start process\n");
-  process_one_node(pctx, ret, document, NULL, &locals, NULL);
+  process_one_node(pctx, ret, document, NULL, locals, NULL);
+  threadpool_wait(pctx->gctx->pool);
 //fprintf(stderr,"----- end process\n");
 /****************** add dtd et al if required *******************/
   t = find_first_node(ret);
@@ -779,7 +779,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 
   if(pctx->outmode==MODE_HTML) {
     XMLNODE *sel;
-    sel = xpath_eval_selection(pctx, &locals, t, xpath_find_expr(pctx,"head"));
+    sel = xpath_eval_selection(pctx, locals, t, xpath_find_expr(pctx,"head"));
     if(sel) {
       XMLNODE *meta = xml_new_node(pctx, NULL,TEXT_NODE);
       meta->content = strdup("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
@@ -794,7 +794,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
       xpath_free_selection(sel);
     }
   }
-  xml_cleanup_node(pctx,&locals);
+  xml_free_node(pctx,locals);
   return ret;
 }
 

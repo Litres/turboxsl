@@ -10,27 +10,24 @@
 **/
 
 
-#include "threadpool.h"
+#include "ltr_xsl.h"
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <signal.h>
 
-#define THREAD_POOL_DEBUG
-
-#ifdef THREAD_POOL_DEBUG
-#define REPORT_ERROR(...) fprintf (stderr,"line %d - ",__LINE__); fprintf (stderr, __VA_ARGS__); fprintf (stderr,"\n")
-#else
-#define REPORT_ERROR(...)
-#endif /* THREAD_POOL_DEBUG */
-
 struct threadpool;
 
 struct threadpool_task
 {
-	void (*routine_cb)(void*);
-	void *data;
-  pthread_t *signature;
+	void (*routine_cb)();
+  TRANSFORM_CONTEXT *pctx;
+  XMLNODE *ret;
+  XMLNODE *source;
+  XMLNODE *params;
+  XMLNODE *locals;
+  void *mode;
+  pthread_t signature;
   struct threadpool *pool;
   pthread_mutex_t ownMutex;
 	pthread_cond_t rcond;
@@ -50,7 +47,7 @@ struct threadpool
 	pthread_mutex_t lock;
   pthread_mutexattr_t attr;
 	pthread_mutex_t block;
-  pthread_t blocking;
+
   unsigned nblocks;
 };
 
@@ -70,7 +67,7 @@ int c=0;
 int threadpool_id(struct threadpool *pool)
 {
 int i;
-pthread_t *p = pthread_self();
+pthread_t p = pthread_self();
 
   if(!pool)return -1;
 
@@ -90,14 +87,14 @@ void threadpool_wait(struct threadpool *pool)
 
   for(;;)
   {
-    pthread_mutex_lock(&(pool->mutex));
+//    pthread_mutex_lock(&(pool->mutex));
     for(n=i=0;i<pool->num_of_threads;++i) {
-      if(pool->tasks[i].signature == signature)
+      if(pool->tasks[i].signature)
         ++n;
     }
-    pthread_mutex_unlock(&(pool->mutex));
+//    pthread_mutex_unlock(&(pool->mutex));
     if(n == 0)break;
-    pthread_yield();
+//    pthread_yield();
   }
 }
 
@@ -129,47 +126,56 @@ void threadpool_unlock(struct threadpool *pool)
 
 int threadpool_start(struct threadpool *pool, void (*routine)(void*), void *data)
 {
+}
+
+void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode)
+{
   int i,j;
   pthread_t sig = pthread_self();
+  struct threadpool *pool = pctx->gctx->pool;
 
-  if(!pool)
-    return -1;
-
+  if(1 ||!pool){
+    (*routine)(pctx,ret,source,params,locals,mode);
+    return -2;
+  }
 	/* Obtain a task */
 	if (pthread_mutex_lock(&(pool->mutex))) {
 		perror("pthread_mutex_lock: ");
 		return -1;
 	}
 
-  j = -1;
-  for(i=0;i<pool->num_of_threads;++i)
-    if(pool->thr_arr[i] == sig)
-    {
-      j = i;
-      break;
-    }
-
   for(i=0;i<pool->num_of_threads;++i) {
     if(pool->tasks[i].signature == 0) {
-      pool->tasks[i].data = data;
+      pool->tasks[i].pctx = pctx;
+      pool->tasks[i].ret = ret;
+      pool->tasks[i].source = source;
+      pool->tasks[i].params = params;
+      pool->tasks[i].locals = locals;
+      pool->tasks[i].mode = mode;
+
       pool->tasks[i].routine_cb = routine;
       pool->tasks[i].signature = sig;
+
+fprintf(stderr,"++++ try start %p\n",&(pool->tasks[i]));
 
       pthread_mutex_lock(&(pool->tasks[i].rmutex));
       pthread_cond_broadcast(&(pool->tasks[i].rcond));
       pthread_mutex_unlock(&(pool->tasks[i].rmutex));
+fprintf(stderr,"++++ broadcast %p\n",&(pool->tasks[i]));
       break;
     }
   }
-
-  if(i >= pool->num_of_threads)
-    i = -2;
 
 	if (pthread_mutex_unlock(&(pool->mutex))) {
 		perror("pthread_mutex_unlock: ");
 		return -1;
 	}
-//fprintf(stderr,"started %d\n",i);
+
+  if(i >= pool->num_of_threads) {
+    (*routine)(pctx,ret,source,params,locals,mode);
+    return -2;
+  }
+
   return i;
 }
 
@@ -182,15 +188,16 @@ static void *worker_thr_routine(void *data)
 	while (1) {
 		pthread_mutex_lock(&(task->rmutex));
     while(task->signature == 0) { /* wait for task */
-      pthread_cond_wait(&(task->rcond), &(task->rmutex));
+    pthread_cond_wait(&(task->rcond), &(task->rmutex));
     }
 		pthread_mutex_unlock(&(task->rmutex));
   
+    fprintf(stderr,"--started %p\n",data);
   	/* Execute routine (if any). */
 		if (task->routine_cb) {
-			task->routine_cb(task->data);
+			task->routine_cb(task->pctx,task->ret,task->source,task->params,task->locals,task->mode);
     }
-
+    fprintf(stderr,"--ended %p\n",data);
     task->signature = 0;
 	}
 
@@ -227,7 +234,6 @@ struct threadpool* threadpool_init(int num_of_threads)
 		free(pool);
 		return NULL;
 	}
-  pool->blocking = NULL;
 
 	/* Create the thr_arr. */
 	if ((pool->thr_arr = malloc(sizeof(pthread_t) * num_of_threads)) == NULL) {

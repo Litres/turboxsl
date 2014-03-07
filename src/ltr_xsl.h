@@ -9,11 +9,11 @@
  *
 **/
 
+#ifndef _LTR_XSL_
 #include <pthread.h>
 
 #include "turboxsl.h"
 #include "xmldict.h"
-#include "threadpool.h"
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
 XPATH_NODE_OR, XPATH_NODE_AND, XPATH_NODE_EQ, XPATH_NODE_NE, XPATH_NODE_LT, XPATH_NODE_GT, XPATH_NODE_CALL, KEY_NODE,
@@ -224,3 +224,10 @@ void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fn
 
 /*************************** debug.c -- various debug and display ************************/
 void print_rval(RVALUE *rv);
+
+#include "threadpool.h"
+
+void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
+
+#define _LTR_XSL_
+#endif

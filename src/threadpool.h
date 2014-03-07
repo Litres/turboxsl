@@ -29,7 +29,6 @@ struct threadpool* threadpool_init(int num_of_threads);
  * @return -2 if pool is full.
  */
 int threadpool_start(struct threadpool *pool, void (*routine)(void*), void *data);
-int threadpool_start_rec(struct threadpool *pool, void (*routine)(void*), void *data, int depth);
 
 /**
  * This function returns running status of the worker thread
