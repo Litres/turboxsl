@@ -35,7 +35,7 @@ unsigned r;
     pctx->templno += 100;
     pctx->templtab = realloc(pctx->templtab, pctx->templno*sizeof(TEMPLATE));
   }
-//fprintf(stderr,"add template %s match %s\n",name?name:"",match?match:"*");
+
   r = pctx->templcnt++;
   pctx->templtab[r].name = hash(name,-1,0);
   pctx->templtab[r].content = content;

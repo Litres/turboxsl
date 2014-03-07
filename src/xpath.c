@@ -50,7 +50,6 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
   for(i=0;i<pctx->n_exprs;++i) {
     if(pctx->compiled[i].expr==e) {
       etree = pctx->compiled[i].comp;
-//fprintf(stderr,"found expr: %s\n",e);
       break;
     }
   }
@@ -628,7 +627,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         res->type = VAL_NULL;
       }
       rval_free(&rv);
-//fprintf(stderr,"get attribute <%s %s='%s'>\n",current->name,etree->name,res->v.string);
       return;
 
     case XPATH_NODE_VAR:
@@ -665,7 +663,6 @@ char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *curre
   if(etree) {
     xpath_execute_scalar(pctx,locals,etree,current,&rval);
     s = rval2string(&rval);
-//fprintf(stderr,"eval string(%s) at %s -> '%s'\n",expr,_name(current),s);
     return s;
   }
   return NULL;
@@ -675,27 +672,9 @@ void xpath_eval_expression(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *cu
 {
   XMLNODE *etree;
   rval_init(res);
-//fprintf(stderr,"eval expression(%s) at %s\n",expr,_name(current));
   etree = xpath_find_expr(pctx, expr);
   if(etree) {
     xpath_execute_scalar(pctx,locals,etree,current,res);
-  }
-}
-
-static void _pr_sel(XMLNODE *node)
-{
-  for(;node;node=node->next) {
-    switch(node->type) {
-      case ELEMENT_NODE:
-        fprintf(stderr,".......<%s>\n",node->name);
-        break;
-      case TEXT_NODE:
-        fprintf(stderr,".......'%s'\n",node->content);
-        break;
-      case ATTRIBUTE_NODE:
-        fprintf(stderr,".......%s='%s'\n",node->name,node->content);
-        break;
-    }
   }
 }
 

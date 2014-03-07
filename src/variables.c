@@ -55,7 +55,6 @@ void set_ctx_global_var(TRANSFORM_CONTEXT *pctx, char *name, char *content)
   XSL_VARIABLE *var;
   name = hash(name,-1,0);
   content = xml_strdup(content);
-//fprintf(stderr,"set %s <- %s\n",name,content);
   var = create_variable(pctx, name);
   var->extra.type = VAL_STRING;
   var->extra.v.string = content;
@@ -67,7 +66,6 @@ void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content)
 
   name = hash(name,-1,0);
   content = strdup(content);
-//fprintf(stderr,"set %s <- %s\n",name,content);
   if(pctx->var_max==0) {
     pctx->var_max = 200;
     pctx->var_pos = 0;
@@ -129,18 +127,16 @@ char *get_variable_str(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name)
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
       if(name==vars->name) {
-//fprintf(stderr,"get local var %s ='%s'\n", name, vars->content);
         return vars->extra.v.string;
       }
     }
   }
   for(i=0;i<pctx->var_pos;++i) { // then globals
     if(name==pctx->vars[i].name) {
-//fprintf(stderr,"get global var %s\n", name);
       return pctx->vars[i].extra.v.string;
     }
   }
-//fprintf(stderr,"not found: var %s\n", name);
+
   return NULL;
 }
 
@@ -218,12 +214,8 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
      tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
      tmp->extra.type = VAL_NODESET;
      apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
-//fprintf(stderr,"add local var %s = ", vname);
-//print_rval(&(tmp->extra));
   } else {
      xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
-//fprintf(stderr,"add local var %s %s = ", vname, vsel);
-//print_rval(&(tmp->extra));
   }
 }
 
@@ -264,13 +256,11 @@ char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second)
 
   for(i=0;i<pctx->var_pos;++i) {
     if(0==strcmp(fullname,pctx->vars[i].name)) {
-//fprintf(stderr,"got %s -> %s\n",fullname,pctx->vars[i].value);
       return xml_strdup(pctx->vars[i].extra.v.string);
     }
   }
   for(i=0;i<pctx->gctx->var_pos;++i) {
     if(0==strcmp(fullname,pctx->gctx->vars[i].name)) {
-//fprintf(stderr,"got %s -> %s\n",fullname,pctx->gctx->vars[i].value);
       return xml_strdup(pctx->gctx->vars[i].extra.v.string);
     }
   }

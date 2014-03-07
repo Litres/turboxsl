@@ -379,7 +379,7 @@ void    xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 {
   RVALUE rv;
   unsigned char *s, *p;
-  int i;
+  int i;http://zx.pk.ru/forumdisplay.php?f=49
 
   rv.type = VAL_NULL;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
@@ -456,7 +456,6 @@ void    xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
     }      
   }
 
-//fprintf(stderr,"translate('%s','%s','%s')\n",src,pat,sub);
   res->type = VAL_STRING;
   res->v.string = src;
 
@@ -481,7 +480,7 @@ void    xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     s = strdup(current->name);
   else
     s = strdup("");
-//fprintf(stderr,"name=%s\n",s);
+
   res->type = VAL_STRING;
   res->v.string = s;
   rval_free(&rv);
@@ -500,7 +499,7 @@ void    xf_lname(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   }
   else
     s = strdup("");
-//fprintf(stderr,"name=%s\n",s);
+
   res->type = VAL_STRING;
   res->v.string = s;
 }
@@ -870,6 +869,36 @@ void  add_function(TRANSFORM_CONTEXT *pctx, char *fname, void (*fun)(TRANSFORM_C
   ++pctx->cb_ptr;
 }
 
+static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res, void (*fun)())
+{
+  char *f_arg[30];
+  unsigned i;
+  RVALUE rv;
+  char *s;
+  
+  for(i=0;i<29;++i) {
+    if(args==NULL)
+      break;
+    xpath_execute_scalar(pctx, locals, args, current, &rv);
+    s = rval2string(&rv);
+    if(!s)
+      s = strdup("");
+    f_arg[i]=s;
+    args=args->next;
+  }
+  f_arg[i]=NULL;
+
+// call to perl
+
+  for(i=0;f_arg[i];++i) {
+    free(f_arg[i]);
+  }
+  res->type = VAL_STRING;
+  res->v.string = strdup("");
+}
+
+
+
 void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   unsigned i;
@@ -925,6 +954,16 @@ void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fn
     add_function(pctx,"ltr:get_onetime_sid",xf_stub); // 0
 */
   }
+
+  if(pctx->gctx->perl_cb_dispatcher) { // first try perl overrides if any
+    for(i=0;i<pctx->gctx->perl_cb_ptr;++i) {
+      if(pctx->gctx->perl_functions[i].name == fname) {
+        do_callback(pctx, locals, args, current, res, pctx->gctx->perl_functions[i].func);
+        return;
+      }
+    }
+  }
+
   for(i=0;i<pctx->cb_ptr;++i) {
     if(pctx->functions[i].name == fname) {
       (pctx->functions[i].func)(pctx, locals, args, current, res);
@@ -933,4 +972,21 @@ void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fn
   }
 fprintf(stderr, "function not found %s()\n",fname);
   res->type = VAL_NULL;
+}
+
+
+void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void (*fun)(),char **args), void (*fun)())
+{
+  pctx->perl_cb_dispatcher = callback;
+  if(!pctx->perl_functions) {
+    pctx->perl_cb_max = 20;
+    pctx->perl_cb_ptr = 0;
+    pctx->perl_functions = malloc(sizeof(CB_TABLE)*pctx->perl_cb_max);
+  } else if(pctx->perl_cb_ptr >= pctx->perl_cb_max) {
+    pctx->perl_cb_max += 20;
+    pctx->perl_functions = realloc(pctx->perl_functions, sizeof(CB_TABLE)*pctx->perl_cb_max);
+  }
+  pctx->perl_functions[pctx->perl_cb_ptr].name = hash(fname,-1,0);
+  pctx->perl_functions[pctx->perl_cb_ptr].func = fun;
+  ++pctx->perl_cb_ptr;
 }

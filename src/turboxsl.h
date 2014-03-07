@@ -25,3 +25,5 @@ void XMLFreeDocument(XMLNODE *node);
 
 void set_ctx_global_var(TRANSFORM_CONTEXT *pctx, char *name, char *content);
 void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content);
+
+void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void (*fun)(),char **args), void (*fun)());
