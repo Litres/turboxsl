@@ -68,7 +68,7 @@ char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *cont
       p=strchr(s,'}');
       if(p)
         *p=0;
-      r = xpath_eval_string(pctx, locals, context, s);
+      r = xpath_eval_string(pctx, locals, context, xpath_find_expr(pctx,s));
       if(r) {
         xmls_add_str(res, r);
         free(r);

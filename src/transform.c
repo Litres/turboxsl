@@ -266,7 +266,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         xml_cleanup_node(pctx,&vars);
       }
       xml_free_node(pctx,param);
-      xpath_free_selection(tofree);
+      xpath_free_selection(pctx,tofree);
 /************************** <xsl:attribute> *****************************/
     } else if(instr->name == xsl_attribute) {
       char *aname = xml_process_string(pctx, locals, source, xml_get_attr(instr,xsl_a_name));
@@ -325,7 +325,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     } else if(instr->name == xsl_param) {
       char *pname = hash(xml_get_attr(instr,xsl_a_name),-1,0);
       char *expr = xml_get_attr(instr,xsl_a_select);
-      XMLNODE n;
+      XMLNODE n;https://www.google.ru/search?client=ubuntu&channel=fs&q=xs+programming+language&ie=utf-8&oe=utf-8&gfe_rd=ctrl&ei=TEcgU8mtDKuA4AS8uoHoCg&gws_rd=cr
       if(!xpath_in_selection(params,pname) && (expr || instr->children)) {
         do_local_var(pctx,locals,source,instr);
       } else {
@@ -352,7 +352,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         newtempl = xml_append_child(pctx,ret,EMPTY_NODE);
         threadpool_start_full(apply_xslt_template,pctx,newtempl,iter,child,params,locals);
       }
-      xpath_free_selection(tmp);
+      xpath_free_selection(pctx,tmp);
 /************************** <xsl:copy-of> *****************************/
     } else if(instr->name == xsl_copyof) {
       char *sexpr = xml_get_attr(instr,xsl_a_select);
@@ -375,7 +375,10 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       do_local_var(pctx,locals,source,instr);
 /************************** <xsl:value-of> *****************************/
     } else if(instr->name == xsl_value_of) {
-      char *cont = xpath_eval_string(pctx, locals, source, xml_get_attr(instr,xsl_a_select));
+      if(!instr->compiled) {
+        instr->compiled = xpath_find_expr(pctx, xml_get_attr(instr,xsl_a_select));
+      }
+      char *cont = xpath_eval_string(pctx, locals, source, instr->compiled);
       if(cont) {
         tmp = xml_append_child(pctx,ret,TEXT_NODE);
         tmp->content = cont;
@@ -624,6 +627,10 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       tmp->next = pctx->keys;
       pctx->keys = tmp;
     }
+/*********** process xsl:sort instructions ************/
+    else if(node->name==xsl_sort) {
+      node->compiled = xpath_find_expr(pctx,xml_get_attr(node, xsl_a_select));
+      name = xml_get_attr(node, xsl_a_datatype);
 /*********** process xsl:decimal-format instructions ************/
     else if(node->name==xsl_decimal) {
       name = xml_get_attr(node, xsl_a_name);
@@ -782,7 +789,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
         if(sel->children->parent)
           sel->children->parent->children = meta;
       }
-      xpath_free_selection(sel);
+      xpath_free_selection(pctx,sel);
     }
   }
   xml_free_node(pctx,locals);

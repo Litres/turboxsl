@@ -173,14 +173,14 @@ char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second);
 
 /************************* xpath.c -- xpath compilator ************************/
 int xpath_eval_boolean(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
-char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr);
+char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
 XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
 void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *this);
 
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr);
 XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *selection, XMLNODE *sort);
 XMLNODE *xpath_in_selection(XMLNODE *sel, char *name);
-void xpath_free_selection(XMLNODE *sel);
+void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel);
 XMLNODE *xpath_copy_nodeset(XMLNODE *set);
 XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr);
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, int *position);
@@ -231,7 +231,7 @@ void print_rval(RVALUE *rv);
 
 #include "threadpool.h"
 
-void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
+void threadpool_start_full(void (*routine)(), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
 
 #define _LTR_XSL_
 #endif

@@ -652,13 +652,11 @@ int xpath_eval_boolean(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *curren
   return 0;
 }
 
-char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr)
+char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *etree)
 {
-  XMLNODE *etree;
   RVALUE rval;
   rval_init(&rval);
   char *s;
-  etree = xpath_find_expr(pctx, expr);
 
   if(etree) {
     xpath_execute_scalar(pctx,locals,etree,current,&rval);
@@ -705,16 +703,15 @@ void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current,
 
 /*
  * nodeset_free - frees nodeset if non-empty;
- * since nodeset is a chain of EMPTY_NODEs with selected nodes referensed as children - only frees EMPTY_NODE chain
  *
  */
 
-void xpath_free_selection(XMLNODE *sel)
+void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel)
 {
   XMLNODE *n;
   while(sel) {
     n = sel->next;
-    free(sel);
+    nfree(pctx,sel);
     sel=n;
   }
 }

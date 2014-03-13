@@ -38,7 +38,7 @@ void rval_free(RVALUE *rv)
       break;
     case VAL_NODESET:
       if(rv->v.nodeset)
-        xpath_free_selection(rv->v.nodeset);
+        xpath_free_selection(NULL, rv->v.nodeset);
       break;
   }
   rv->type = VAL_NULL;
@@ -166,7 +166,7 @@ char *p,*n;
       } else {
         r = nan("");
       }
-      xpath_free_selection(rv->v.nodeset);
+      xpath_free_selection(NULL,rv->v.nodeset);
       return r;
     default:
       return 0.0;
