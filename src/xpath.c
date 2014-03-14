@@ -46,6 +46,8 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 {
   XMLNODE *etree = NULL;
   char *e = hash(expr,-1,0);
+  if(e==NULL)
+    return NULL;
   unsigned i;
   for(i=0;i<pctx->n_exprs;++i) {
     if(pctx->compiled[i].expr==e) {
@@ -273,7 +275,7 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
   selection = newsel;
   for(i=0;i<n;++i) {
     pctx->sort_nodes[i] = selection;
-    pctx->sort_keys[i] = node2string(selection);
+    pctx->sort_keys[i] = sort->compiled?xpath_eval_string(pctx,locals,selection,sort->compiled):node2string(selection);
     selection = selection->next;
   }
 

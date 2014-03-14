@@ -5,7 +5,7 @@
  *
  *
  *
- *  $Id: xslglobs.h 34247 2014-03-05 14:48:37Z evozn $
+ *  $Id$
  *
 **/
 
@@ -64,3 +64,7 @@ X char *xsl_a_dtsystem;
 X char *xsl_a_elements;
 X char *xsl_a_xmlns;
 X char *xsl_a_use;
+X char *xsl_a_datatype;
+X char *xsl_a_lang;
+X char *xsl_a_order;
+X char *xsl_a_caseorder;

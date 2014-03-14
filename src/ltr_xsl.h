@@ -40,7 +40,7 @@ struct _xmlnode {
   struct _xmlnode *prev;
   struct _xmlnode *children;
   struct _xmlnode *attributes;
-  enum {XML_FLAG_CDATA=1,XML_FLAG_NOESCAPE=2} flags;
+  enum {XML_FLAG_CDATA=1,XML_FLAG_NOESCAPE=2,XML_FLAG_SORTNUMBER=4,XML_FLAG_DESCENDING=8,XML_FLAG_LOWER=16} flags;
   unsigned position;
   unsigned order;
   unsigned uid;

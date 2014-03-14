@@ -79,6 +79,10 @@ static void init_processor(XSLTGLOBALDATA *gctx)
     xsl_a_elements = hash("elements",-1,0);
     xsl_a_xmlns    = hash("xmlns",-1,0);
     xsl_a_use      = hash("use",-1,0);
+    xsl_a_datatype = hash("data-type",-1,0);
+    xsl_a_lang     = hash("lang",-1,0);
+    xsl_a_order    = hash("order",-1,0);
+    xsl_a_caseorder = hash("case-order",-1,0);
     gctx->pool = threadpool_init(gctx->nthreads);
     gctx->initialized = 1;
   }
@@ -256,7 +260,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         if(!tofree) {
           tofree = iter = xpath_copy_nodeset(iter);
         }
-        tofree = iter = xpath_sort_selection(pctx, locals, iter,child);
+        tofree = iter = xpath_sort_selection(pctx, locals, iter, child);
       }
 
       for(;iter;iter=iter->next) {
@@ -631,6 +635,15 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     else if(node->name==xsl_sort) {
       node->compiled = xpath_find_expr(pctx,xml_get_attr(node, xsl_a_select));
       name = xml_get_attr(node, xsl_a_datatype);
+      if(0==xml_strcasecmp(name, "number"))
+        node->flags |= XML_FLAG_SORTNUMBER;
+      name = xml_get_attr(node, xsl_a_order);
+      if(0==xml_strcasecmp(name, "descending"))
+        node->flags |= XML_FLAG_DESCENDING;
+      name = xml_get_attr(node, xsl_a_caseorder);
+      if(0==xml_strcasecmp(name, "lower-first"))
+        node->flags |= XML_FLAG_LOWER;
+    }
 /*********** process xsl:decimal-format instructions ************/
     else if(node->name==xsl_decimal) {
       name = xml_get_attr(node, xsl_a_name);
