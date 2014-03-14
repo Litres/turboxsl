@@ -72,7 +72,7 @@ struct _globaldata {
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;
   unsigned perl_cb_ptr;
-  char *(*perl_cb_dispatcher)(void (*fun)(),char *args);
+  char *(*perl_cb_dispatcher)(void (*fun)(),char **args);
   unsigned nthreads;
   struct threadpool *pool;
   XSL_VARIABLE *vars;

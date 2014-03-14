@@ -417,6 +417,10 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       if(rv.type == VAL_NODESET) {
         selection = xpath_filter(pctx,locals,rv.v.nodeset,etree->children->next);
         res->v.nodeset = selection;
+      } else if(rv.type == VAL_STRING) {  // special case for @attr[1]
+        res->type = VAL_STRING;
+        res->v.string = rv.v.string;
+        rv.type = VAL_NULL;
       } else {  // can not select from non-nodeset
         res->v.nodeset = NULL;
       }
@@ -624,7 +628,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       name=current?xml_get_attr(current,etree->name):NULL;
       if(name) {
         res->type = VAL_STRING;
-        res->v.string = name?strdup(name):NULL;
+        res->v.string = strdup(name);
       } else {
         res->type = VAL_NULL;
       }

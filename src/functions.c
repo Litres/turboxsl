@@ -36,7 +36,7 @@ void    xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
     free(mode);
   }
   res->type = VAL_STRING;
-  if(js) {
+  if(js && str) {
     XMLSTRING s = xmls_new(200);
     for(p=str;*p;++p) {
       switch(*p) {
@@ -146,8 +146,13 @@ void    xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   char *p;
   char *d;
   int n;
+  res->type = VAL_STRING;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   s = rval2string(&rv);
+  if(!s) {
+    res->v.string = NULL;
+    return;
+  }
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
   n = (int)floor(rval2number(&rv));
   for(p=s;n>1;++p) {
@@ -170,7 +175,6 @@ void    xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   }
   *d = 0;
 
-  res->type = VAL_STRING;
   res->v.string = s;
 }
 
@@ -888,13 +892,16 @@ static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args,
   }
   f_arg[i]=NULL;
 
-// call to perl
+  s = NULL;
+  if(pctx->gctx->perl_cb_dispatcher) {
+    s = (pctx->gctx->perl_cb_dispatcher)(fun, f_arg);
+  }
 
   for(i=0;f_arg[i];++i) {
     free(f_arg[i]);
   }
   res->type = VAL_STRING;
-  res->v.string = strdup("");
+  res->v.string = xml_strdup(s);
 }
 
 
