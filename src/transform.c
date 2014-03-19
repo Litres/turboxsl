@@ -662,6 +662,7 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 void XSLTEnd(XSLTGLOBALDATA *data)
 {
   drop_hash();
+  dict_free_data(data->urldict);
   free(data);
 }
 
@@ -670,6 +671,7 @@ XSLTGLOBALDATA *XSLTInit()
   XSLTGLOBALDATA *ret = malloc(sizeof(XSLTGLOBALDATA));
   memset(ret,0,sizeof(XSLTGLOBALDATA));
   init_processor(ret);
+  ret->urldict = dict_new(300);
   return ret;
 }
 

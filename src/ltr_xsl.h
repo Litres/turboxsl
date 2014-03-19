@@ -69,10 +69,12 @@ typedef struct _var {
 } XSL_VARIABLE;
 
 struct _globaldata {
+  XMLDICT *urldict;
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;
   unsigned perl_cb_ptr;
   char *(*perl_cb_dispatcher)(void (*fun)(),char **args);
+  void (*perl_urlcode)();
   unsigned nthreads;
   struct threadpool *pool;
   XSL_VARIABLE *vars;

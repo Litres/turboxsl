@@ -46,6 +46,19 @@ void dict_free(XMLDICT *dict)
   }
 }
 
+void dict_free_data(XMLDICT *dict)
+{
+  int i;
+
+  if(dict) {
+    for(i=0;i<dict->used;++i)
+      free(dict->entries[i].data);
+    if(dict->entries)
+      free(dict->entries);
+    free(dict);
+  }
+}
+
 void *dict_find(XMLDICT *dict, char *name)
 {
   unsigned h;

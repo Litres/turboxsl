@@ -630,7 +630,7 @@ static char *url_get_specials(TRANSFORM_CONTEXT *pctx, char *name)
 void    xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
-  XMLSTRING url;
+  XMLSTRING url,key;
   char *str;
   char *p;
   char *arg;
@@ -643,6 +643,31 @@ void    xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
     return;
   }
   url = xmls_new(100);
+  if(pctx->gctx->perl_urlcode) {
+    XMLNODE *parg;
+    char *p_args[2];
+    key = xmls_new(100);
+    for(parg=args;parg;parg=parg->next) {
+      xpath_execute_scalar(pctx, locals, parg, current, &rv);
+      str = rval2string(&rv);
+      xmls_add_str(key,str);
+      free(str);
+      if(parg->next)
+        xmls_add_char(key,',');
+    }
+    p = xmls_detach(key);
+    str = hash(p,-1,0);
+    free(p);
+    p = dict_find(pctx->gctx->urldict,str);
+    if(!p) {
+      p_args[0] = str;
+      p_args[1] = NULL;
+      p = (pctx->gctx->perl_cb_dispatcher)(pctx->gctx->perl_urlcode, p_args);
+      dict_add(pctx->gctx->urldict,str,p);
+    }
+    res->v.string = strdup(p);
+    return;
+  }
   xmls_add_char(url,'/');
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   str = rval2string(&rv);
@@ -956,10 +981,6 @@ void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fn
     add_function(pctx,"string",xf_tostr); // 0 ?
     add_function(pctx,"system-property",xf_stub); // 0
     add_function(pctx,"ltr:existsOnHost",xf_exists); // 0
-/*    
-    add_function(pctx,"ltr:mobile_google_ads",xf_stub); // 0 -- Currently unused, need to implement???
-    add_function(pctx,"ltr:get_onetime_sid",xf_stub); // 0
-*/
   }
 
   if(pctx->gctx->perl_cb_dispatcher) { // first try perl overrides if any
@@ -993,7 +1014,11 @@ void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void
     pctx->perl_cb_max += 20;
     pctx->perl_functions = realloc(pctx->perl_functions, sizeof(CB_TABLE)*pctx->perl_cb_max);
   }
-  pctx->perl_functions[pctx->perl_cb_ptr].name = hash(fname,-1,0);
-  pctx->perl_functions[pctx->perl_cb_ptr].func = fun;
-  ++pctx->perl_cb_ptr;
+  if(0 == xml_strcmp(fname,"ltr:url_code")) {
+    pctx->perl_urlcode = fun;
+  } else {
+    pctx->perl_functions[pctx->perl_cb_ptr].name = hash(fname,-1,0);
+    pctx->perl_functions[pctx->perl_cb_ptr].func = fun;
+    ++pctx->perl_cb_ptr;
+  }
 }
