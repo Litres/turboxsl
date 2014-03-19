@@ -87,7 +87,7 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
 
 char *node2string(XMLNODE *node)
 {
-  XMLSTRING str = xmls_new(100);
+  XMLSTRING str;
 
   if(node==NULL)
     return NULL;
@@ -95,6 +95,7 @@ char *node2string(XMLNODE *node)
   if(node->type == TEXT_NODE)
     return xml_strdup(node->content);
 
+  str = xmls_new(100);
   add_node_str(str, node);
 
   return xmls_detach(str); //XXX leak!

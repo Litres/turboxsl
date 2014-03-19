@@ -663,6 +663,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 {
   drop_hash();
   dict_free_data(data->urldict);
+  free(data->perl_functions);
   free(data);
 }
 
@@ -697,8 +698,10 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
     next = tmp->next;
     free(tmp);
   }
+  free(pctx->templtab);
   free(pctx->sort_keys);
   free(pctx->sort_nodes);
+  free(pctx->functions);
   free(pctx->fnbuf);
   free(pctx);
 }

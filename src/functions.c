@@ -642,7 +642,7 @@ void    xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
     res->v.string = strdup("/");
     return;
   }
-  url = xmls_new(100);
+
   if(pctx->gctx->perl_urlcode) {
     XMLNODE *parg;
     char *p_args[2];
@@ -668,6 +668,7 @@ void    xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
     res->v.string = strdup(p);
     return;
   }
+  url = xmls_new(100);
   xmls_add_char(url,'/');
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   str = rval2string(&rv);
