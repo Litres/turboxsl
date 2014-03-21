@@ -73,8 +73,10 @@ char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *cont
         xmls_add_str(res, r);
         free(r);
       }
-      if(p)
+      if(p) {
+        *p = '}';
         s = p+1;
+      }
       else break;
     } else {
       if(*s=='}' && s[1]=='}')

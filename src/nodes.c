@@ -96,7 +96,7 @@ void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode)
   xml_free_node(pctx,node);
 }
 
-static char nuid = 0;
+static unsigned int nuid = 0;
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {

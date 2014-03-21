@@ -112,7 +112,7 @@ XMLNODE *node;
     case VAL_NODESET:   // TODO: take first in document order
       res = NULL;
       if(rv->v.nodeset) {
-        res = node2string(rv->v.nodeset->children);
+        res = node2string(rv->v.nodeset->type==EMPTY_NODE?rv->v.nodeset:rv->v.nodeset->children);
       }
       rval_free(rv);
       return res;

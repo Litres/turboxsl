@@ -16,6 +16,15 @@
 
 #include "ltr_xsl.h"
 
+int x_can_number(char *p)
+{
+  if(*p=='-')
+    ++p;
+  if(*p=='.')
+    ++p;
+  return (*p >= '0' && *p <= '9')?1:0;
+}
+
 int x_is_ws(char c)
 {
   if(c==' '||c=='\t'||c=='\n'||c=='\r')

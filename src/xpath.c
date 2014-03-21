@@ -114,6 +114,7 @@ XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, int *position)
   dst->children = src->children;
   dst->parent = src->parent;
   dst->order = src->order;
+  dst->uid = src->uid;
   dst->position = ++(*position);
   if(prev) {
     dst->prev = prev;
@@ -235,8 +236,23 @@ XMLNODE *xpath_get_descendants(XMLNODE *nodeset)
   for(;nodeset;nodeset=nodeset->next) {
     tmp = add_all_children(tmp,nodeset->children,&pos,&(head->children));
   }
-  head->flags|=0x8000; // XXX
+  head->flags|=0x8000;
   return head;
+}
+
+XMLNODE *xpath_get_ancestors(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *name)
+{
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned pos = 0;
+  for(node=node->parent;node;node=node->parent) {
+    if(!name || name==node->name) {
+      tmp = add_to_selection(tmp,node,&pos);
+      if(!ret)
+        ret = tmp;
+    }
+  }
+  return ret;
 }
 
 XMLNODE *xpath_get_attrs(XMLNODE *nodeset)
@@ -438,6 +454,22 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         res->v.nodeset = NULL;
       }
       rval_free(&rv);
+      return;
+
+    case XPATH_NODE_ANCESTOR:
+      res->type = VAL_NODESET;
+      if(etree->children) {
+        xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
+        if(rv.type == VAL_NODESET) {
+          selection = xpath_get_ancestors(pctx,rv.v.nodeset,etree->name);
+          res->v.nodeset = selection;
+        } else {  // can not select from non-nodeset
+          res->v.nodeset = NULL;
+        }
+        rval_free(&rv);
+      } else {
+        res->v.nodeset = xpath_get_ancestors(pctx,current,etree->name);
+      }
       return;
 
     case XPATH_NODE_ALL:
@@ -717,6 +749,8 @@ void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel)
 {
   XMLNODE *n;
   while(sel) {
+    if(sel->type==EMPTY_NODE && (sel->flags&0x8000))
+       xpath_free_selection(pctx,sel->children);
     n = sel->next;
     nfree(pctx,sel);
     sel=n;
@@ -816,6 +850,13 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
         } else {
           node1->type = XPATH_NODE_ATTR;
         }
+      } else if(match(eptr,"ancestor::")) {
+        node1->type = XPATH_NODE_ANCESTOR;
+        if(**eptr=='*') {
+          ++(*eptr);
+          node1->name = NULL;
+          return node1;
+        }
       }
     }
     p = *eptr;
@@ -876,7 +917,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
       skip_ws(eptr);
     }
     return node1;
-  } else if (**eptr >= '0' && **eptr <= '9') {
+  } else if (x_can_number(*eptr)) {
     char *p, *e;
     int f_fl = 0;
     p = (*eptr);

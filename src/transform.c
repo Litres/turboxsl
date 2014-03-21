@@ -329,7 +329,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     } else if(instr->name == xsl_param) {
       char *pname = hash(xml_get_attr(instr,xsl_a_name),-1,0);
       char *expr = xml_get_attr(instr,xsl_a_select);
-      XMLNODE n;https://www.google.ru/search?client=ubuntu&channel=fs&q=xs+programming+language&ie=utf-8&oe=utf-8&gfe_rd=ctrl&ei=TEcgU8mtDKuA4AS8uoHoCg&gws_rd=cr
+      XMLNODE n;
       if(!xpath_in_selection(params,pname) && (expr || instr->children)) {
         do_local_var(pctx,locals,source,instr);
       } else {
@@ -531,10 +531,12 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       if(name) {
         included = XMLParseFile(pctx->gctx, name);
         if(included) {
-          //xml_replace_node(node, included);
-          //node = included;
-          node->type=EMPTY_NODE;
-          node->children=included->children;
+          xml_replace_node(pctx, node, included);
+          node = included;
+//          node->type=EMPTY_NODE;
+//          node->children=included->children;
+//          included->children = included->next = NULL;
+//          free(included);
         } else {
           fprintf(stderr,"failed to include %s\n",pctx->fnbuf);
         }
