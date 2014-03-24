@@ -155,13 +155,14 @@ void    xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   }
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
   n = (int)floor(rval2number(&rv));
-  for(p=s;n>1;++p) {
-    if(*p==0)
+
+  for(p=s;n>1;--n) {
+    if(*p++==0)
       break;
     if((0x0C0 & *p)==0x080)
-        continue;
-    --n;
+      ++n;
   }
+
   if(args->next->next) {
     xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
     n = (int)floor(rval2number(&rv));
