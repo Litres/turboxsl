@@ -161,7 +161,10 @@ char *p,*n;
       rv->type=VAL_NULL;
       if(rv->v.nodeset) {
         p = node2string(rv->v.nodeset->children?rv->v.nodeset->children:rv->v.nodeset);
-        r = strtod(p,NULL);
+        if(p)
+          r = strtod(p,NULL);
+        else
+          r = nan("");
         free(p);
       } else {
         r = nan("");

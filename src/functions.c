@@ -168,9 +168,10 @@ void    xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
     n = (int)floor(rval2number(&rv));
   } else n = 100500;
   for(d=s;n>0;--n) {
-    *d++ = *p;
+    *d = *p;
     if(*p++==0)
       break;
+    ++d;
     if((0x0C0 & *p)==0x080)
       ++n;
   }
@@ -384,7 +385,7 @@ void    xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 {
   RVALUE rv;
   unsigned char *s, *p;
-  int i;http://zx.pk.ru/forumdisplay.php?f=49
+  int i;
 
   rv.type = VAL_NULL;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
@@ -445,25 +446,51 @@ void    xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 
 void    xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  char *src,*pat,*sub;
-  unsigned i;
+  short *src,*pat,*sub;
+  char *s;
+  unsigned i,j;
   RVALUE rv;
+  XMLSTRING xs;
 
-  pat = sub = NULL;
+  res->type = VAL_STRING;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  src = rval2string(&rv);
+  s = rval2string(&rv);
+  if(!s) {
+    res->v.string = NULL;
+    return;
+  }
+  
+  src = utf2ws(s);
+  xs = xmls_new(strlen(s)+10);
+  free(s);
   if(args->next) {
     xpath_execute_scalar(pctx, locals, args->next, current, &rv);
-    pat = rval2string(&rv);
+    s = rval2string(&rv);
+    pat = utf2ws(s);
+    free(s);
     if(args->next->next) {
       xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
-      sub = rval2string(&rv);
+      s = rval2string(&rv);
+      sub = utf2ws(s);
+      free(s);
     }      
   }
 
-  res->type = VAL_STRING;
-  res->v.string = src;
+  for(i=0;src[i];++i) {
+    short v = src[i];
+    for(j=0;pat[j];++j) {
+      if(v==pat[j]) {
+        v = sub[j];
+        continue;
+      }
+    }
+    xmls_add_utf(xs,v);
+  }
+  xmls_add_char(xs,0);
 
+  res->v.string = xmls_detach(xs);
+
+  free(src);
   free(pat);
   free(sub);
 }

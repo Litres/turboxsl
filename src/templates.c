@@ -61,7 +61,6 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
       break;
     }
   }
-
   if(!content)  // if template match is empty, return empty node on match, not NULL
     content = &enode;
 

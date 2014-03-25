@@ -199,3 +199,32 @@ char *xmls_detach(XMLSTRING s)
   free(s);
   return ret;
 }
+
+
+short *utf2ws(char *s)
+{
+short *ws;
+short u;
+int i,j;
+
+  if(!s)
+    return NULL;
+  ws = malloc((strlen(s)+1)*sizeof(short));
+  for(i=j=0;s[i];++i) {
+    u = 0;
+    if(s[i]&0x80) {
+      if((s[i]&0xE0)==0xC0) {
+        u = ((s[i]&0x1F)<<6)|(s[i+1]&0x3F);
+        ++i;
+      } else if((s[i]&0xF0)==0xE0) {
+        u = ((s[i]&0x0F)<<12)|((s[i+1]&0x3F)<<6)|(s[i+2]&0x3F);
+        i+=2;
+      }
+    } else {
+      u = s[i];
+    }
+    ws[j++]=u;
+  }
+  ws[j] = 0;
+  return ws;
+}

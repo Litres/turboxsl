@@ -529,14 +529,11 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
       if(name) {
+//        fprintf(stderr,"including %s\n",pctx->fnbuf);
         included = XMLParseFile(pctx->gctx, name);
         if(included) {
-          xml_replace_node(pctx, node, included);
-          node = included;
-//          node->type=EMPTY_NODE;
-//          node->children=included->children;
-//          included->children = included->next = NULL;
-//          free(included);
+          node->type=EMPTY_NODE;
+          node->children=included;
         } else {
           fprintf(stderr,"failed to include %s\n",pctx->fnbuf);
         }
@@ -593,7 +590,7 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
           process_imports(pctx,included); //process imports if any
           node->type = EMPTY_NODE;
           node->children = included;
-          fprintf(stderr,"importing %s\n",pctx->fnbuf);
+//          fprintf(stderr,"importing %s\n",pctx->fnbuf);
           precompile_templates(pctx, included);
           node = included;
         } else {

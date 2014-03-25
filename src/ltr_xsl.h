@@ -224,6 +224,8 @@ void        xmls_add_utf(XMLSTRING s, unsigned u);// appends unicode value to xm
 void        xmls_add_str(XMLSTRING s, char *d);   // appends a string to xmlstring
 char       *xmls_detach(XMLSTRING s);             // frees xmlstring, returns content to be freed later
 
+short   *utf2ws(char *s);
+
 void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx);
 
 

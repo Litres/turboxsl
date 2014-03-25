@@ -1,4 +1,3 @@
-
 /*
  *  TurboXSL XML+XSLT processing library
  *  XPATH language parser and evaluator
@@ -277,6 +276,10 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
   XMLNODE *newsel;
   char *t;
   unsigned i,n,again;
+  int numeric_sort = (sort->flags&XML_FLAG_SORTNUMBER)?1:0;
+  int backward_sort = (sort->flags&XML_FLAG_DESCENDING)?-1:1;
+  double *nsk = NULL;
+  double dt;
 
   if(selection==NULL||selection->next==NULL)  //do not attempt to sort single-element or empty nodesets;
     return selection;
@@ -289,35 +292,65 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
     pctx->sort_keys = (char **)realloc(pctx->sort_keys, pctx->sort_size*sizeof(char *));
     pctx->sort_nodes = (XMLNODE **)realloc(pctx->sort_nodes, pctx->sort_size*sizeof(XMLNODE *));
   }
+  if(numeric_sort) {
+    nsk = malloc(sizeof(double)*n);
+  }
   selection = newsel;
   for(i=0;i<n;++i) {
     pctx->sort_nodes[i] = selection;
     pctx->sort_keys[i] = sort->compiled?xpath_eval_string(pctx,locals,selection,sort->compiled):node2string(selection);
+    if(numeric_sort) {
+      if(pctx->sort_keys[i])
+        nsk[i] = strtod(pctx->sort_keys[i],NULL);
+      else
+        nsk[i]=-9999999999;
+    }
     selection = selection->next;
   }
 
-  for(again=1;again;) { // do sorting
-    again = 0;
-    for(i=1;i<n;++i) {
-      if(xml_strcasecmp(pctx->sort_keys[i-1],pctx->sort_keys[i])>0) {
-        selection = pctx->sort_nodes[i];
-        pctx->sort_nodes[i]=pctx->sort_nodes[i-1];
-        pctx->sort_nodes[i-1]=selection;
-        t = pctx->sort_keys[i];
-        pctx->sort_keys[i]=pctx->sort_keys[i-1];
-        pctx->sort_keys[i-1]=t;
-        again = 1;
+  if(numeric_sort) {
+    for(again=1;again;) { // do sorting
+      again = 0;
+      for(i=1;i<n;++i) {
+        if(backward_sort*(nsk[i-1]-nsk[i])>0.0) {
+          selection = pctx->sort_nodes[i];
+          pctx->sort_nodes[i]=pctx->sort_nodes[i-1];
+          pctx->sort_nodes[i-1]=selection;
+          dt = nsk[i];
+          nsk[i]=nsk[i-1];
+          nsk[i-1]=dt;
+          again = 1;
+        }
+      }
+    }
+  } else {
+    for(again=1;again;) { // do sorting
+      again = 0;
+      for(i=1;i<n;++i) {
+        if(backward_sort*xml_strcasecmp(pctx->sort_keys[i-1],pctx->sort_keys[i])>0) {
+          selection = pctx->sort_nodes[i];
+          pctx->sort_nodes[i]=pctx->sort_nodes[i-1];
+          pctx->sort_nodes[i-1]=selection;
+          t = pctx->sort_keys[i];
+          pctx->sort_keys[i]=pctx->sort_keys[i-1];
+          pctx->sort_keys[i-1]=t;
+          again = 1;
+        }
       }
     }
   }
+
   pctx->sort_nodes[0]->prev=NULL;
   for(i=1;i<n;++i) {
+    pctx->sort_nodes[i-1]->position = i;
     pctx->sort_nodes[i]->prev = pctx->sort_nodes[i-1];
     pctx->sort_nodes[i-1]->next = pctx->sort_nodes[i];
     free(pctx->sort_keys[i]);
   }
   pctx->sort_nodes[n-1]->next = NULL;
+  pctx->sort_nodes[n-1]->position = n;
   newsel = pctx->sort_nodes[0];
+  free(nsk);
   return newsel;
 }
 
@@ -629,8 +662,12 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
       l = rval2number(&rv);
       r = rval2number(&rv1);
-      res->type = VAL_NUMBER;
-      res->v.number = (double)((long)l % (long)r);
+      {
+        long ll = trunc(l);
+        long lr = trunc(r);
+        res->type = VAL_NUMBER;
+        res->v.number = (ll%lr);
+      }
       return;
 
     case XPATH_NODE_NOT:
@@ -1066,7 +1103,7 @@ XMLNODE *do_mul_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
       ornode->children = node1;
       skip_ws(eptr);
     } else if(match(eptr,"mod ")) {
-      ornode = xml_new_node(pctx,NULL,XPATH_NODE_DIV);
+      ornode = xml_new_node(pctx,NULL,XPATH_NODE_MOD);
       ornode->children = node1;
       skip_ws(eptr);
     } else return node1;
