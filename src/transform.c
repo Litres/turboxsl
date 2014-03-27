@@ -228,7 +228,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       XMLNODE vars;
       XMLNODE *child;
       XMLNODE *param = NULL;
-
       if(sval) {
         if(!instr->compiled) {
           instr->compiled = xpath_find_expr(pctx, sval);

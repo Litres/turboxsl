@@ -233,10 +233,7 @@ XMLNODE *tmp;
       tmp = xml_new_node(pctx, name, ATTRIBUTE_NODE);
       tmp->next = vars->attributes;
       vars->attributes = tmp;
-      tmp->extra = params->extra;
-      params->extra.type = VAL_NULL;
-      params->name = NULL;
-      
+      rval_copy(pctx,&(tmp->extra), &(params->extra));      
       return;
     }
   }

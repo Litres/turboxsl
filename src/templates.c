@@ -132,13 +132,13 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
         return 0;
       else return select_match(pctx, node->parent, templ->children);
 
-     case XPATH_NODE_CONTEXT:
+    case XPATH_NODE_CONTEXT:
         return 1;
 
-     case XPATH_NODE_SELF:
+    case XPATH_NODE_SELF:
         return select_match(pctx, node, templ->children);
 
-     case XPATH_NODE_FILTER:
+    case XPATH_NODE_FILTER:
         if(!select_match(pctx, node, templ->children))
           return 0;
         if(templ->children->next->type==XPATH_NODE_UNION || templ->children->next->type==XPATH_NODE_SELECT) {
@@ -147,7 +147,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
           return 1;
         }
 
-     case XPATH_NODE_UNION:
+    case XPATH_NODE_UNION:
         for(;node;node=node->next) {
           for(t=templ->children;t;t=t->next) {
             if(select_match(pctx,node,t))
@@ -156,15 +156,30 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
         }
         return 0;
 
-     case XPATH_NODE_ALL:
+    case XPATH_NODE_ALL:
         return select_match(pctx, node->parent, templ->children);
 
-      case XPATH_NODE_CALL:
+    case XPATH_NODE_CALL:
         if(templ->name==fn_text) {
           return node->type==TEXT_NODE;
         } else if(templ->name==fn_node) {
           return 1;
         } else return 0;
+
+    case XPATH_NODE_OR:
+      for(t=templ->children;t;t=t->next) {
+        if(select_match(pctx,node,t))
+          return 1;
+      }
+      return 0;
+
+    case XPATH_NODE_AND:
+      for(t=templ->children;t;t=t->next) {
+        if(!select_match(pctx,node,t))
+          return 0;
+      }
+      return 1;
+
 
     default:
       return 0;

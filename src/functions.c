@@ -89,7 +89,7 @@ void    xf_current(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
   XMLNODE *set;
   unsigned p = 0;
 
-  set = add_to_selection(NULL,current,&p);
+  set = add_to_selection(NULL,locals->parent,&p);
   res->type = VAL_NODESET;
   res->v.nodeset = set;
 }
@@ -244,9 +244,19 @@ void    xf_sum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 {
   RVALUE rv;
   double d = 0;
+  XMLNODE *node;
+
   while(args) {
     xpath_execute_scalar(pctx, locals, args, current, &rv);
-    d = d + rval2number(&rv);
+    if(rv.type==VAL_NODESET) {
+      for(node=rv.v.nodeset;node;node=node->next) {
+        char *s = node2string(node);
+        d = d + strtod(s, NULL);
+        free(s);
+      }
+    } else {
+      d = d + rval2number(&rv);
+    }
     args = args->next;
   }
   res->type = VAL_NUMBER;
@@ -332,7 +342,8 @@ void    xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
 {
   unsigned n = 0;
   RVALUE rv;
-  XMLNODE *selection;
+  XMLNODE *selection, *t;
+
   if(args->type == XPATH_NODE_ALL) {
     for(;current;current=current->next)
       ++n;
@@ -340,8 +351,12 @@ void    xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
     xpath_execute_scalar(pctx, locals, args, current, &rv);
     if(rv.type == VAL_NODESET) {
       for(selection=rv.v.nodeset;selection;selection=selection->next) {
-        if(selection->children)
+        if(selection->type==EMPTY_NODE) {
+          for(t=selection->children;t;t=t->next)
+            ++n;
+        } else {
           ++n;
+        }
       }
     }
     rval_free(&rv);

@@ -112,7 +112,7 @@ XMLNODE *node;
     case VAL_NODESET:   // TODO: take first in document order
       res = NULL;
       if(rv->v.nodeset) {
-        res = node2string(rv->v.nodeset->type==EMPTY_NODE?rv->v.nodeset:rv->v.nodeset->children);
+        res = node2string(rv->v.nodeset->type==EMPTY_NODE?rv->v.nodeset->children:rv->v.nodeset);
       }
       rval_free(rv);
       return res;
@@ -223,7 +223,24 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
   }
 
   if(left->type == VAL_NODESET && right->type == VAL_NODESET) {
-    return 0;
+    XMLNODE *ln,*rn;
+    char *l,*r;
+    for(ln=left->v.nodeset;ln;ln=ln->next) {
+      l=node2string(ln);
+      for(rn=right->v.nodeset;rn;rn=rn->next) {
+        r=node2string(rn);
+        if(0==xml_strcmp(l,r)) {
+          free(r);
+          free(l);
+          rval_free(left);
+          rval_free(right);
+          return eq;
+        }
+        free(r);
+      }
+      free(l);
+    }
+    return !eq;
   }
 
   if(left->type == VAL_NODESET) {
@@ -231,7 +248,7 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
     char *l, *r;
     r = rval2string(right);
     for(p=left->v.nodeset;p;p=p->next) {
-      l = node2string(p->children);
+      l = node2string(p);
       if(0==xml_strcmp(l,r)) {
         free(r);
         free(l);
@@ -248,7 +265,7 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
     char *l, *r;
     l = rval2string(left);
     for(p=right->v.nodeset;p;p=p->next) {
-      r = node2string(p->children);
+      r = node2string(p);
       if(0==xml_strcmp(l,r)) {
         free(r);
         free(l);
