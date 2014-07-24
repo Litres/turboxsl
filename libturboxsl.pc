@@ -1,0 +1,11 @@
+prefix=/opt/turboxsl
+exec_prefix=/opt/turboxsl
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+
+Name: libturboxsl
+Version: 0.1
+Description: TurboXSLT library.
+Libs: -L${libdir} -lturboxsl  -lpthread -lm 
+Cflags: -I${includedir}

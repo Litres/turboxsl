@@ -25,12 +25,14 @@ int x_can_number(char *p)
   return (*p >= '0' && *p <= '9')?1:0;
 }
 
+
 int x_is_ws(char c)
 {
-  if(c==' '||c=='\t'||c=='\n'||c=='\r')
+  if(c == ' ' || c == 0x20 || c == '\t' || c == '\n' || c == '\r')
     return 1;
   return 0;
 }
+
 
 int x_is_namechar(char c)
 {
@@ -39,12 +41,14 @@ int x_is_namechar(char c)
   return 0;
 }
 
+
 int x_is_selchar(char c)
 {
   if(x_is_namechar(c)||c=='/'||c=='.'||c=='*')
     return 1;
   return 0;
 }
+
 
 char *xml_get_attr(XMLNODE *node, char *name)
 {

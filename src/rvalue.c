@@ -110,6 +110,7 @@ XMLNODE *node;
       rv->type=VAL_NULL;
       return rv->v.string;
     case VAL_NODESET:   // TODO: take first in document order
+      //fprintf(stderr, "IS NULL (VAL_NODESET)\n");
       res = NULL;
       if(rv->v.nodeset) {
         res = node2string(rv->v.nodeset->type==EMPTY_NODE?rv->v.nodeset->children:rv->v.nodeset);

@@ -136,12 +136,14 @@ void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNO
 
   if(1||!pool){
     (*routine)(pctx,ret,source,params,locals,mode);
-    return -2;
+    //return -2;
+    return;
   }
 	/* Obtain a task */
 	if (pthread_mutex_lock(&(pool->mutex))) {
 		perror("pthread_mutex_lock: ");
-		return -1;
+		//return -1;
+		return;
 	}
 
   for(i=0;i<pool->num_of_threads;++i) {
@@ -168,15 +170,23 @@ fprintf(stderr,"++++ broadcast %p\n",&(pool->tasks[i]));
 
 	if (pthread_mutex_unlock(&(pool->mutex))) {
 		perror("pthread_mutex_unlock: ");
-		return -1;
+		//return -1;
+		return;
 	}
 
-  if(i >= pool->num_of_threads) {
-    (*routine)(pctx,ret,source,params,locals,mode);
-    return -2;
-  }
+	/*
+	  if(i >= pool->num_of_threads) {
+	    (*routine)(pctx,ret,source,params,locals,mode);
+	    return -2;
+	  }
 
-  return i;
+	  return i;
+  */
+	
+	if (i >= pool->num_of_threads)
+		(*routine)(pctx,ret,source,params,locals,mode);
+
+  return;
 }
 
 

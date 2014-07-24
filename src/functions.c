@@ -418,7 +418,9 @@ void    xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   free(s);  
 }
 
-void    xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+// format-number
+void    
+xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res) 
 {
   RVALUE rv;
   double num;
@@ -454,7 +456,9 @@ void    xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   res->type=VAL_STRING;
   res->v.string=strdup(fmt_buf);
 
-//fprintf(stderr,"format(%g,'%s','%s')\n",num,pat,decf);
+  fprintf(stderr, "format(%g,'%s','%s')\n", num, pat, decf);
+
+
   free(pat);
   free(decf);
 }
@@ -557,34 +561,44 @@ void    xf_position(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XML
   res->v.integer = current->position;
 }
 
-void    xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+
+void 
+xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
+  RVALUE   rv;
   XMLNODE *doc = NULL;
-  char *docname;
-  char *abs;
+  char    *docname;
+  char    *abs;
   unsigned p = 0;
 
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   docname = rval2string(&rv);
-  if(docname[0]==0) {
-    doc = add_to_selection(NULL,pctx->stylesheet,&p);
-  } else {
+  fprintf(stderr, "xf_document: docname %s\n", docname);
+
+  if (docname[0] == 0) {
+    doc = add_to_selection(NULL, pctx->stylesheet, &p);
+  } 
+  else {
     abs = get_abs_name(pctx, docname);
+    fprintf(stderr, "xf_document: abs %s\n", abs);
+
     if(abs) {
       doc = XMLParseFile(pctx->gctx, abs);
-      doc = add_to_selection(NULL,doc,&p);
+      doc = add_to_selection(NULL, doc, &p);
     }
   }
+
   if(doc) {
     res->type = VAL_NODESET;
     res->v.nodeset = doc;
-  } else {
+  } 
+  else {
     res->type = VAL_NULL;
   }
 
   free(docname);
 }
+
 
 void    xf_text(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
@@ -819,24 +833,35 @@ void    xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   char c;
 
   res->type = VAL_STRING;
-  if(args==NULL) {
+
+  if (args == NULL) {
     res->v.string = NULL;
     return;
   }
+
   url = xmls_new(100);
   xpath_execute_scalar(pctx, locals, args, current, &rv);
+  //fprintf(stderr, "%s\n", res->v.string);
   tofree = str = rval2string(&rv);
-  for(;c=*str;++str) {
-    if(c=='?')
-      xmls_add_str(url,"%3F");
-    else if(c==' ')
-      xmls_add_str(url,"%20");
-    else if(c=='&')
-      xmls_add_str(url,"%26");
-    else
-      xmls_add_char(url,c);
+
+  if (str != NULL) {
+    for(; c = *str; ++str) {
+      if(c=='?'){
+        xmls_add_str(url,"%3F");
+      }
+      else if(c==' ') {
+        xmls_add_str(url,"%20");
+      }
+      else if(c=='&') {
+        xmls_add_str(url,"%26");
+      }
+      else {
+        xmls_add_char(url,c);
+      }
+    }
+    free(tofree);
   }
-  free(tofree);
+
   res->v.string = xmls_detach(url);
 }
 

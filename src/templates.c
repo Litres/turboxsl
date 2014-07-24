@@ -192,6 +192,8 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
   XMLNODE *selection;
 
   char *name = node->name;
+  //fprintf(stderr, "find_template: name: %s\n", name);
+
   int i;
   for(i=0;i<pctx->templcnt;++i) {
     if(pctx->templtab[i].mode!=mode)
