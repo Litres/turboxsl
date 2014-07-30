@@ -24,13 +24,13 @@ XPATH_NODE_SELECT, XPATH_NODE_ATTR_ALL, XPATH_NODE_INT, XPATH_NODE_CONTEXT, XPAT
 } NODETYPE;
 
 typedef struct _rval {
-    enum {VAL_NULL=0, VAL_BOOL, VAL_INT, VAL_NUMBER, VAL_STRING, VAL_NODESET} type;
-    union {
-	long integer;
-	double number;
-	char *string;
-	XMLNODE *nodeset;
-    } v;
+  enum {VAL_NULL=0, VAL_BOOL, VAL_INT, VAL_NUMBER, VAL_STRING, VAL_NODESET} type;
+  union {
+    long integer;
+    double number;
+    char *string;
+    XMLNODE *nodeset;
+  } v;
 } RVALUE;
 
 typedef XMLNODE XPATH_EXPR;
@@ -218,6 +218,7 @@ int xml_strcasecmp(char *l, char *r);
 char *xml_strdup(char *s);
 char *xml_unescape(char *s);
 char *node2string(XMLNODE *node);
+char *nodes2string(XMLNODE *node);
 
 XMLSTRING   xmls_new(unsigned bsize);             // allocates xmlstring
 void        xmls_add_char(XMLSTRING s, char c);   // appends a char to xmlstring

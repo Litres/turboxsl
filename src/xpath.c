@@ -84,15 +84,34 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
   }
 }
 
-char *node2string(XMLNODE *node)
+
+char *nodes2string(XMLNODE *node) 
 {
+  char     *content = NULL;
+  char *tmp_content = NULL;
+
+  while (node) {
+    tmp_content = (char*) realloc(content, strlen(node->content));
+    tmp_content = strdup(node->content);
+
+    content = tmp_content;
+    node = node->next;
+  }
+
+  return content;
+}
+
+
+char *node2string(XMLNODE *node) {
   XMLSTRING str;
 
-  if(node==NULL)
+  if (node == NULL)
     return NULL;
 
-  if(node->type == TEXT_NODE)
-    return xml_strdup(node->content);
+  if (node->type == TEXT_NODE) {
+    return nodes2string(node);
+    //return xml_strdup(node->content);
+  }
 
   str = xmls_new(100);
   add_node_str(str, node);
@@ -821,15 +840,18 @@ int xpath_eval_boolean(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *curren
 char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *etree)
 {
   RVALUE rval;
-  rval_init(&rval);
-  char *s;
+  char     *s;
 
-  if(etree) {
+  rval_init(&rval);
+
+  if(etree) 
+  {
     locals->parent = current;
     xpath_execute_scalar(pctx,locals,etree,current,&rval);
     s = rval2string(&rval);
     return s;
   }
+
   return NULL;
 }
 
@@ -859,17 +881,21 @@ XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
   return NULL;
 }
 
+
 void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *this)
 {
   XMLNODE *etree;
 
   rval_free(this);
+
   etree = xpath_find_expr(pctx, expr);
-  if(etree) {
+  if (etree) 
+  {
     locals->parent = current;
-    xpath_execute_scalar(pctx,locals,etree,current,this);
+    xpath_execute_scalar(pctx, locals, etree, current, this);
   }
 }
+
 
 /*
  * nodeset_free - frees nodeset if non-empty;

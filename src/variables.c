@@ -211,11 +211,18 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
   }
 
   if(!vsel) {
-     tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
-     tmp->extra.type = VAL_NODESET;
-     apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
-  } else {
-     xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
+    tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
+    tmp->extra.type = VAL_NODESET;
+    apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
+
+    // fprintf(stderr,"add local var %s = ", vname);
+    // print_rval(&(tmp->extra));
+  } 
+  else {
+    xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
+
+    // fprintf(stderr,"add local var %s %s = ", vname, vsel);
+    // print_rval(&(tmp->extra));
   }
 }
 
@@ -224,16 +231,19 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
  * called at <xsl:param>
  */
 
-void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, XMLNODE *params)
+void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, XMLNODE *params) 
 {
-XMLNODE *tmp;
+  XMLNODE *tmp;
 
-  for(;params;params=params->next) {
-    if(name==params->name) {
-      tmp = xml_new_node(pctx, name, ATTRIBUTE_NODE);
-      tmp->next = vars->attributes;
+  for (; params; params = params->next) {
+    if (name == params->name) 
+    {
+      tmp              = xml_new_node(pctx, name, ATTRIBUTE_NODE);
+      tmp->next        = vars->attributes;
       vars->attributes = tmp;
-      rval_copy(pctx,&(tmp->extra), &(params->extra));      
+
+      rval_copy(pctx, &(tmp->extra), &(params->extra));
+
       return;
     }
   }

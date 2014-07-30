@@ -456,7 +456,7 @@ xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *curr
   res->type=VAL_STRING;
   res->v.string=strdup(fmt_buf);
 
-  fprintf(stderr, "format(%g,'%s','%s')\n", num, pat, decf);
+  // fprintf(stderr, "format(%g,'%s','%s')\n", num, pat, decf);
 
 
   free(pat);
