@@ -124,12 +124,8 @@ char *node2string(XMLNODE *node) {
   if (node == NULL)
     return NULL;
 
-  if (node->type == TEXT_NODE) {
-    //fprintf(stderr, "call nodes2string()\n");
-    //return nodes2string(node);
-
+  if (node->type == TEXT_NODE)
     return xml_strdup(node->content);
-  }
 
   str = xmls_new(100);
   add_node_str(str, node);
