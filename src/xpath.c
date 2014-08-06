@@ -84,17 +84,33 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
   }
 }
 
-
 char *nodes2string(XMLNODE *node) 
 {
-  char     *content = NULL;
-  char *tmp_content = NULL;
+  char        *content = NULL;
+  char    *tmp_content = NULL;
+
+  unsigned     content_len = 0;
+  unsigned tmp_content_len = 0;
 
   while (node) {
-    tmp_content = (char*) realloc(content, strlen(node->content));
-    tmp_content = strdup(node->content);
+    tmp_content = node2string(node);
+    tmp_content_len = strlen(tmp_content) + 1;
 
-    content = tmp_content;
+    // fprintf(stderr, "tmp_content = {%s}\n", tmp_content);
+    // fprintf(stderr, "tmp_content_len = %d\n", tmp_content_len);
+
+    if (tmp_content) 
+    {
+      content = realloc(content, content_len + tmp_content_len);
+      memcpy(content + content_len, tmp_content, tmp_content_len);
+      content_len = strlen(content);
+
+      // fprintf(stderr, "content = {%s}\n", content);
+      // fprintf(stderr, "content_len = %d\n", content_len);
+
+      free(tmp_content);
+    }
+
     node = node->next;
   }
 
@@ -109,8 +125,10 @@ char *node2string(XMLNODE *node) {
     return NULL;
 
   if (node->type == TEXT_NODE) {
-    return nodes2string(node);
-    //return xml_strdup(node->content);
+    //fprintf(stderr, "call nodes2string()\n");
+    //return nodes2string(node);
+
+    return xml_strdup(node->content);
   }
 
   str = xmls_new(100);
