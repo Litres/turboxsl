@@ -84,7 +84,8 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
   }
 }
 
-char *nodes2string(XMLNODE *node) 
+
+char *nodes2string(XMLNODE *node)
 {
   char        *content = NULL;
   char    *tmp_content = NULL;
@@ -93,20 +94,14 @@ char *nodes2string(XMLNODE *node)
   unsigned tmp_content_len = 0;
 
   while (node) {
-    tmp_content = node2string(node);
+    tmp_content     = node2string(node);
     tmp_content_len = strlen(tmp_content) + 1;
 
-    // fprintf(stderr, "tmp_content = {%s}\n", tmp_content);
-    // fprintf(stderr, "tmp_content_len = %d\n", tmp_content_len);
-
-    if (tmp_content) 
+    if (tmp_content)
     {
       content = realloc(content, content_len + tmp_content_len);
       memcpy(content + content_len, tmp_content, tmp_content_len);
       content_len = strlen(content);
-
-      // fprintf(stderr, "content = {%s}\n", content);
-      // fprintf(stderr, "content_len = %d\n", content_len);
 
       free(tmp_content);
     }
@@ -209,6 +204,7 @@ XMLNODE *xpath_copy_nodeset(XMLNODE *set)
   return node;
 }
 
+
 XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset, XMLNODE *expr)
 {
   XMLNODE *node = NULL;
@@ -227,19 +223,40 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
         }
       }
     }
-  } else { // execute check expr for each node in nodeset, if true - add to new set
+  }
+  else { // execute check expr for each node in nodeset, if true - add to new set
     for(;nodeset;nodeset=nodeset->next) {
       xpath_execute_scalar(pctx, locals, expr, nodeset, &rv);
-      if(rval2bool(&rv)) {
-        tmp = add_to_selection(tmp,nodeset,&pos);
-        if(!node) {
-          node = tmp;
+
+      // fprintf(stderr, "rv.v.integer = %i\n", rv.v.integer);
+      // fprintf(stderr, "nodeset->position = %i\n", nodeset->position);
+
+      if (rv.type == VAL_INT) 
+      {
+        long n = rv.v.integer;
+        if (nodeset->position == n) {
+          tmp = add_to_selection(tmp, nodeset, &pos);
+          if(!node) {
+            node = tmp;
+            continue;
+          }
+        }
+      }
+      else {
+        if(rval2bool(&rv))
+        {
+          tmp = add_to_selection(tmp,nodeset,&pos);
+          if(!node) {
+            node = tmp;
+          }
         }
       }
     }
   }
-  return node;    
+
+  return node;
 }
+
 
 static
 XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, int *pos, XMLNODE **head)
@@ -528,14 +545,18 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     case XPATH_NODE_FILTER:
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv); // selection
       res->type = VAL_NODESET;
-      if(rv.type == VAL_NODESET) {
+      if(rv.type == VAL_NODESET) 
+      {
         selection = xpath_filter(pctx,locals,rv.v.nodeset,etree->children->next);
         res->v.nodeset = selection;
-      } else if(rv.type == VAL_STRING) {  // special case for @attr[1]
+      }
+      else if(rv.type == VAL_STRING) // special case for @attr[1]
+      {
         res->type = VAL_STRING;
         res->v.string = rv.v.string;
         rv.type = VAL_NULL;
-      } else {  // can not select from non-nodeset
+      }
+      else {  // can not select from non-nodeset
         res->v.nodeset = NULL;
       }
       rval_free(&rv);
@@ -784,9 +805,11 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
 
     case XPATH_NODE_ATTR:
       rv.type = VAL_NULL;
-      if(etree->children) {
+      if(etree->children) 
+      {
         xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
-        if(rv.type == VAL_NODESET) {
+        if(rv.type == VAL_NODESET) 
+        {
           XMLNODE *r = NULL;
           XMLNODE *t = NULL;
           if(rv.v.nodeset && !rv.v.nodeset->next) {
@@ -816,7 +839,8 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
           res->type = VAL_NULL;
         }
         rval_free(&rv);
-      } else {
+      }
+      else {
         name=current?xml_get_attr(current,etree->name):NULL;
         if(name) {
           res->type = VAL_STRING;
