@@ -77,24 +77,28 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 void add_node_str(XMLSTRING str, XMLNODE *node)
 {
   for(;node;node=node->next) {
-    if(node->children)
-      add_node_str(str,node->children);
-    if(node->type==TEXT_NODE)
-      xmls_add_str(str,node->content);
+      if(node->children)
+        add_node_str(str,node->children);
+      if(node->type==TEXT_NODE)
+        xmls_add_str(str,node->content);
   }
 }
 
 
 char *nodes2string(XMLNODE *node)
 {
+  XMLNODE     *tmp_node;
   char        *content = NULL;
   char    *tmp_content = NULL;
-
   unsigned     content_len = 0;
   unsigned tmp_content_len = 0;
 
   while (node) {
-    tmp_content     = node2string(node);
+    tmp_node    = node->next;
+    node->next  = NULL;
+    tmp_content = node2string(node);
+    node->next  = tmp_node;
+
     tmp_content_len = strlen(tmp_content) + 1;
 
     if (tmp_content)
@@ -113,7 +117,8 @@ char *nodes2string(XMLNODE *node)
 }
 
 
-char *node2string(XMLNODE *node) {
+char *node2string(XMLNODE *node) 
+{
   XMLSTRING str;
 
   if (node == NULL)
@@ -121,7 +126,6 @@ char *node2string(XMLNODE *node) {
 
   if (node->type == TEXT_NODE)
     return xml_strdup(node->content);
-
   str = xmls_new(100);
   add_node_str(str, node);
 
