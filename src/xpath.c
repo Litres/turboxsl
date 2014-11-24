@@ -43,13 +43,24 @@ void xpath_free_compiled(TRANSFORM_CONTEXT *pctx)
 
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 {
+// #ifdef DEBUG
+//   fprintf(stderr, "xpath_find_expr::expr = %s\n", expr);
+// #endif
+
   XMLNODE *etree = NULL;
   char *e = hash(expr,-1,0);
+// #ifdef DEBUG
+//   fprintf(stderr, "xpath_find_expr::e = %s\n", e);
+// #endif
+
   if(e==NULL)
     return NULL;
   unsigned i;
   for(i=0;i<pctx->n_exprs;++i) {
     if(pctx->compiled[i].expr==e) {
+// #ifdef DEBUG
+//       fprintf(stderr, "xpath_find_expr::pctx->compiled[%i].expr = %s\n", i, pctx->compiled[i].expr);
+// #endif
       etree = pctx->compiled[i].comp;
       break;
     }
@@ -232,9 +243,6 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
     for(;nodeset;nodeset=nodeset->next) {
       xpath_execute_scalar(pctx, locals, expr, nodeset, &rv);
 
-      // fprintf(stderr, "rv.v.integer = %i\n", rv.v.integer);
-      // fprintf(stderr, "nodeset->position = %i\n", nodeset->position);
-
       if (rv.type == VAL_INT) 
       {
         long n = rv.v.integer;
@@ -251,6 +259,7 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
         {
           tmp = add_to_selection(tmp,nodeset,&pos);
           if(!node) {
+            // tmp = add_to_selection(tmp,nodeset,&pos);
             node = tmp;
           }
         }
@@ -455,6 +464,10 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     return;
   }
 
+// #ifdef DEBUG
+//   fprintf(stderr, "xpath_execute_scalar::etree->type = %i (%s)\n", etree->type, nodeTypeNames[etree->type]);
+// #endif
+
   switch(etree->type) {
     case XPATH_NODE_INT:
       res->type = VAL_INT;
@@ -518,12 +531,21 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       return;
 
     case XPATH_NODE_PARENT:
-      if(etree->children) {
+      if(etree->children)
+      {
+        XMLNODE *parent_node = NULL;
         xpath_execute_scalar(pctx,locals,etree->children,current,&rv); // XXX
-        selection = add_to_selection(NULL,rv.v.nodeset->parent,&pos);
-        res->type = VAL_NODESET;
+
+        if (rv.v.nodeset)
+          parent_node = rv.v.nodeset->parent;
+
+        selection = add_to_selection(NULL, parent_node, &pos);
+
+        res->type      = VAL_NODESET;
         res->v.nodeset = selection;
-      } else {
+      }
+      else
+      {
         selection = add_to_selection(NULL,current->parent,&pos);
         res->type = VAL_NODESET;
         res->v.nodeset = selection;
@@ -667,12 +689,15 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     case XPATH_NODE_EQ:
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
-      res->type=VAL_BOOL;
+
+      res->type = VAL_BOOL;
       if(rval_equal(&rv, &rv1, 1)) {
-        res->v.integer=1;
-      } else {
-      	res->v.integer=0;
+        res->v.integer = 1;
+      } 
+      else {
+      	res->v.integer = 0;
       }
+
       rval_free(&rv);
       rval_free(&rv1);
       return;
@@ -832,9 +857,17 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
             if(name) {
               expr = xml_new_node(pctx, NULL,TEXT_NODE);
               expr->content = name;
-              t = add_to_selection(t,expr,&pos);
+
+              // if (!r) {
+              //   t = add_to_selection(t,expr,&pos);
+              //   r = t;
+              // }
+
+              t = add_to_selection(t, expr, &pos);
+              if (!r) 
+                r = t;
+
               free(expr);
-              if(!r)r=t;
             }
           }
           res->type = VAL_NODESET;
@@ -915,6 +948,9 @@ XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
 
   if(etree) {
     locals->parent = current;
+// #ifdef DEBUG
+//     fprintf(stderr, "xpath_eval_selection call xpath_execute_scalar()\n");
+// #endif
     xpath_execute_scalar(pctx,locals,etree,current,&rval);
     if(rval.type == VAL_NODESET) {
       return rval.v.nodeset;
@@ -992,6 +1028,7 @@ int match(char **eptr, char *str)
   return 1;
 }
 
+
 static
 XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, char **eptr, NODETYPE t)
 {
@@ -999,7 +1036,7 @@ XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, char **eptr, NODETYPE t)
   char *p, *e;
 
   p = (*eptr);
-  for(e=p+1;*e && x_is_namechar(*e);++e)
+  for (e = p+1; *e && x_is_namechar(*e); ++e)
     ;
   ret = xml_new_node(pctx, NULL, t);
   ret->name=hash(p,e-p,0);
@@ -1015,64 +1052,96 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
   XMLNODE *node1, *node2;
   char *p, *e;
   skip_ws(eptr);
-  if(**eptr=='*') {
+  if(**eptr=='*') 
+  {
     ++(*eptr);
     return xml_new_node(pctx,NULL,XPATH_NODE_ALL);
-  } else if(**eptr=='.') {
+  } 
+  else if(**eptr=='.') 
+  {
     ++(*eptr);
-    if(**eptr=='.') {
+    if(**eptr=='.') 
+    {
       ++(*eptr);
       return xml_new_node(pctx,NULL,XPATH_NODE_PARENT);
-    } else {
+    } 
+    else 
+    {
       return xml_new_node(pctx,NULL,XPATH_NODE_SELF);
     }
-  } else if(**eptr=='/') {
+  } 
+  else if(**eptr=='/') 
+  {
     return xml_new_node(pctx,NULL,XPATH_NODE_DESCENDANTS);
   }
 
   p = (*eptr);
-  if(*p=='@') {
+  if(*p=='@') 
+  {
     ++p;
-    if(*p=='*') {
+    if(*p=='*') 
+    {
       ++p;
       *eptr = p;
       return xml_new_node(pctx,NULL,XPATH_NODE_ATTR_ALL);
-    } else node1 = xml_new_node(pctx,NULL,XPATH_NODE_ATTR);
-  } else {
+    } 
+    else 
+      node1 = xml_new_node(pctx,NULL,XPATH_NODE_ATTR);
+  } 
+  else 
+  {
     node1 = xml_new_node(pctx,NULL,XPATH_NODE_SELECT);
-    if(!match(eptr,"child::")) { //skip default child prefix
-      if(match(eptr,"attribute::")) {
-        if(**eptr=='*') {
+    if(!match(eptr,"child::")) //skip default child prefix
+    {
+      if(match(eptr,"attribute::"))
+      {
+        if(**eptr=='*') 
+        {
           ++(*eptr);
           node1->type = XPATH_NODE_ATTR_ALL;
           return node1;
-        } else {
+        }
+        else
           node1->type = XPATH_NODE_ATTR;
-        }
-      } else if(match(eptr,"ancestor::")) {
+      }
+      else if(match(eptr,"ancestor::")) 
+      {
         node1->type = XPATH_NODE_ANCESTOR;
-        if(**eptr=='*') {
+
+        if(**eptr=='*') 
+        {
           ++(*eptr);
           node1->name = NULL;
           return node1;
         }
-      } else if(match(eptr,"descendant::")) {
+      } 
+      else if(match(eptr,"descendant::")) {
         node1->type = XPATH_NODE_DESCENDANTS;
-        if(**eptr=='*') {
+
+        if(**eptr=='*') 
+        {
           ++(*eptr);
           node1->name = NULL;
           return node1;
         }
-      } else if(match(eptr,"preceding-sibling::")) {
+      } 
+      else if(match(eptr,"preceding-sibling::")) 
+      {
         node1->type = XPATH_NODE_PRE_SIBLING;
-        if(**eptr=='*') {
+        
+        if(**eptr=='*') 
+        {
           ++(*eptr);
           node1->name = NULL;
           return node1;
         }
-      } else if(match(eptr,"following-sibling::")) {
+      } 
+      else if(match(eptr,"following-sibling::")) 
+      {
         node1->type = XPATH_NODE_AFT_SIBLING;
-        if(**eptr=='*') {
+        
+        if(**eptr=='*') 
+        {
           ++(*eptr);
           node1->name = NULL;
           return node1;
@@ -1082,8 +1151,9 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     p = *eptr;
   }
 
-  for(e=p+1;*e && x_is_namechar(*e);++e)
+  for (e = p+1; *e && x_is_namechar(*e); ++e)
       ;
+
   node1->name = hash(p,e-p,0);
   *eptr=e;
 
@@ -1115,7 +1185,8 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   XMLNODE *node1, *node2;
   skip_ws(eptr);
-  if(**eptr=='\'') {
+  if(**eptr=='\'') 
+  {
     char *p, *e;
     p = ++(*eptr);
     node1 = xml_new_node(pctx,NULL,TEXT_NODE);
@@ -1128,33 +1199,42 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     *eptr = e;
     skip_ws(eptr);
     return node1;
-  } else if(**eptr=='(') {
+  } 
+  else if(**eptr=='(') 
+  {
     ++(*eptr);
     node1 = do_or_expr(pctx, eptr);
     skip_ws(eptr);
-    if(**eptr==')') {
+    if(**eptr==')') 
+    {
       ++(*eptr);
       skip_ws(eptr);
     }
     return node1;
-  } else if (x_can_number(*eptr)) {
+  } 
+  else if (x_can_number(*eptr)) 
+  {
     char *p, *e;
     int f_fl = 0;
     p = (*eptr);
     node1 = xml_new_node(pctx,NULL,TEXT_NODE);
     for(e=p+1;*e>='0' && *e <= '9';++e)
         ;
-    if(*e=='.') {
+    if(*e=='.') 
+    {
       ++e;
       f_fl = 1;
     }
     for(;*e>='0' && *e <= '9';++e)
         ;
-    if(f_fl) {
+    if(f_fl) 
+    {
       node1->content = malloc(e-p+2);
       memcpy(node1->content,p,e-p);
       node1->content[e-p]=0;
-    } else {
+    } 
+    else 
+    {
       char c = *e;
       *e = 0;
       node1->type = XPATH_NODE_INT;
@@ -1165,34 +1245,45 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     *eptr = e;
     skip_ws(eptr);
     return node1;
-  } else if (**eptr == '$') {
+  } 
+  else if (**eptr == '$') 
+  {
     ++(*eptr);
     return do_var_expr(pctx,eptr,XPATH_NODE_VAR);
-  } else if (**eptr == '@') {
+  } 
+  else if (**eptr == '@') 
+  {
     ++(*eptr);
-    if(**eptr=='*') {
+    if(**eptr=='*') 
+    {
       ++(*eptr);
       return xml_new_node(pctx,NULL,XPATH_NODE_ATTR_ALL);
-    } else {
-      return do_var_expr(pctx,eptr,XPATH_NODE_ATTR);
-    }
-  } else if(x_is_selchar(**eptr)) {
+    } 
+    else
+      return do_var_expr(pctx, eptr, XPATH_NODE_ATTR);
+  } 
+  else if(x_is_selchar(**eptr)) 
+  {
     NODETYPE nt;
-    if(**eptr=='/') {
+    if(**eptr=='/') 
+    {
       nt = XPATH_NODE_ROOT;
       ++(*eptr);
-    } else {
+    } 
+    else
       nt = XPATH_NODE_CONTEXT;
-    }
+
     node1 = do_select_expr(pctx, eptr);
-    if(node1->type == XPATH_NODE_SELECT||node1->type == XPATH_NODE_DESCENDANTS) {
+    if(node1->type == XPATH_NODE_SELECT||node1->type == XPATH_NODE_DESCENDANTS)
       node1->children = xml_new_node(pctx,NULL, nt); // case for root select
-    }
+
     return node1;
   }
-  fprintf(stderr,"\nmalformed xpath expr at %s in %s\n",*eptr,errexp);
+
+  fprintf(stderr, "\nmalformed xpath expr at %s in %s\n", *eptr, errexp);
   return NULL;
 }
+
 
 static
 XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
@@ -1200,73 +1291,93 @@ XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
   XMLNODE *node1, *node2, *node3;
   
   node1 = do_node2_expr(pctx,eptr);
-  for(;;) {
+  for(;;) 
+  {
     skip_ws(eptr);
-    if(**eptr=='/') {  //continuing select
+    if(**eptr=='/') //continuing select
+    {
       ++ (*eptr);
       node2 = do_select_expr(pctx,eptr);
       node2->children = node1;
       node1 = node2;
-    } else if(**eptr=='[') { // filter selection
+    } 
+    else if(**eptr=='[') // filter selection
+    {
       ++ (*eptr);
       node2 = do_or_expr(pctx,eptr);
       skip_ws(eptr);
+
       if(**eptr==']')
         ++(*eptr);
-      else {
+      else
         fprintf(stderr,"unterminated select expr at %s in %s\n",*eptr,errexp);
-      }
-      node3 = xml_new_node(pctx,NULL,XPATH_NODE_FILTER);
-      node3->children = node1; // previous select
+
+      node3                 = xml_new_node(pctx,NULL,XPATH_NODE_FILTER);
+      node3->children       = node1; // previous select
       node3->children->next = node2;
-      node1 = node3;
-    } else {
+      node1                 = node3;
+    } 
+    else
       return node1;
-    }
   }
 }
+
 
 static
 XMLNODE *do_union_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   XMLNODE *node1;
   XMLNODE *ornode;
+
   skip_ws(eptr);
-  node1 = do_node_expr(pctx,eptr);
+  node1 = do_node_expr(pctx, eptr);
   skip_ws(eptr);
-  if(**eptr=='|') {
+
+  if(**eptr=='|') 
+  {
     ++ (*eptr);
     ornode = xml_new_node(pctx,NULL,XPATH_NODE_UNION);
     ornode->children = node1;
     skip_ws(eptr);
-  } else return node1;
+  } 
+  else 
+    return node1;
+
   do {
     node1->next = do_node_expr(pctx,eptr);
     node1=node1->next;
     skip_ws(eptr);
-  } while(node1 && match(eptr, "|"));
+  } while (node1 && match(eptr, "|"));
+
   return ornode;
 }
+
 
 static
 XMLNODE *do_not_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   XMLNODE *ornode;
-  char *old;
+  char    *old;
+
   skip_ws(eptr);
   old = *eptr;
-  if(match(eptr,"not")) {
-    if(**eptr=='(' || x_is_ws(**eptr)) {
+
+  if (match(eptr,"not")) 
+  {
+    if(**eptr=='(' || x_is_ws(**eptr)) 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_NOT);
       skip_ws(eptr);
       ornode->children = do_not_expr(pctx,eptr);
       return ornode;
-    } else {
+    } 
+    else
       *eptr = old;
-    }
   }
+
   return do_union_expr(pctx,eptr);
 }
+
 
 static
 XMLNODE *do_mul_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
@@ -1329,23 +1440,33 @@ XMLNODE *do_rel_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
   node1 = do_add_expr(pctx,eptr);
   for(;;) {
     skip_ws(eptr);
-    if(match(eptr,"<=")) {
+    if(match(eptr,"<=")) 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_LE);
       ornode->children = node1;
       skip_ws(eptr);
-    } else if(match(eptr,">=")) {
+    } 
+    else if(match(eptr,">=")) 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_GE);
       ornode->children = node1;
       skip_ws(eptr);
-    } else if(match(eptr,"<")) {
+    } 
+    else if(match(eptr,"<")) 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_LT);
       ornode->children = node1;
       skip_ws(eptr);
-    } else if(match(eptr,">")) {
+    } 
+    else if(match(eptr,">")) 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_GT);
       ornode->children = node1;
       skip_ws(eptr);
-    } else return node1;
+    } 
+    else 
+      return node1;
+
     node1->next = do_add_expr(pctx,eptr);
     node1 = ornode;
   }
@@ -1356,73 +1477,99 @@ XMLNODE *do_eq_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   XMLNODE *node1;
   XMLNODE *ornode;
-  node1 = do_rel_expr(pctx,eptr);
-  for(;;) {
+
+  node1 = do_rel_expr(pctx, eptr);
+
+  for(;;) 
+  {
     skip_ws(eptr);
-    if(**eptr=='=') {
+
+    if(**eptr=='=') 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_EQ);
       ornode->children = node1;
       ++(*eptr);
       skip_ws(eptr);
-    } else if((*eptr)[0]=='!' && (*eptr)[1]=='=') {
+    } 
+    else if((*eptr)[0]=='!' && (*eptr)[1]=='=') 
+    {
       ornode = xml_new_node(pctx,NULL,XPATH_NODE_NE);
       ornode->children = node1;
       (*eptr) += 2;
       skip_ws(eptr);
-    } else return node1;
+    } 
+    else 
+      return node1;
+
     node1->next = do_rel_expr(pctx,eptr);
     node1=ornode;
   }
 }
+
 
 static
 XMLNODE *do_and_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   XMLNODE *node1;
   XMLNODE *ornode;
+
   node1 = do_eq_expr(pctx,eptr);
   skip_ws(eptr);
-  if(match(eptr, "and ")) {
+
+  if(match(eptr, "and ")) 
+  {
     ornode = xml_new_node(pctx,NULL,XPATH_NODE_AND);
     ornode->children = node1;
     skip_ws(eptr);
-  } else return node1;
+  } 
+  else 
+    return node1;
+
   do {
     node1->next = do_eq_expr(pctx,eptr);
     node1=node1->next;
     skip_ws(eptr);
   } while(node1 && match(eptr, "and "));
+  
   return ornode;
 }
+
 
 static
 XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   XMLNODE *node1;
   XMLNODE *ornode;
+
   skip_ws(eptr);
   node1 = do_and_expr(pctx,eptr);
   skip_ws(eptr);
-  if(match(eptr, "or ")) {
+
+  if(match(eptr, "or ")) 
+  {
     ornode = xml_new_node(pctx,NULL,XPATH_NODE_OR);
     ornode->children = node1;
     skip_ws(eptr);
-  } else return node1;
+  } 
+  else 
+    return node1;
+
   do {
     node1->next = do_and_expr(pctx,eptr);
     node1=node1->next;
     skip_ws(eptr);
   } while(node1 && match(eptr, "or "));
+
   return ornode;
 }
 
 
 XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr)
 {
-  char *eptr = errexp = expr;
+  char    *eptr = errexp = expr;
   XMLNODE *res;
 
-  res = do_or_expr(pctx,&eptr);
+  res = do_or_expr(pctx, &eptr);
   return res;
 }
 
