@@ -18,7 +18,7 @@
 #include "md5.h"
 
 
-void    xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *str;
@@ -63,7 +63,7 @@ void    xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
   }
 }
 
-void    xf_getid(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_getid(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   char buf[100];
   RVALUE rv;
@@ -84,7 +84,7 @@ void    xf_getid(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   }
 }
 
-void    xf_current(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_current(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   XMLNODE *set;
   unsigned p = 0;
@@ -94,30 +94,32 @@ void    xf_current(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
   res->v.nodeset = set;
 }
 
-void    xf_true(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_true(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_BOOL;
   res->v.integer = 1;
 }
 
-void    xf_false(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_false(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_BOOL;
   res->v.integer = 0;
 }
 
-void    xf_last(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_last(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_INT;
   res->v.integer = 1;
+
   if(current) {
-    for(;current->next;current=current->next)
-	;
+    for(;current->next; current=current->next)
+	   ;
+    
     res->v.integer = current->position;
   }
 }
 
-void    xf_concat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_concat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s = NULL;
@@ -139,7 +141,7 @@ void    xf_concat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   res->v.string = s;
 }
 
-void    xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s = NULL;
@@ -180,7 +182,7 @@ void    xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   res->v.string = s;
 }
 
-void    xf_tostr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_tostr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s;
@@ -190,7 +192,7 @@ void    xf_tostr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.string = s;
 }
 
-void    xf_tonum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_tonum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   double d;
@@ -200,7 +202,7 @@ void    xf_tonum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.number = d;
 }
 
-void    xf_tobool(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_tobool(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   int d;
@@ -210,7 +212,7 @@ void    xf_tobool(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   res->v.integer = d;
 }
 
-void    xf_round(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_round(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   double d;
@@ -220,7 +222,7 @@ void    xf_round(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.number = floor(d+0.5);
 }
 
-void    xf_floor(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_floor(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   double d;
@@ -230,7 +232,7 @@ void    xf_floor(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.number = floor(d);
 }
 
-void    xf_ceil(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_ceil(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   double d;
@@ -240,7 +242,7 @@ void    xf_ceil(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   res->v.number = ceil(d);
 }
 
-void    xf_sum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_sum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   double d = 0;
@@ -263,7 +265,7 @@ void    xf_sum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   res->v.number = d;
 }
 
-void    xf_contains(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_contains(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s,*p;
@@ -280,7 +282,7 @@ void    xf_contains(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XML
   free(p);
 }
 
-void    xf_starts(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_starts(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s,*p;
@@ -297,7 +299,7 @@ void    xf_starts(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   free(p);
 }
 
-void    xf_sub_before(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_sub_before(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s,*p,*z;
@@ -317,7 +319,7 @@ void    xf_sub_before(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, X
   free(p);
 }
 
-void    xf_sub_after(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_sub_after(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s,*p,*z;
@@ -338,7 +340,7 @@ void    xf_sub_after(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
   free(p);
 }
 
-void    xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   unsigned n = 0;
   RVALUE rv;
@@ -365,7 +367,7 @@ void    xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.integer = n;
 }
 
-void    xf_normalize(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_normalize(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *s, *p;
@@ -396,7 +398,7 @@ void    xf_normalize(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
   }
 }
 
-void    xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   unsigned char *s, *p;
@@ -418,48 +420,89 @@ void    xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   free(s);  
 }
 
-void    xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+
+// format-number
+void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   double num;
-  char *pat;
-  char *decf=NULL;
-  char fmt_buf[200];
-  char *fmt;
+  char   fmt_buf[200];
+  char  *pat;
+  char  *decf = NULL;
+  char  *fmt;
+  int   l, i;
+
   rv.type = VAL_NULL;
+
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   num = rval2number(&rv);
+
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
   pat = rval2string(&rv);
-  if(args->next->next) {
+
+  if (args->next->next) {
     xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
     decf = rval2string(&rv);
   }
 
-  if(strchr(pat,',')) {
-    if(strstr(pat,".00"))
+  if (strchr(pat,',')) {
+    if (strstr(pat,".00")) {
       fmt = "%02f";
-    else if(strstr(pat,",0"))
+      sprintf(fmt_buf, fmt, num);
+    }
+    else if (strstr(pat,",0")) {
       fmt = "%.01f";
-    else if(strstr(pat,",##"))
+      sprintf(fmt_buf, fmt, num);
+
+      l = strlen(fmt_buf);
+      for (i = 0; i < l; i++) {
+        if (fmt_buf[i] == '.') {
+          fmt_buf[i] = ','; break;
+        }
+      }
+    }
+    else if (strstr(pat,",##")) {
       fmt = "%.2f";
-    else if(strstr(pat,",#"))
+      sprintf(fmt_buf, fmt, num);
+
+      l = strlen(fmt_buf);
+      for (i = 0; i < l; i++) {
+        if (fmt_buf[i] == '.') {
+          fmt_buf[i] = ','; break;
+        }
+      }
+    }
+    else if (strstr(pat,",#")) {
       fmt = "%.1f";
-    else fmt = "%f";
-  } else {
+      sprintf(fmt_buf, fmt, num);
+
+      l = strlen(fmt_buf);
+      for (i = 0; i < l; i++) {
+        if (fmt_buf[i] == '.') {
+          fmt_buf[i] = ','; break;
+        }
+      }
+    }
+    else {
+      fmt = "%f";
+      sprintf(fmt_buf, fmt, num);
+    }
+  }
+  else {
     fmt = "%.0f";
+    sprintf(fmt_buf, fmt, num);
   }
 
-  sprintf(fmt_buf,fmt,num);
-  res->type=VAL_STRING;
-  res->v.string=strdup(fmt_buf);
+  // sprintf(fmt_buf, fmt, num);
 
-//fprintf(stderr,"format(%g,'%s','%s')\n",num,pat,decf);
+  res->type     = VAL_STRING;
+  res->v.string = strdup(fmt_buf);
+
   free(pat);
   free(decf);
 }
 
-void    xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   short *src,*pat,*sub;
   char *s;
@@ -488,7 +531,7 @@ void    xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
       s = rval2string(&rv);
       sub = utf2ws(s);
       free(s);
-    }      
+    }
   }
 
   for(i=0;src[i];++i) {
@@ -510,7 +553,7 @@ void    xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
   free(sub);
 }
 
-void    xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   char *s;
   RVALUE rv;
@@ -533,7 +576,7 @@ void    xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   rval_free(&rv);
 }
 
-void    xf_lname(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_lname(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   char *s;
   if(current && current->name) {
@@ -551,42 +594,53 @@ void    xf_lname(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.string = s;
 }
 
-void    xf_position(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_position(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_INT;
   res->v.integer = current->position;
 }
 
-void    xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+
+void xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
+  RVALUE   rv;
   XMLNODE *doc = NULL;
-  char *docname;
-  char *abs;
+  char    *docname;
+  char    *abs;
   unsigned p = 0;
 
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   docname = rval2string(&rv);
-  if(docname[0]==0) {
-    doc = add_to_selection(NULL,pctx->stylesheet,&p);
-  } else {
+#ifdef DEBUG
+  fprintf(stderr, "xf_document: docname %s\n", docname);
+#endif
+  if (docname[0] == 0) {
+    doc = add_to_selection(NULL, pctx->stylesheet, &p);
+  } 
+  else {
     abs = get_abs_name(pctx, docname);
+#ifdef DEBUG
+    fprintf(stderr, "xf_document: abs %s\n", abs);
+#endif
     if(abs) {
       doc = XMLParseFile(pctx->gctx, abs);
-      doc = add_to_selection(NULL,doc,&p);
+      doc = add_to_selection(NULL, doc, &p);
     }
   }
+
   if(doc) {
     res->type = VAL_NODESET;
     res->v.nodeset = doc;
-  } else {
+  } 
+  else {
     res->type = VAL_NULL;
   }
 
   free(docname);
 }
 
-void    xf_text(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+
+void xf_text(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   XMLNODE *texts = NULL;
@@ -606,7 +660,7 @@ void    xf_text(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
 }
 
 
-void    xf_check(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_check(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   char *str;
@@ -629,13 +683,13 @@ void    xf_check(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   }
 }
 
-void    xf_exists(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_exists(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_INT;
   res->v.integer = 1;
 }
 
-void    xf_md5(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_md5(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   char *str;
   XMLSTRING msg = xmls_new(200);
@@ -659,7 +713,7 @@ void    xf_md5(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   res->v.string = strdup(md5hex);
 }
 
-void    xf_base64(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_base64(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_STRING;
   res->v.string = strdup("Aa3b24455632+30h");
@@ -670,15 +724,20 @@ static char *url_get_specials(TRANSFORM_CONTEXT *pctx, char *name)
   return NULL;
 }
 
-void    xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
-  XMLSTRING url,key;
-  char *str;
-  char *p;
-  char *arg;
-  char separ='?';
-  char *value;
+  RVALUE     rv;
+  XMLSTRING  url, key;
+  char      *str;
+  char      *p;
+  char      *arg;
+  char       separ = '?';
+  char      *value;
+
+#ifdef DEBUG
+  fprintf(stderr, "call xf_urlcode()\n");
+  print_rval(&res);
+#endif
 
   res->type = VAL_STRING;
   if(args==NULL) {
@@ -779,7 +838,8 @@ void    xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
   res->v.string = xmls_detach(url);
 }
 
-void    xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+
+void xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   XMLSTRING url;
@@ -811,7 +871,7 @@ void    xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XML
   res->v.string = xmls_detach(url);
 }
 
-void    xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   XMLSTRING url;
@@ -819,28 +879,38 @@ void    xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   char c;
 
   res->type = VAL_STRING;
-  if(args==NULL) {
+
+  if (args == NULL) {
     res->v.string = NULL;
     return;
   }
+
   url = xmls_new(100);
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   tofree = str = rval2string(&rv);
-  for(;c=*str;++str) {
-    if(c=='?')
-      xmls_add_str(url,"%3F");
-    else if(c==' ')
-      xmls_add_str(url,"%20");
-    else if(c=='&')
-      xmls_add_str(url,"%26");
-    else
-      xmls_add_char(url,c);
+
+  if (str != NULL) {
+    for(; c = *str; ++str) {
+      if(c=='?'){
+        xmls_add_str(url,"%3F");
+      }
+      else if(c==' ') {
+        xmls_add_str(url,"%20");
+      }
+      else if(c=='&') {
+        xmls_add_str(url,"%26");
+      }
+      else {
+        xmls_add_char(url,c);
+      }
+    }
+    free(tofree);
   }
-  free(tofree);
+
   res->v.string = xmls_detach(url);
 }
 
-void    xf_veristatl(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_veristatl(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
   XMLSTRING url;
@@ -878,13 +948,13 @@ void    xf_veristatl(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
   res->v.string = xmls_detach(url);
 }
 
-void    xf_banner(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res) // XXX stub for banner!
+void xf_banner(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res) // XXX stub for banner!
 {
   res->type = VAL_STRING;
   res->v.string = NULL;//strdup("<table bgcolor='#99FF00' width='100%' height='100%'><tr><td>banner</td></tr></table>\n");
 }
 
-void    xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE rv;
 
@@ -899,7 +969,7 @@ void    xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XM
   rval_free(&rv);
 }
 
-void    xf_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   int p = 0;
 
@@ -907,7 +977,7 @@ void    xf_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   res->v.nodeset = add_to_selection(NULL,current, &p);
 }
 
-void    xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type == VAL_NODESET;
   res->v.nodeset = NULL;
@@ -915,7 +985,7 @@ void    xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 
 /*******************************************************************************/
 
-void    xf_stub(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_stub(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_NULL;
 }
@@ -927,7 +997,7 @@ void    xf_stub(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
  */
 
 
-void  add_function(TRANSFORM_CONTEXT *pctx, char *fname, void (*fun)(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res))
+void add_function(TRANSFORM_CONTEXT *pctx, char *fname, void (*fun)(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res))
 {
   if(!pctx->functions) {
     pctx->cb_max = 20;
@@ -975,7 +1045,7 @@ static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args,
 
 
 
-void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   unsigned i;
 

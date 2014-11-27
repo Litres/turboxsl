@@ -86,36 +86,65 @@ int rval2bool(RVALUE *rv)
 
 /******************* convert to string, string() function ***************/
 
-char *rval2string(RVALUE *rv)
-{
-char s[200];
-char *res;
-XMLNODE *node;
+char *rval2string(RVALUE *rv) {
+  char s[200];
+  char *res;
+  XMLNODE *node;
 
   switch(rv->type) {
     case VAL_NULL:
       return NULL;
+
     case VAL_INT:
       rv->type=VAL_NULL;
       sprintf(s,"%ld",rv->v.integer);
       return strdup(s);
+
     case VAL_BOOL:
       rv->type=VAL_NULL;
       return strdup(rv->v.integer?"true":"false");
+
     case VAL_NUMBER:
       rv->type=VAL_NULL;
       sprintf(s,"%g",rv->v.number);
       return strdup(s);
+
     case VAL_STRING:
       rv->type=VAL_NULL;
       return rv->v.string;
+
     case VAL_NODESET:   // TODO: take first in document order
       res = NULL;
-      if(rv->v.nodeset) {
-        res = node2string(rv->v.nodeset->type==EMPTY_NODE?rv->v.nodeset->children:rv->v.nodeset);
+      if (rv->v.nodeset) {
+        // fprintf(stderr, "call node2string()\n");
+        // print_nodeset(
+        //   rv->v.nodeset->type == EMPTY_NODE
+        //     ? rv->v.nodeset->children
+        //       : rv->v.nodeset
+        // );
+
+        // res = node2string(
+        //   rv->v.nodeset->type == EMPTY_NODE
+        //     ? rv->v.nodeset->children
+        //       : rv->v.nodeset
+        // );
+
+        res = nodes2string(
+          rv->v.nodeset->type == EMPTY_NODE
+            ? rv->v.nodeset->children
+              : rv->v.nodeset
+        );
+
+        // fprintf(stderr, "res = %s\n", res);
+        // fprintf(stderr, "********************************************************************************\n");
+        // fprintf(stderr, "********************************************************************************\n");
+        // fprintf(stderr, "********************************************************************************\n");
+        // fprintf(stderr, "********************************************************************************\n");
+        // fprintf(stderr, "********************************************************************************\n");
       }
       rval_free(rv);
       return res;
+
     default:
       return NULL;
   }

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "ltr_xsl.h"
 
@@ -329,36 +330,87 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
   return ret;
 }
 
-
-XMLNODE *XMLParseFile(XSLTGLOBALDATA *gctx, char *file)
+/*
+XMLNODE *XMLParseFile(XSLTGLOBALDATA* gctx, char* file) 
 {
-XMLNODE *ret;
-FILE *f;
-char *buffer;
-char *p;
-unsigned length,nread;
+	XMLNODE * ret;
+	FILE * pFile;
+	char * buffer;
+	char * p;
+	unsigned length, nread;
 
   file = hash(file,-1,0);
-  f = fopen(file, "r");
-  if(f) {
-    buffer = (char *)malloc(length=CHUNK);
-    p = buffer;
-    while((nread = fread(p,1,CHUNK,f)) == CHUNK)
-    {
-      length += CHUNK;
-      buffer = realloc(buffer, length);
-      p = buffer+length-CHUNK;
-    }
-    p[nread] = 0;
-    fclose(f);
-  } else {
-    fprintf(stderr, "failed to open %s\n",file);
-    return NULL;
+  fprintf(stderr, "Include %s\n", file);
+  pFile = fopen(file, "r");
+
+  if (pFile == NULL) {
+  	fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
+  	return NULL;
   }
+
+  buffer = (char*) malloc(length=CHUNK);
+  p = buffer;
+  while((nread = fread(p, 1, CHUNK, pFile)) == CHUNK) {
+    length += CHUNK;
+    buffer = realloc(buffer, length);
+    p = buffer + length - CHUNK;
+  }
+  p[nread] = 0;
+  fclose(pFile);
 
   ret = do_parse(gctx, buffer, file);
   renumber_children(ret);
-  free(buffer);
 
+  free(buffer);
   return ret;
 }
+//*/
+
+//*
+XMLNODE *
+XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
+	XMLNODE   *ret;
+	FILE      *pFile;
+	char      *buffer;
+	unsigned   length;
+	long       size;
+	
+	if (file == NULL)
+		return NULL;
+
+	file = hash(file,-1,0);
+
+  fprintf (stderr, "XMLParseFile: file %s\n", file);
+	
+	if ((pFile = fopen(file, "r")) == NULL) {
+		fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
+		return NULL;
+	}
+
+	if (fseek(pFile, 0, SEEK_END) || (size = ftell(pFile)) == EOF || fseek(pFile, 0, SEEK_SET)) {
+		fclose(pFile);
+		return NULL;
+	}
+
+	buffer = (char*) malloc(size + 10);
+	if (buffer == NULL) {
+		fclose(pFile);
+		return NULL;
+	}
+
+	length = fread(buffer, 1, size, pFile);
+	fclose(pFile);
+
+	if (length < 0) {
+		free(buffer);
+		return NULL;
+	}
+	buffer[length] = 0;
+
+	ret = do_parse(gctx, buffer, file);
+  renumber_children(ret);
+
+	free(buffer);
+	return ret;
+}
+//*/

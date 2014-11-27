@@ -94,8 +94,11 @@ XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
   XMLNODE *t;
   XMLNODE *a;
 
-  newnode->name = src->name;
+  newnode->name  = src->name;
   newnode->flags = src->flags;
+
+  //fprintf(stderr, "src->type = %i\n", src->type);
+
 // copy attributes
   switch(src->type) {
     case ELEMENT_NODE:
@@ -109,6 +112,7 @@ XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
       break;
     case TEXT_NODE:
       newnode->content = xml_strdup(src->content);
+      //fprintf(stderr, "src->content = %s\n", src->content);
       break;
   }
   return newnode;
@@ -177,101 +181,133 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
   XMLNODE *iter;
   XMLNODE *newtempl;
 
-  for(instr=templ;instr;instr=instr->next) {
-    if(instr->type == EMPTY_NODE) { // skip empty nodes
-      if(instr->children)
-        apply_xslt_template(pctx,tmp,source,instr->children,params,locals);
+  for (instr = templ; instr; instr = instr->next) 
+  {
+    if (instr->type == EMPTY_NODE) {
+      if (instr->children)
+        apply_xslt_template( pctx, tmp, source, instr->children, params, locals );
+
       continue;
     }
-    if(instr->name==NULL || instr->name[0]!='x') { // hack, speeding up copying of non-xsl elements
-      tmp = copy_node_to_result(pctx,locals,source,ret,instr);
-      if(instr->children) {
-        threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
+
+    if (instr->name == NULL || instr->name[0] != 'x') { // hack, speeding up copying of non-xsl elements
+      tmp = copy_node_to_result(pctx, locals, source, ret, instr);
+
+      if (instr->children) {
+        threadpool_start_full(apply_xslt_template, pctx, tmp, source, instr->children, params, locals);
       }
+
       continue;
     }
-//fprintf(stderr,"-- do %s\n",instr->name);
+
+    // fprintf( stderr, "----------------------------------------------------- %s\n", instr->name);
+
 /************************** <xsl:call-template> *****************************/
-    if(instr->name == xsl_call) {
-      if(newtempl=template_byname(pctx, xml_get_attr(instr,xsl_a_name))) {
+    if (instr->name == xsl_call) {
+      if (newtempl = template_byname(pctx, xml_get_attr(instr,xsl_a_name))) {
         XMLNODE vars;
         XMLNODE *param = NULL;
 
-        for(iter=instr->children;iter;iter=iter->next) {
-          if(iter->name == xsl_withparam) {
-            char *pname = hash(xml_get_attr(iter,xsl_a_name),-1,0);
-            char *expr = xml_get_attr(iter,xsl_a_select);
-            tmp = xml_new_node(pctx,pname, ATTRIBUTE_NODE);
+        for (iter = instr->children; iter; iter=iter->next) 
+        {
+          if (iter->name == xsl_withparam) 
+          {
+            char *pname = hash( xml_get_attr(iter,xsl_a_name),-1,0 );
+            char *expr  = xml_get_attr( iter, xsl_a_select );
+
+            // fprintf(stderr, "--------------- %s\npname = %s\nexpr = %s\n", iter->name, pname, expr);
+
+            tmp       = xml_new_node(pctx, pname, ATTRIBUTE_NODE);
             tmp->next = param;
-            param = tmp;
-            if(!expr) {
-              tmp->extra.v.nodeset = xml_new_node(pctx,NULL, EMPTY_NODE);
-              tmp->extra.type = VAL_NODESET;
+            param     = tmp;
+
+            if (!expr) {
+              tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
+              tmp->extra.type      = VAL_NODESET;
+
               apply_xslt_template(pctx, tmp->extra.v.nodeset, source, iter->children, NULL, locals);
-            } else {
+            }
+            else {
               xpath_eval_node(pctx, locals, source, expr, &(tmp->extra));
             }
           }
         }
 
-        tmp = xml_append_child(pctx,ret,EMPTY_NODE);
-        xml_clear_node(pctx,&vars);
+        tmp = xml_append_child(pctx, ret, EMPTY_NODE);
+        xml_clear_node(pctx, &vars);
         apply_xslt_template(pctx, tmp, source, newtempl, param, &vars);
         xml_free_node(pctx,param);
         xml_cleanup_node(pctx,&vars);
       }
+    }
 /************************** <xsl:apply-templates> *****************************/
-    } else if(instr->name == xsl_apply) {
+    else if (instr->name == xsl_apply) 
+    {
       char *sval = xml_get_attr(instr,xsl_a_select);
-      char *mode = hash(xml_get_attr(instr,xsl_a_mode),-1,0);
+      char *mode = hash(xml_get_attr(instr,xsl_a_mode), -1, 0);
+
       XMLNODE *tofree = NULL;
       XMLNODE vars;
       XMLNODE *child;
       XMLNODE *param = NULL;
-      if(sval) {
+
+      if (sval) {
         if(!instr->compiled) {
           instr->compiled = xpath_find_expr(pctx, sval);
         }
         tofree = iter = xpath_eval_selection(pctx, locals, source, instr->compiled);
-      } else {
+      } 
+      else {
         iter = source->children;
       }
-      for(child=instr->children;child;child=child->next) {
-        if(child->type==EMPTY_NODE)
+
+      for (child = instr->children; child; child = child->next) 
+      {
+        if (child->type == EMPTY_NODE)
           continue;
-        if(child->name == xsl_withparam) {
+
+        if (child->name == xsl_withparam) 
+        {
           char *pname = hash(xml_get_attr(child,xsl_a_name),-1,0);
-          char *expr = xml_get_attr(child,xsl_a_select);
-          tmp = xml_new_node(pctx,pname, ATTRIBUTE_NODE);
+          char *expr  = xml_get_attr(child,xsl_a_select);
+
+          tmp       = xml_new_node(pctx, pname, ATTRIBUTE_NODE);
           tmp->next = param;
-          param = tmp;
-          if(!expr) {
-            tmp->extra.v.nodeset = xml_new_node(pctx,NULL, EMPTY_NODE);
-            tmp->extra.type = VAL_NODESET;
+          param     = tmp;
+
+          if (!expr) {
+            tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
+            tmp->extra.type      = VAL_NODESET;
+
             apply_xslt_template(pctx, tmp->extra.v.nodeset, source, child->children, NULL, locals);
-          } else {
+            tmp = copy_node_to_result(pctx, locals, source, ret, instr);
+          } 
+          else {
             xpath_eval_node(pctx, locals, source, expr, &(tmp->extra));
           }
+
           continue;
         }
-        if(child->name != xsl_sort)
+
+        if (child->name != xsl_sort)
           break;
-        if(!tofree) {
+        if (!tofree) {
           tofree = iter = xpath_copy_nodeset(iter);
         }
         tofree = iter = xpath_sort_selection(pctx, locals, iter, child);
       }
 
-      for(;iter;iter=iter->next) {
-        xml_clear_node(pctx,&vars);
+      for (; iter; iter = iter->next) {
+        xml_clear_node(pctx, &vars);
         tmp = xml_append_child(pctx,ret,EMPTY_NODE);
         process_one_node(pctx, tmp, iter, param?param:params, &vars, mode);
         xml_cleanup_node(pctx,&vars);
       }
       xml_free_node(pctx,param);
       xpath_free_selection(pctx,tofree);
+    }
 /************************** <xsl:attribute> *****************************/
-    } else if(instr->name == xsl_attribute) {
+    else if(instr->name == xsl_attribute) {
       char *aname = xml_process_string(pctx, locals, source, xml_get_attr(instr,xsl_a_name));
       char *value = xml_eval_string(pctx, locals, source, instr->children);
       char *p;
@@ -281,8 +317,9 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       free(value);
       xml_add_attribute(pctx,ret,aname,p);
       free(aname);
+    }
 /************************** <xsl:element> *****************************/
-    } else if(instr->name == xsl_element) {
+    else if(instr->name == xsl_element) {
       char *name = xml_process_string(pctx, locals, source, xml_get_attr(instr,xsl_a_name));
       tmp = xml_append_child(pctx,ret,ELEMENT_NODE);
       tmp->name = hash(name,-1,0);
@@ -295,8 +332,9 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         tmp->attributes = iter;
       }
       threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
+    }
 /************************** <xsl:if> *****************************/
-    } else if(instr->name == xsl_if) {
+    else if(instr->name == xsl_if) {
       if(!instr->compiled) {
         char *expr = xml_get_attr(instr,xsl_a_test);
         instr->compiled = xpath_find_expr(pctx,expr);
@@ -304,8 +342,9 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       if(xpath_eval_boolean(pctx, locals, source, instr->compiled)) {
         apply_xslt_template(pctx,ret,source,instr->children,params,locals);
       }
+    }
 /************************** <xsl:choose> *****************************/
-    } else if(instr->name == xsl_choose) {
+    else if(instr->name == xsl_choose) {
       newtempl = NULL;
       for(iter=instr->children;iter;iter=iter->next) {
         if(iter->name==xsl_otherwise)
@@ -324,19 +363,23 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       if(iter==NULL && newtempl) { // no when clause selected -- go for otherwise
         apply_xslt_template(pctx,ret,source,newtempl->children,params,locals);
       }
+    }
 /************************** <xsl:param> *****************************/
-    } else if(instr->name == xsl_param) {
-      char *pname = hash(xml_get_attr(instr,xsl_a_name),-1,0);
-      char *expr = xml_get_attr(instr,xsl_a_select);
+    else if(instr->name == xsl_param) {
+      char *pname = hash(xml_get_attr(instr, xsl_a_name), -1, 0);
+      char *expr  = xml_get_attr(instr, xsl_a_select);
+
       XMLNODE n;
-      if(!xpath_in_selection(params,pname) && (expr || instr->children)) {
-        do_local_var(pctx,locals,source,instr);
-      } else {
+      if(!xpath_in_selection(params, pname) && (expr || instr->children)) {
+        do_local_var(pctx, locals, source, instr);
+      }
+      else {
         n.attributes = params;
         add_local_var(pctx, locals, pname, params);
       }
+    }
 /************************** <xsl:for-each> *****************************/
-    } else if(instr->name == xsl_foreach) {
+    else if(instr->name == xsl_foreach) {
       XMLNODE *child;
       if(!instr->compiled) {
         instr->compiled = xpath_find_expr(pctx, xml_get_attr(instr,xsl_a_select));
@@ -356,8 +399,9 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         threadpool_start_full(apply_xslt_template,pctx,newtempl,iter,child,params,locals);
       }
       xpath_free_selection(pctx,tmp);
+    }
 /************************** <xsl:copy-of> *****************************/
-    } else if(instr->name == xsl_copyof) {
+    else if(instr->name == xsl_copyof) {
       char *sexpr = xml_get_attr(instr,xsl_a_select);
       RVALUE rv;
       xpath_eval_expression(pctx, locals, source, sexpr, &rv);
@@ -373,22 +417,29 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         }
         rval_free(&rv);
       }
+    }
 /************************** <xsl:variable> *****************************/
-    } else if(instr->name == xsl_var) {
+    else if(instr->name == xsl_var) {
       do_local_var(pctx,locals,source,instr);
+    }
 /************************** <xsl:value-of> *****************************/
-    } else if(instr->name == xsl_value_of) {
-      if(!instr->compiled) {
-        instr->compiled = xpath_find_expr(pctx, xml_get_attr(instr,xsl_a_select));
-      }
+    else if (instr->name == xsl_value_of) 
+    {
+      if (!instr->compiled)
+        instr->compiled = xpath_find_expr(pctx, xml_get_attr(instr, xsl_a_select));
+
+      // fprintf(stderr, "xml_get_attr(instr, xsl_a_select) = %s\n", xml_get_attr(instr, xsl_a_select));
+
       char *cont = xpath_eval_string(pctx, locals, source, instr->compiled);
-      if(cont) {
-        tmp = xml_append_child(pctx,ret,TEXT_NODE);
+      if (cont) 
+      {
+        tmp          = xml_append_child(pctx, ret, TEXT_NODE);
         tmp->content = cont;
-        tmp->flags |= instr->flags&XML_FLAG_NOESCAPE;
+        tmp->flags  |= instr->flags & XML_FLAG_NOESCAPE;
       }
+    }
 /************************** <xsl:text> *****************************/
-    } else if(instr->name == xsl_text) {
+    else if(instr->name == xsl_text) {
       char *esc = xml_get_attr(instr,xsl_a_escaping);
       if(esc && esc[0]!='y')
         esc=NULL;
@@ -396,7 +447,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         if(newtempl->type==TEXT_NODE) {
           tmp = xml_append_child(pctx,ret,TEXT_NODE);
           tmp->content = strdup(newtempl->content);
-          tmp->flags |= instr->flags&XML_FLAG_NOESCAPE;
+          tmp->flags |= instr->flags & XML_FLAG_NOESCAPE;
         }
       }
 /************************** <xsl:copy> *****************************/
@@ -423,16 +474,19 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     } else if(instr->name == xsl_comment) {
       tmp = xml_append_child(pctx,ret,COMMENT_NODE);
       tmp->content = xml_eval_string(pctx, locals, source, instr->children);
+    }
 /************************** <xsl:processing-instruction> ***********************/
-    } else if(instr->name == xsl_pi) {
+    else if(instr->name == xsl_pi) {
       tmp = xml_append_child(pctx,ret,PI_NODE);
       tmp->name = xml_get_attr(instr,xsl_a_name);
       tmp->content = xml_eval_string(pctx, locals, source, instr->children);
-    } else if(instr->name[0] == 'x' && instr->name[1] == 's' && instr->name[2] == 'l' && instr->name[3] == ':') {
+    } 
+    else if(instr->name[0] == 'x' && instr->name[1] == 's' && instr->name[2] == 'l' && instr->name[3] == ':') {
       fprintf(stderr,"XSLT directive <%s> not supported!\n",instr->name);
       return;
+    }
 /***************** unknown element - copy to result *************************/
-    } else {
+    else {
       tmp = copy_node_to_result(pctx,locals,source,ret,instr);
       if(instr->children) {
         threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
@@ -481,11 +535,18 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
 }
 
 
-char *get_abs_name(TRANSFORM_CONTEXT *pctx,char *fname)
+char *
+get_abs_name(TRANSFORM_CONTEXT *pctx, char *fname)
 {
-  if(!fname)
-    return NULL;
-  strcpy(pctx->local_part,fname);
+  if (!fname) return NULL;
+
+  fprintf(stderr, "get_abs_name: fname %s\n", fname);
+  fprintf(stderr, "get_abs_name: old pctx->fnbuf %s\n", pctx->fnbuf);
+
+  strcpy(pctx->local_part, fname);
+
+  fprintf(stderr, "get_abs_name: new pctx->fnbuf %s\n", pctx->fnbuf);
+
   return pctx->fnbuf;
 }
 
@@ -528,7 +589,8 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
       if(name) {
-//        fprintf(stderr,"including %s\n",pctx->fnbuf);
+        //fprintf(stderr,"including %s\n",pctx->fnbuf);
+        fprintf(stderr, "xsl_preprocess: include %s\n", name);
         included = XMLParseFile(pctx->gctx, name);
         if(included) {
           node->type=EMPTY_NODE;
@@ -558,6 +620,7 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     }
 
     if(node->children) {
+    	// fprintf(stderr, "xsl_preprocess: node->children exists\n");
       char *save_local = pctx->local_part;
       char *s = strrchr(pctx->local_part,'/');
       if(s)
@@ -573,31 +636,39 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 
 void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-  for(;node;node=node->next) {
-    if(node->name == xsl_import) {
+  for(;node;node=node->next) 
+  {
+    if(node->name == xsl_import) 
+    {
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
-      if(name) {
+      if(name) 
+      {
         char *save_local = pctx->local_part;
-        char *s = strrchr(pctx->local_part,'/');
-        if(s)
-          pctx->local_part = s+1;
-       
+        char *s = strrchr(pctx->local_part, '/');
+
+        if (s) 
+        	pctx->local_part = s+1;
+
+       	fprintf(stderr, "process_imports: include %s\n", name);
         included = XMLParseFile(pctx->gctx, name);
-        if(included) {
-          xsl_preprocess(pctx,included);  //process includes and clean-up
-          process_imports(pctx,included); //process imports if any
+        if(included != NULL) 
+        {
+          xsl_preprocess(pctx, included);  //process includes and clean-up
+          process_imports(pctx, included); //process imports if any
           node->type = EMPTY_NODE;
           node->children = included;
-//          fprintf(stderr,"importing %s\n",pctx->fnbuf);
+          fprintf(stderr,"process_imports: importing %s\n", pctx->fnbuf);
           precompile_templates(pctx, included);
           node = included;
-        } else {
+        } 
+        else {
           fprintf(stderr,"failed to import %s\n",pctx->fnbuf);
         }
         pctx->local_part = save_local;
       }
-    } else if(node->children) {
+    } 
+    else if(node->children) {
       process_imports(pctx,node->children); //process imports if any
     }
   }
@@ -715,7 +786,8 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
     return NULL;
   }
   ret->gctx = gctx;
-
+  //fprintf(stderr, "include stylesheet %s\n", stylesheet);
+  fprintf(stderr, "XSLTNewProcessor: include %s\n", stylesheet);
   ret->stylesheet = XMLParseFile(gctx, stylesheet);
   if(!ret->stylesheet) {
     free(ret);
@@ -776,10 +848,14 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   pctx->root_node = document;
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
+
 //fprintf(stderr,"----- start process\n");
+
   process_one_node(pctx, ret, document, NULL, locals, NULL);
   threadpool_wait(pctx->gctx->pool);
+
 //fprintf(stderr,"----- end process\n");
+
 /****************** add dtd et al if required *******************/
   t = find_first_node(ret);
 

@@ -120,14 +120,16 @@ XMLNODE *ret = NULL;
   return ret;
 }
 
+
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type)
 {
-XMLNODE *ret, *prev;
+  XMLNODE *ret, *prev;
 
-  ret = xml_new_node(pctx, NULL,type);
+  ret = xml_new_node(pctx, NULL, type);
   xml_add_child(pctx, node, ret);
   return ret;
 }
+
 
 void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
