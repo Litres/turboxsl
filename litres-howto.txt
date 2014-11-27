@@ -1,9 +1,14 @@
 1. Загрузка:
 	git clone https://github.com/Litres/turboxsl/ где/будем/собирать
 
-2. Генерация (config.h.in aclocal.m4 configure Makefile.in):
-	aclocal && autoheader && autoconf && automake
+
+
+2. Генерация (aclocal.m4 configure Makefile.in):
+	aclocal && autoconf && automake
+
 	(Возможно придется сделать отдельно "automake -a" после autoconf)
+
+
 
 
 3. Конфигурация:
@@ -12,9 +17,14 @@
 		./configure --prefix=/opt/turboxsl/ --exec-prefix=/opt/turboxsl/ CFLAGS="-O2"
 
 	exec-prefix и prefix - куда будет установлена либа после make install
+
 	CFLAGS - флаги компиляции (напр. CFLAGS="-O1" или CFLAGS="-O2" или CFLAGS="-O3" и тд.)
 	Варианты флагов оптимизации можно посмотреть на: 
 		https://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/Optimize-Options.html
+
+	Для задания флагов рек. использовать CFLAGS в make
+
+
 
 
 4. Компиляция и установка:
@@ -25,12 +35,16 @@
 	CFLAGS - см. выше пункт 3.
 
 
+
+
 5. После изменений конфигурации (./configure) необходимо пересобрать либу:
 		make clean && make && make install
 	или
 		make clean && make CFLAGS="-O2" && make install
 
 	CFLAGS - см. выше пункт 3.
+
+
 
 
 6. Замерить скорость работы можно через ./test.pl необходимо только поправить пути 
