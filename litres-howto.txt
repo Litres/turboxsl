@@ -1,9 +1,12 @@
 1. Загрузка:
+
 	git clone https://github.com/Litres/turboxsl/ где/будем/собирать
 
 
 
-2. Генерация (aclocal.m4 configure Makefile.in):
+
+2. Генерация (aclocal.m4 configure Makefile.in .. и т.п.):
+	aclocal && autoheader && autoconf && automake
 	aclocal && autoconf && automake
 
 	(Возможно придется сделать отдельно "automake -a" после autoconf)
@@ -12,6 +15,7 @@
 
 
 3. Конфигурация:
+
 		./configure --prefix=/opt/turboxsl/ --exec-prefix=/opt/turboxsl/
 	или
 		./configure --prefix=/opt/turboxsl/ --exec-prefix=/opt/turboxsl/ CFLAGS="-O2"
@@ -20,9 +24,21 @@
 
 	CFLAGS - флаги компиляции (напр. CFLAGS="-O1" или CFLAGS="-O2" или CFLAGS="-O3" и тд.)
 	Варианты флагов оптимизации можно посмотреть на: 
+		https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
 		https://gcc.gnu.org/onlinedocs/gcc-4.8.2/gcc/Optimize-Options.html
 
-	Для задания флагов рек. использовать CFLAGS в make
+	(!) Для задания флагов рек. использовать CFLAGS в make
+
+
+
+
+7. Установка  кол-ва потоков:
+
+	src/ltr_xsl.h
+		NTHREADS - кол-во потоков ( #define NTHREADS 0 )
+
+	Хардкод стоит в 24 + 1
+	После изменения делаем компиляцию и установку либы (пункт 4).
 
 
 
@@ -49,3 +65,8 @@
 
 6. Замерить скорость работы можно через ./test.pl необходимо только поправить пути 
 до шаблонов и xml (можно взять из asxml напр.)
+
+
+
+
+

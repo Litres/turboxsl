@@ -26,7 +26,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
 static void init_processor(XSLTGLOBALDATA *gctx)
 {
   if(!gctx->initialized) {
-    gctx->nthreads = 4;
+    gctx->nthreads = NTHREADS;
     init_hash();
     xsl_stylesheet = hash("xsl:stylesheet",-1,0);
     xsl_template   = hash("xsl:template",-1,0);
