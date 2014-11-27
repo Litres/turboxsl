@@ -4,12 +4,13 @@
 
 
 
-
 2. Генерация (aclocal.m4 configure Makefile.in .. и т.п.):
-	aclocal && autoheader && autoconf && automake
-	aclocal && autoconf && automake
 
-	(Возможно придется сделать отдельно "automake -a" после autoconf)
+		aclocal && autoheader && autoconf && automake
+	или
+		aclocal && autoconf && automake
+
+	Возможно придется сделать отдельно "automake -a" после autoconf
 
 
 
@@ -32,18 +33,18 @@
 
 
 
-7. Установка  кол-ва потоков:
+4. Установка  кол-ва потоков:
 
 	src/ltr_xsl.h
 		NTHREADS - кол-во потоков ( #define NTHREADS 0 )
 
 	Хардкод стоит в 24 + 1
-	После изменения делаем компиляцию и установку либы (пункт 4).
+	После изменения делаем компиляцию и установку либы (пункт 5).
 
 
 
 
-4. Компиляция и установка:
+5. Компиляция и установка:
 		make && make install
 	или
 		make CFLAGS="-O2" && make install
@@ -53,7 +54,7 @@
 
 
 
-5. После изменений конфигурации (./configure) необходимо пересобрать либу:
+6. После изменений конфигурации (./configure) необходимо пересобрать либу:
 		make clean && make && make install
 	или
 		make clean && make CFLAGS="-O2" && make install
@@ -63,7 +64,7 @@
 
 
 
-6. Замерить скорость работы можно через ./test.pl необходимо только поправить пути 
+7. Замерить скорость работы можно через ./test.pl необходимо только поправить пути 
 до шаблонов и xml (можно взять из asxml напр.)
 
 
