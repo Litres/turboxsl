@@ -379,9 +379,6 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 		return NULL;
 
 	file = hash(file,-1,0);
-
-  fprintf (stderr, "XMLParseFile: file %s\n", file);
-	
 	if ((pFile = fopen(file, "r")) == NULL) {
 		fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
 		return NULL;

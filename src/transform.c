@@ -535,18 +535,11 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
 }
 
 
-char *
-get_abs_name(TRANSFORM_CONTEXT *pctx, char *fname)
+char *get_abs_name(TRANSFORM_CONTEXT *pctx, char *fname)
 {
-  if (!fname) return NULL;
-
-  fprintf(stderr, "get_abs_name: fname %s\n", fname);
-  fprintf(stderr, "get_abs_name: old pctx->fnbuf %s\n", pctx->fnbuf);
-
+  if (!fname) 
+    return NULL;
   strcpy(pctx->local_part, fname);
-
-  fprintf(stderr, "get_abs_name: new pctx->fnbuf %s\n", pctx->fnbuf);
-
   return pctx->fnbuf;
 }
 
@@ -589,8 +582,6 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
       if(name) {
-        //fprintf(stderr,"including %s\n",pctx->fnbuf);
-        fprintf(stderr, "xsl_preprocess: include %s\n", name);
         included = XMLParseFile(pctx->gctx, name);
         if(included) {
           node->type=EMPTY_NODE;
@@ -786,8 +777,6 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
     return NULL;
   }
   ret->gctx = gctx;
-  //fprintf(stderr, "include stylesheet %s\n", stylesheet);
-  fprintf(stderr, "XSLTNewProcessor: include %s\n", stylesheet);
   ret->stylesheet = XMLParseFile(gctx, stylesheet);
   if(!ret->stylesheet) {
     free(ret);

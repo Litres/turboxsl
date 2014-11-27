@@ -116,31 +116,11 @@ char *rval2string(RVALUE *rv) {
     case VAL_NODESET:   // TODO: take first in document order
       res = NULL;
       if (rv->v.nodeset) {
-        // fprintf(stderr, "call node2string()\n");
-        // print_nodeset(
-        //   rv->v.nodeset->type == EMPTY_NODE
-        //     ? rv->v.nodeset->children
-        //       : rv->v.nodeset
-        // );
-
-        // res = node2string(
-        //   rv->v.nodeset->type == EMPTY_NODE
-        //     ? rv->v.nodeset->children
-        //       : rv->v.nodeset
-        // );
-
         res = nodes2string(
           rv->v.nodeset->type == EMPTY_NODE
             ? rv->v.nodeset->children
               : rv->v.nodeset
         );
-
-        // fprintf(stderr, "res = %s\n", res);
-        // fprintf(stderr, "********************************************************************************\n");
-        // fprintf(stderr, "********************************************************************************\n");
-        // fprintf(stderr, "********************************************************************************\n");
-        // fprintf(stderr, "********************************************************************************\n");
-        // fprintf(stderr, "********************************************************************************\n");
       }
       rval_free(rv);
       return res;
