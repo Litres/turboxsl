@@ -15,8 +15,28 @@
 #include "turboxsl.h"
 #include "xmldict.h"
 
+#undef DEBUG
+#define NTHREADS 4
 
-#define NTHREADS 24
+
+#ifdef DEBUG
+// fprintf(stderr, "etree->type = %s (%i)\n", nodeTypeNames[etree->type], etree->type);
+static char *nodeTypeNames[] = {
+  "EMPTY_NODE",
+  "ELEMENT_NODE",           "TEXT_NODE",              "ATTRIBUTE_NODE",      "PI_NODE",                "COMMENT_NODE",
+  "INFO_NODE",              "XPATH_NODE_VAR",         "XPATH_NODE_NOT",      "XPATH_NODE_OR",          "XPATH_NODE_AND",
+  "XPATH_NODE_EQ",          "XPATH_NODE_NE",          "XPATH_NODE_LT",       "XPATH_NODE_GT",          "XPATH_NODE_CALL",
+  "KEY_NODE",               "XPATH_NODE_LE",          "XPATH_NODE_GE",       "XPATH_NODE_ADD",         "XPATH_NODE_SUB",
+  "XPATH_NODE_MUL",         "XPATH_NODE_DIV",         "XPATH_NODE_MOD",      "XPATH_NODE_FILTER",      "XPATH_NODE_ALL",
+  "XPATH_NODE_ATTR",        "XPATH_NODE_ROOT",        "XPATH_NODE_PARENT",   "XPATH_NODE_SELF",        "XPATH_NODE_ANCESTOR",
+  "XPATH_NODE_AFT_SIBLING", "XPATH_NODE_PRE_SIBLING", "XPATH_NODE_PREV",     "XPATH_NODE_NEXT",        "XPATH_NODE_SELECT",
+  "XPATH_NODE_ATTR_ALL",    "XPATH_NODE_INT",         "XPATH_NODE_CONTEXT",  "XPATH_NODE_DESCENDANTS", "XPATH_NODE_UNION"
+};
+
+static char *rvalTypeNames[] = {
+  "VAL_NULL", "VAL_BOOL", "VAL_INT", "VAL_NUMBER", "VAL_STRING", "VAL_NODESET"
+};
+#endif
 
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
