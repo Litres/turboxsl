@@ -164,20 +164,33 @@ void rval_copy(TRANSFORM_CONTEXT *pctx, RVALUE *dst, RVALUE *src)
 void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE *rv)
 {
   unsigned i;
-  if(vars && vars->attributes) {  //first try locals
-    for(vars=vars->attributes;vars;vars=vars->next) {
-      if(name==vars->name) {
-        rval_copy(pctx,rv,&vars->extra);
-        return;
+
+  if (vars && vars->attributes) {  //first try locals
+    vars = vars->attributes;
+    while (vars) {
+      if (vars->name) {
+        if(name == vars->name) {
+          rval_copy(pctx, rv, &vars->extra);
+          return;
+        }
       }
+      vars = vars->next;
     }
+    // for(vars=vars->attributes; vars; vars=vars->next) {
+    //   if(name == vars->name) {
+    //     rval_copy(pctx,rv,&vars->extra);
+    //     return;
+    //   }
+    // }
   }
+
   for(i=0;i<pctx->var_pos;++i) { // then globals
     if(name==pctx->vars[i].name) {
       rval_copy(pctx,rv,&pctx->vars[i].extra);
       return;
     }
   }
+
   rv->type = VAL_NULL;
 }
 
@@ -197,8 +210,8 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
   vname = hash(xml_get_attr(var,xsl_a_name),-1,0); 
   vsel = xml_get_attr(var,xsl_a_select);
 
-  for(tmp=vars->attributes;tmp;tmp=tmp->next) {
-    if(vname==tmp->name) {
+  for (tmp = vars->attributes; tmp; tmp=tmp->next) {
+    if(tmp->name && vname == tmp->name) {
       free(tmp->content);
       tmp->content = NULL;
       break;
