@@ -81,8 +81,8 @@ int dict_add(XMLDICT *dict, char *name, void *data)
 {
   unsigned h,d;
 
-  if(!dict || !name)
-    return;
+  if(!dict || !name) return 0;
+  
   if(dict->used >= dict->allocated) {
     dict->allocated += 100;
     dict->entries = realloc(dict->entries,dict->allocated * sizeof(XMLDICTENTRY));

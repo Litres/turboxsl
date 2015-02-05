@@ -146,7 +146,7 @@ char *xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source,
   return xmls_detach(res);
 }
 
-xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, char *name, char *value)
+void xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, char *name, char *value)
 {
   XMLNODE *tmp;
   while(parent && parent->type==EMPTY_NODE) {
