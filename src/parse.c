@@ -330,42 +330,6 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
   return ret;
 }
 
-/*
-XMLNODE *XMLParseFile(XSLTGLOBALDATA* gctx, char* file) 
-{
-	XMLNODE * ret;
-	FILE * pFile;
-	char * buffer;
-	char * p;
-	unsigned length, nread;
-
-  file = hash(file,-1,0);
-  fprintf(stderr, "Include %s\n", file);
-  pFile = fopen(file, "r");
-
-  if (pFile == NULL) {
-  	fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
-  	return NULL;
-  }
-
-  buffer = (char*) malloc(length=CHUNK);
-  p = buffer;
-  while((nread = fread(p, 1, CHUNK, pFile)) == CHUNK) {
-    length += CHUNK;
-    buffer = realloc(buffer, length);
-    p = buffer + length - CHUNK;
-  }
-  p[nread] = 0;
-  fclose(pFile);
-
-  ret = do_parse(gctx, buffer, file);
-  renumber_children(ret);
-
-  free(buffer);
-  return ret;
-}
-//*/
-
 //*
 XMLNODE *
 XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {

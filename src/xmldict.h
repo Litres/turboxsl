@@ -18,6 +18,7 @@ typedef struct _dict {
 
 XMLDICT *dict_new(unsigned size);
 void dict_free(XMLDICT *dict);
+void dict_free_data(XMLDICT *dict);
 void *dict_find(XMLDICT *dict, char *name);
 int dict_add(XMLDICT *dict, char *name, void *data);
 void dict_replace(XMLDICT *dict, char *name, void *data);

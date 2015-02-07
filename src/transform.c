@@ -19,10 +19,6 @@
 static int initialized = 0;
 struct threadpool *xsltThreadPool = NULL;
 
-void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, char *mode);
-void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, char *mode);
-void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *templ, XMLNODE *params, XMLNODE *locals);
-
 static void init_processor(XSLTGLOBALDATA *gctx)
 {
   if(!gctx->initialized) {

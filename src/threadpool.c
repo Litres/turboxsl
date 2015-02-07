@@ -134,7 +134,7 @@ void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNO
   pthread_t sig = pthread_self();
   struct threadpool *pool = pctx->gctx->pool;
 
-  if (1 || !pool) {
+  if (!pool) {
     (*routine)(pctx,ret,source,params,locals,mode);
     //return -2;
     return;

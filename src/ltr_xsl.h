@@ -47,8 +47,10 @@ XPATH_NODE_AFT_SIBLING, XPATH_NODE_PRE_SIBLING, XPATH_NODE_PREV, XPATH_NODE_NEXT
 XPATH_NODE_SELECT, XPATH_NODE_ATTR_ALL, XPATH_NODE_INT, XPATH_NODE_CONTEXT, XPATH_NODE_DESCENDANTS, XPATH_NODE_UNION
 } NODETYPE;
 
+typedef enum {VAL_NULL=0, VAL_BOOL, VAL_INT, VAL_NUMBER, VAL_STRING, VAL_NODESET} RVALUE_TYPE;
+
 typedef struct _rval {
-  enum {VAL_NULL=0, VAL_BOOL, VAL_INT, VAL_NUMBER, VAL_STRING, VAL_NODESET} type;
+  RVALUE_TYPE type;
   union {
     long integer;
     double number;
@@ -59,13 +61,15 @@ typedef struct _rval {
 
 typedef XMLNODE XPATH_EXPR;
 
+typedef enum {XML_FLAG_CDATA=1,XML_FLAG_NOESCAPE=2,XML_FLAG_SORTNUMBER=4,XML_FLAG_DESCENDING=8,XML_FLAG_LOWER=16} XML_FLAG;
+
 struct _xmlnode {
   struct _xmlnode *parent;
   struct _xmlnode *next;
   struct _xmlnode *prev;
   struct _xmlnode *children;
   struct _xmlnode *attributes;
-  enum {XML_FLAG_CDATA=1,XML_FLAG_NOESCAPE=2,XML_FLAG_SORTNUMBER=4,XML_FLAG_DESCENDING=8,XML_FLAG_LOWER=16} flags;
+  XML_FLAG flags;
   unsigned position;
   unsigned order;
   unsigned uid;
@@ -108,15 +112,20 @@ struct _globaldata {
   unsigned initialized:1;
 };
 
+typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_EXACT, TMATCH_START, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
+
 typedef struct {
   char *name;
   char *match;
   char *mode;
   XMLNODE *expr;
-  enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_EXACT, TMATCH_START, TMATCH_ROOT, TMATCH_SELECT} matchtype;
+  MATCH_TYPE matchtype;
   XMLNODE *content;
   double priority;
 } TEMPLATE;
+
+typedef enum {XSL_FLAG_OUTPUT=1, XSL_FLAG_OMIT_DESC=2, XSL_FLAG_STANDALONE=4, XSL_FLAG_INDENT=8, XSL_FLAG_MODE_SET=16} XSL_FLAG;
+typedef enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} OUTPUT_MODE;
 
 struct _context {
   XSLTGLOBALDATA *gctx;
@@ -132,7 +141,7 @@ struct _context {
   CB_TABLE *functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned cb_max;
   unsigned cb_ptr;
-  enum {XSL_FLAG_OUTPUT=1, XSL_FLAG_OMIT_DESC=2, XSL_FLAG_STANDALONE=4, XSL_FLAG_INDENT=8, XSL_FLAG_MODE_SET=16} flags;
+  XSL_FLAG flags;
   unsigned rawout;
   XSL_VARIABLE *vars;   // Global (per conversion context) variables
   unsigned var_max;     // +
@@ -152,7 +161,7 @@ struct _context {
   XMLNODE *formats;     // xsl:decimal-format data
   XMLNODE *node_cache;  // freed nodes are here for fast reuse
   pthread_mutex_t lock;
-  enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} outmode;
+  OUTPUT_MODE outmode;
 };
 
 
@@ -164,6 +173,7 @@ char *add_hash(char *name, int len, int lock);
 char *find_hash(char *name, int len, int lock);
 
 /********************** nodes.c -- nodes operations *****************/
+void xml_unlink_node(XMLNODE *node);
 void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 void xml_cleanup_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
@@ -175,6 +185,9 @@ void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode);
 void xml_free_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 
 /********************** transform.c -- XSLT mainloop ****************/
+void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *templ, XMLNODE *params, XMLNODE *locals);
+void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, char *mode);
+void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, char *mode);
 XMLNODE *find_first_node(XMLNODE *n);
 char *xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source, XMLNODE *foreval);
 
@@ -199,6 +212,9 @@ void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, XMLNODE *
 char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second);
 
 /************************* xpath.c -- xpath compilator ************************/
+void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etree, XMLNODE *current, RVALUE *res);
+
+void xpath_eval_expression(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *res);
 int xpath_eval_boolean(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
 char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
 XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *expr);
@@ -218,9 +234,13 @@ char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *src,
 
 
 /************************* rvalue.c -- rvalues operations ************************/
+void rval_init(RVALUE *rv);
+void rval_free(RVALUE *rv);
 int rval2bool(RVALUE *rv);
 char *rval2string(RVALUE *rv);
 double rval2number(RVALUE *rv);
+int rval_equal(RVALUE *left, RVALUE *right, unsigned eq);
+int rval_compare(RVALUE *left, RVALUE *right);
 
 TRANSFORM_CONTEXT *xslt_new_context();
 void xslt_free_context(TRANSFORM_CONTEXT *pctx);

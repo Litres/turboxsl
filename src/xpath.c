@@ -19,7 +19,6 @@
 #include "ltr_xsl.h"
 
 static XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, char **eptr);
-void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etree, XMLNODE *current, RVALUE *res);
 
 
 XMLNODE *xpath_in_selection(XMLNODE *sel, char *name)
