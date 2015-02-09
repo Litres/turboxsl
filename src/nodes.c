@@ -30,32 +30,11 @@ void xml_unlink_node(XMLNODE *node)
 
 static void free_attributes(XMLNODE *attributes)
 {
-  XMLNODE *n;
-  while(attributes) {
-    n = attributes->next;
-    free(attributes->content);
-    rval_free(&(attributes->extra));
-    free(attributes);
-    attributes = n;
-  }
+
 }
 
 void xml_free_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-XMLNODE *next;
-
-  if(!node)
-    return;
-  xml_free_node(pctx, node->children);
-  free_attributes(node->attributes);
-  while(node) {
-    next = node->next;
-    if(node->content)
-      free(node->content);
-    rval_free(&(node->extra));
-    nfree(pctx, node);
-    node = next;
-  }
 
 }
 
@@ -63,19 +42,12 @@ XMLNODE *next;
 
 void xml_cleanup_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-  if(!node)
-    return;
-  xml_free_node(pctx, node->children);
-  free_attributes(node->attributes);
-  rval_free(&(node->extra));
-  if(node->content) {
-    free(node->content);
-    node->content = NULL;
-  }
-}  
+
+}
 
 void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
+  debug("xml_clear_node:: node %s", node->name);
   memset(node,0,sizeof(XMLNODE));
 }
 
@@ -100,23 +72,11 @@ static unsigned int nuid = 0;
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
-XMLNODE *ret = NULL;
-  if(pctx) {
-    pthread_mutex_lock(&(pctx->lock));
-    if(pctx->node_cache) {
-      ret = pctx->node_cache;
-      pctx->node_cache = ret->next;
-    }
-  }
-  if(!ret) {
-    ret = (XMLNODE *)malloc(sizeof(XMLNODE));
-  }
+  XMLNODE *ret = (XMLNODE *)malloc(sizeof(XMLNODE));
   memset(ret,0,sizeof(XMLNODE));
   ret->type = type;
   ret->name = name;
   ret->uid = nuid++;
-  if(pctx)
-    pthread_mutex_unlock(&(pctx->lock));
   return ret;
 }
 
@@ -133,15 +93,7 @@ XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type)
 
 void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-  if(pctx) {
-    pthread_mutex_lock(&(pctx->lock));
-    memset(node,0,sizeof(XMLNODE));
-    node->next = pctx->node_cache;
-    pctx->node_cache = node;
-    pthread_mutex_unlock(&(pctx->lock));
-  } else {
-    free(node);
-  }
+
 }
 
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child)

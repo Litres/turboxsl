@@ -2,6 +2,8 @@
  *  Dictionary for hashed names -> pointers conversion
  *
  */
+#ifndef XML_DICT_H_
+#define XML_DICT_H_
 
 typedef struct _dict_entry {
   char *name;
@@ -22,3 +24,6 @@ void dict_free_data(XMLDICT *dict);
 void *dict_find(XMLDICT *dict, char *name);
 int dict_add(XMLDICT *dict, char *name, void *data);
 void dict_replace(XMLDICT *dict, char *name, void *data);
+
+#endif
+

@@ -9,18 +9,18 @@
  *
 **/
 
-#ifndef _LTR_XSL_
+#ifndef LTR_XSL_H_
+#define LTR_XSL_H_
+
 #include <pthread.h>
 
 #include "turboxsl.h"
 #include "xmldict.h"
+#include "threadpool.h"
 
-#undef DEBUG
-#define NTHREADS 4
-
+//#define DEBUG
 
 #ifdef DEBUG
-// fprintf(stderr, "etree->type = %s (%i)\n", nodeTypeNames[etree->type], etree->type);
 static char *nodeTypeNames[] = {
   "EMPTY_NODE",
   "ELEMENT_NODE",           "TEXT_NODE",              "ATTRIBUTE_NODE",      "PI_NODE",                "COMMENT_NODE",
@@ -38,6 +38,13 @@ static char *rvalTypeNames[] = {
 };
 #endif
 
+#ifndef DEBUG
+#define debug(M, ...)
+#define error(M, ...)
+#else
+#define debug(M, ...) fprintf(stderr, "DEBUG [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
+#define error(M, ...) fprintf(stderr, "ERROR [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
+#endif
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
 XPATH_NODE_OR, XPATH_NODE_AND, XPATH_NODE_EQ, XPATH_NODE_NE, XPATH_NODE_LT, XPATH_NODE_GT, XPATH_NODE_CALL, KEY_NODE,
@@ -226,7 +233,7 @@ XMLNODE *xpath_in_selection(XMLNODE *sel, char *name);
 void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel);
 XMLNODE *xpath_copy_nodeset(XMLNODE *set);
 XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr);
-XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, int *position);
+XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position);
 XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src);
 void xpath_free_compiled(TRANSFORM_CONTEXT *pctx);
 
@@ -280,9 +287,9 @@ void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fn
 /*************************** debug.c -- various debug and display ************************/
 void print_rval(RVALUE *rv);
 
-#include "threadpool.h"
+void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
 
-void threadpool_start_full(void (*routine)(), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
+int threadpool_lock_on();
+void threadpool_lock_off();
 
-#define _LTR_XSL_
 #endif

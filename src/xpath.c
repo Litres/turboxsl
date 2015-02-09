@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 
 #include "ltr_xsl.h"
@@ -100,8 +99,8 @@ char *nodes2string(XMLNODE *node)
   XMLNODE     *tmp_node;
   char        *content = NULL;
   char    *tmp_content = NULL;
-  unsigned     content_len = 0;
-  unsigned tmp_content_len = 0;
+  size_t     content_len = 0;
+  size_t tmp_content_len = 0;
 
   while (node) {
     tmp_node    = node->next;
@@ -143,7 +142,7 @@ char *node2string(XMLNODE *node)
 }
 
 
-XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, int *position)
+XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position)
 {
   if(src==NULL)
     return prev;
@@ -164,7 +163,7 @@ XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, int *position)
   return dst;
 }
 
-XMLNODE *xml_add_siblings(XMLNODE *prev, XMLNODE *src, int *position, XMLNODE **psel) // NOTE: does not copy nodes, used for selection unions only!
+XMLNODE *xml_add_siblings(XMLNODE *prev, XMLNODE *src, unsigned int *position, XMLNODE **psel) // NOTE: does not copy nodes, used for selection unions only!
 {
   if(src==NULL)
     return prev;
@@ -184,7 +183,7 @@ XMLNODE *xpath_select_nodes(TRANSFORM_CONTEXT *pctx, XMLNODE *current, char *nam
 {
 XMLNODE *r, *iter;
 XMLNODE *set = NULL;
-int pos;
+unsigned int pos;
 
   if(!current)
     return NULL;
@@ -207,7 +206,7 @@ XMLNODE *xpath_copy_nodeset(XMLNODE *set)
 {
   XMLNODE *node = NULL;
   XMLNODE *tmp = NULL;
-  int pos = 0;
+  unsigned int pos = 0;
   if(set == NULL)
     return NULL;
   for(;set;set=set->next) {
@@ -224,7 +223,7 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
   XMLNODE *node = NULL;
   XMLNODE *tmp;
   RVALUE rv;
-  int pos = 0;
+  unsigned int pos = 0;
   tmp = NULL;
   
   if(expr->type == XPATH_NODE_INT) { // select n-th node from selection
@@ -271,10 +270,8 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
 
 
 static
-XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, int *pos, XMLNODE **head)
+XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, unsigned int *pos, XMLNODE **head)
 {
-int t;
-
   for(;node;node=node->next) {
     if(node->type == EMPTY_NODE) {
       tmp = add_all_children(tmp,node->children,pos,head);
@@ -463,9 +460,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     return;
   }
 
-// #ifdef DEBUG
-//   fprintf(stderr, "xpath_execute_scalar::etree->type = %i (%s)\n", etree->type, nodeTypeNames[etree->type]);
-// #endif
+  debug("xpath_execute_scalar::etree->type = %i (%s)", etree->type, nodeTypeNames[etree->type]);
 
   switch(etree->type) {
     case XPATH_NODE_INT:
@@ -981,6 +976,7 @@ void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current,
 
 void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel)
 {
+  debug("xpath_free_selection:: ");
   XMLNODE *n;
   while(sel) {
     if(sel->type==EMPTY_NODE && (sel->flags&0x8000))
@@ -1279,7 +1275,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     return node1;
   }
 
-  fprintf(stderr, "\nmalformed xpath expr at %s in %s\n", *eptr, errexp);
+  error("do_node2_expr:: malformed xpath expr at %s in %s", *eptr, errexp);
   return NULL;
 }
 
@@ -1309,7 +1305,7 @@ XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
       if(**eptr==']')
         ++(*eptr);
       else
-        fprintf(stderr,"unterminated select expr at %s in %s\n",*eptr,errexp);
+        error("do_node_expr:: unterminated select expr at %s in %s",*eptr,errexp);
 
       node3                 = xml_new_node(pctx,NULL,XPATH_NODE_FILTER);
       node3->children       = node1; // previous select

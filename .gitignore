@@ -1,0 +1,9 @@
+# Created by .ignore support plugin (hsz.mobi)
+### CMake template
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
+

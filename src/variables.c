@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "ltr_xsl.h"
 #include "xslglobs.h"
@@ -213,7 +212,9 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
   if(!vsel) {
     tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
     tmp->extra.type = VAL_NODESET;
+    int locked = threadpool_lock_on();
     apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
+    if (locked) threadpool_lock_off();
 
     // fprintf(stderr,"add local var %s = ", vname);
     // print_rval(&(tmp->extra));

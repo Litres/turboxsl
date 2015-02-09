@@ -9,12 +9,13 @@
  *
 **/
 
-#include "xmldict.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
+#include "xmldict.h"
+#include "ltr_xsl.h"
 
 XMLDICT *dict_new(unsigned size)
 {
@@ -32,7 +33,7 @@ XMLDICT *dict_new(unsigned size)
     }
   }
   if(!dict) {
-    fprintf(stderr,"XMLDICT: failed to allocate storage\n");
+    error("dict_new:: failed to allocate storage");
   }
   return dict;
 }

@@ -1,4 +1,5 @@
-
+#ifndef TURBOXSL_H_
+#define TURBOXSL_H_
 
 struct _xmlnode;
 typedef struct _xmlnode XMLNODE;
@@ -29,3 +30,4 @@ void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content);
 void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void (*fun)(),char **args), void (*fun)());
 char *xml_strdup(char *s);
 
+#endif

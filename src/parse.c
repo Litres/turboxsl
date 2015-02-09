@@ -55,7 +55,7 @@ void decode_entity(char **s, XMLSTRING d)
     if(**s==';')
       ++(*s);
     else {
-      fprintf(stderr,"Invalid numeric entity\n");
+      error("decode_entity:: invalid numeric entity");
       u = '?';
     }
   } else {
@@ -70,7 +70,7 @@ void decode_entity(char **s, XMLSTRING d)
     else if(match(s,"apos;"))
       u = '\'';
     else {
-      fprintf(stderr,"Unknown entity &%c%c%c\n",s[0][0],s[0][1],s[0][2]);
+      error("decode_entity:: unknown entity &%c%c%c\n",s[0][0],s[0][1],s[0][2]);
       u = '&';
     }
   }
@@ -168,7 +168,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           p+=8;
           state = CDATA;
         } else if(*p=='!') {
-          fprintf(stderr,"DOCTYPE instructions not supported!\n");
+          error("do_parse:: DOCTYPE instructions not supported!");
           return NULL;
         } else if(*p=='/') {// closing </element>
           state = CLOSE;
@@ -206,7 +206,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
             ret = previous->parent;
         } else {
           *c = 0;
-          fprintf(stderr,"closing tag mismatch <%s> </%s>\n",ret->name,p);
+          error("do_parse:: closing tag mismatch <%s> </%s>",ret->name,p);
           state = ERROR;
         }
         break;
@@ -344,7 +344,7 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 
 	file = hash(file,-1,0);
 	if ((pFile = fopen(file, "r")) == NULL) {
-		fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
+		error("XMLParseFile:: can't open %s: %s", file, strerror(errno));
 		return NULL;
 	}
 

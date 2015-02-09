@@ -158,7 +158,7 @@ void XMLOutputFile(TRANSFORM_CONTEXT *ctx, XMLNODE *tree, char *filename)
 {
   FILE *f = fopen(filename,"w");
   if(!f) {
-    fprintf(stderr,"failed to create output file %s\n",filename);
+    error("XMLOutputFile:: failed to create output file %s",filename);
     return;
   }
   char *result = XMLOutput(ctx, tree);

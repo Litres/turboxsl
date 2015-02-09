@@ -611,17 +611,13 @@ void xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
 
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   docname = rval2string(&rv);
-#ifdef DEBUG
-  fprintf(stderr, "xf_document: docname %s\n", docname);
-#endif
+  debug("xf_document:: docname %s", docname);
   if (docname[0] == 0) {
     doc = add_to_selection(NULL, pctx->stylesheet, &p);
   } 
   else {
     abs = get_abs_name(pctx, docname);
-#ifdef DEBUG
-    fprintf(stderr, "xf_document: abs %s\n", abs);
-#endif
+    debug("xf_document:: abs %s", abs);
     if(abs) {
       doc = XMLParseFile(pctx->gctx, abs);
       doc = add_to_selection(NULL, doc, &p);
@@ -734,11 +730,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   char       separ = '?';
   char      *value;
 
-#ifdef DEBUG
-  fprintf(stderr, "call xf_urlcode()\n");
-  print_rval(&res);
-#endif
-
+  debug("xf_urlcode:: ");
   res->type = VAL_STRING;
   if(args==NULL) {
     res->v.string = strdup("/");
@@ -958,7 +950,7 @@ void xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 {
   RVALUE rv;
 
-  res->type == VAL_NODESET;
+  res->type = VAL_NODESET;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   if(rv.type == VAL_NODESET) {
     res->v.nodeset = rv.v.nodeset;
@@ -971,15 +963,15 @@ void xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 
 void xf_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  int p = 0;
+  unsigned int p = 0;
 
-  res->type == VAL_NODESET;
+  res->type = VAL_NODESET;
   res->v.nodeset = add_to_selection(NULL,current, &p);
 }
 
 void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  res->type == VAL_NODESET;
+  res->type = VAL_NODESET;
   res->v.nodeset = NULL;
 }
 
@@ -1112,7 +1104,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
       return;
     }
   }
-fprintf(stderr, "function not found %s()\n",fname);
+  error("xpath_call_dispatcher:: function not found %s",fname);
   res->type = VAL_NULL;
 }
 
