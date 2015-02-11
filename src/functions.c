@@ -1111,20 +1111,5 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
 
 void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void (*fun)(),char **args), void (*fun)())
 {
-  pctx->perl_cb_dispatcher = callback;
-  if(!pctx->perl_functions) {
-    pctx->perl_cb_max = 20;
-    pctx->perl_cb_ptr = 0;
-    pctx->perl_functions = malloc(sizeof(CB_TABLE)*pctx->perl_cb_max);
-  } else if(pctx->perl_cb_ptr >= pctx->perl_cb_max) {
-    pctx->perl_cb_max += 20;
-    pctx->perl_functions = realloc(pctx->perl_functions, sizeof(CB_TABLE)*pctx->perl_cb_max);
-  }
-  if(0 == xml_strcmp(fname,"ltr:url_code")) {
-    pctx->perl_urlcode = fun;
-  } else {
-    pctx->perl_functions[pctx->perl_cb_ptr].name = hash(fname,-1,0);
-    pctx->perl_functions[pctx->perl_cb_ptr].func = fun;
-    ++pctx->perl_cb_ptr;
-  }
+    // TODO temporary removed
 }
