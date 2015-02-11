@@ -60,10 +60,11 @@ struct thread_lock *locks = NULL;
 
 int threadpool_lock_on()
 {
+    int i;
     if (!locks) return 0;
 
     pthread_t self = pthread_self();
-    for (int i = 0; i < 10; i++)
+    for (i = 0; i < 10; i++)
     {
         if (locks[i].thread == self)
         {
@@ -80,10 +81,11 @@ int threadpool_lock_on()
 
 void threadpool_lock_off()
 {
+    int i;
     if (!locks) return;
 
     pthread_t self = pthread_self();
-    for (int i = 0; i < 10; i++)
+    for (i = 0; i < 10; i++)
     {
         if (locks[i].thread == self)
         {
