@@ -21,6 +21,7 @@
 static void init_processor(XSLTGLOBALDATA *gctx)
 {
   if(!gctx->initialized) {
+    gctx->nthreads = 8;
     init_hash();
     xsl_stylesheet = hash("xsl:stylesheet",-1,0);
     xsl_template   = hash("xsl:template",-1,0);
