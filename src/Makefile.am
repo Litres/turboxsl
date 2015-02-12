@@ -28,8 +28,10 @@ libturboxsl_la_SOURCES = \
   md5.h \
   md5_loc.h \
   rvalue.c \
+  node_cache.c \
   xmldict.h \
   threadpool.h \
+  node_cache.h \
   xslglobs.h \
   turboxsl.h \
   ltr_xsl.h
