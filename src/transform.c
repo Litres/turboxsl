@@ -835,6 +835,9 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   preformat_document(pctx,document);
 
   pctx->gctx->pool = threadpool_init(pctx->gctx->nthreads);
+  pctx->gctx->cache = node_cache_create();
+  threadpool_set_cache(pctx->gctx->pool, pctx->gctx->cache);
+
   debug("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);
   threadpool_wait(pctx->gctx->pool);

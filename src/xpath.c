@@ -860,8 +860,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
               t = add_to_selection(t, expr, &pos);
               if (!r) 
                 r = t;
-
-              free(expr);
             }
           }
           res->type = VAL_NODESET;

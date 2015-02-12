@@ -42,6 +42,8 @@ static char *rvalTypeNames[] = {
 #define debug(M, ...)
 #define error(M, ...)
 #else
+#include <stdio.h>
+
 #define debug(M, ...) fprintf(stderr, "DEBUG [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 #define error(M, ...) fprintf(stderr, "ERROR [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 #endif
@@ -113,6 +115,7 @@ struct _globaldata {
   void (*perl_urlcode)();
   unsigned nthreads;
   struct threadpool *pool;
+  node_cache *cache;
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;
