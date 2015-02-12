@@ -333,8 +333,7 @@ void xf_sub_after(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
     z = strstr(s,p);
     if(z) {
       z+=strlen(p);
-      strcpy(s,z);
-      res->v.string = s;
+      res->v.string = strdup(z);
     }
   }
   free(p);
