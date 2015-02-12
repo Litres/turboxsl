@@ -299,6 +299,8 @@ void threadpool_free(struct threadpool *pool)
 
 void threadpool_set_cache(struct threadpool *pool, node_cache *cache)
 {
+    if (!pool) return;
+
     debug("threadpool_set_cache:: setup");
     for (int i = 0; i < pool->num_of_threads; i++)
     {
