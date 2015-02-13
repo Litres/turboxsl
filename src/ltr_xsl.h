@@ -39,7 +39,7 @@ static char *rvalTypeNames[] = {
 };
 #endif
 
-#define info(M, ...) fprintf(stdout, "INFO [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
+#define info(M, ...) fprintf(stderr, "INFO [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 #define error(M, ...) fprintf(stderr, "ERROR [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 
 #ifndef DEBUG
