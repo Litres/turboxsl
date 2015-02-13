@@ -4,6 +4,11 @@ use TurboXSLT;
 use Time::HiRes;
 use utf8;
 
+if (!$ARGV[1]){
+	print "turboxsl test.pl. Usage:\ntest.pl <template.xsl> <data.xml>\n\n";
+	exit(0);
+}
+
 my $engine = new TurboXSLT;
 my $Start = Time::HiRes::time();
 my $ctx = $engine->LoadStylesheet("xsl/for_readers/index.xsl");
