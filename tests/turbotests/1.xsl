@@ -5,20 +5,8 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	</head>
 	<body>
-		<ol>
-		<li><xsl:value-of select="@username"/></li>
-		<li><xsl:value-of select="@fullname"/></li>
-		<li><xsl:value-of select="@username | @fullname"/></li>
-		<li><xsl:value-of select="@fullname | @username"/></li>
-		<li><xsl:value-of select="sub_test/@username | @fullname"/></li>
-		<li><xsl:value-of select="@username | sub_test/@fullname"/></li>
-		<li><xsl:value-of select="sub_test/@username | sub_test/@fullname"/></li>
-		<li><xsl:value-of select="sub_test/@fullname | sub_test/@username"/></li>
-		<li><xsl:value-of select="sub_test/@username | sub_test2/@username"/></li>
-		<li><xsl:value-of select="sub_test2/@fullname|sub_test/@fullname|sub_test/../@fullname"/></li>
-		<li><xsl:value-of select="sub_test2/@fullname|sub_test/@fullname"/></li>
-		</ol>
-		<xsl:apply-templates/>
+		<xsl:value-of select="@username | @fullname"/><br/>
+		<xsl:value-of select="@fullname | @username"/><br/>
 	</body>
 </xsl:template>
 
