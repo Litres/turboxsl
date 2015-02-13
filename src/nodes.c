@@ -30,12 +30,12 @@ void xml_unlink_node(XMLNODE *node)
 
 static void free_attributes(XMLNODE *attributes)
 {
-
+    // TODO
 }
 
 void xml_free_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-
+    // TODO
 }
 
 /*********** for static-allocated nodes *******************/
@@ -72,26 +72,29 @@ static unsigned int nuid = 0;
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
-  XMLNODE *ret = NULL;
-  if (pctx != NULL && pctx->gctx->cache != NULL) ret = node_cache_get(pctx->gctx->cache);
-  if (ret == NULL)
-  {
-      ret = (XMLNODE *)malloc(sizeof(XMLNODE));
-  }
+    XMLNODE *ret = NULL;
+    if (pctx != NULL && pctx->gctx->cache != NULL) ret = node_cache_get(pctx->gctx->cache);
+    if (ret == NULL)
+    {
+        ret = (XMLNODE *) malloc(sizeof(XMLNODE));
+        if (ret == NULL)
+        {
+            error("xml_new_node:: malloc");
+            return NULL;
+        }
+    }
 
-  memset(ret,0,sizeof(XMLNODE));
-  ret->type = type;
-  ret->name = name;
-  ret->uid = nuid++;
-  return ret;
+    memset(ret, 0, sizeof(XMLNODE));
+    ret->type = type;
+    ret->name = name;
+    ret->uid = nuid++;
+    return ret;
 }
 
 
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type)
 {
-  XMLNODE *ret, *prev;
-
-  ret = xml_new_node(pctx, NULL, type);
+  XMLNODE *ret = xml_new_node(pctx, NULL, type);
   xml_add_child(pctx, node, ret);
   return ret;
 }
@@ -99,22 +102,29 @@ XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type)
 
 void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-
+    // TODO
 }
 
-void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child)
+void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *child)
 {
-XMLNODE *prev;
+    if (!child)
+    {
+        error("xml_add_child:: child is NULL");
+        return;
+    }
 
-  if(node->children) {
-    for(prev=node->children;prev->next;prev=prev->next)
-      ;
-    child->prev = prev;
-    prev->next = child;
-  } else {
-    node->children = child;
-  }
-  child->parent = node;
+    if (node->children)
+    {
+        XMLNODE *prev;
+        for (prev = node->children; prev->next; prev = prev->next);
+        child->prev = prev;
+        prev->next = child;
+    }
+    else
+    {
+        node->children = child;
+    }
+    child->parent = node;
 }
 
 void xml_add_sibling(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *sibling)

@@ -59,10 +59,7 @@ char *xml_get_attr(XMLNODE *node, char *name)
   for(attr=node->attributes;attr;attr=attr->next)
     if(attr->name == name)
       return attr->content;
-  name = hash(name,-1,1);
-  for(attr=node->attributes;attr;attr=attr->next)
-    if(attr->name == name)
-      return attr->content;
+
   return NULL;
 }
 

@@ -338,7 +338,8 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 	char      *buffer;
 	unsigned   length;
 	long       size;
-	
+
+    info("XMLParseFile:: file %s", file);
 	if (file == NULL)
 		return NULL;
 

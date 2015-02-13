@@ -765,10 +765,10 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
 {
+  info("XSLTNewProcessor:: stylesheet %s", stylesheet);
   TRANSFORM_CONTEXT *ret = malloc(sizeof(TRANSFORM_CONTEXT));
+  if(!ret) return NULL;
   memset(ret,0,sizeof(TRANSFORM_CONTEXT));
-  if(!ret)
-    return NULL;
 
   if(pthread_mutex_init(&(ret->lock), NULL)) {
     return NULL;
@@ -838,10 +838,10 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   pctx->gctx->cache = node_cache_create();
   threadpool_set_cache(pctx->gctx->pool, pctx->gctx->cache);
 
-  debug("XSLTProcess:: start process");
+  info("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);
   threadpool_wait(pctx->gctx->pool);
-  debug("XSLTProcess:: end process");
+  info("XSLTProcess:: end process");
 
 /****************** add dtd et al if required *******************/
   t = find_first_node(ret);

@@ -12,6 +12,7 @@
 #ifndef LTR_XSL_H_
 #define LTR_XSL_H_
 
+#include <stdio.h>
 #include <pthread.h>
 
 #include "turboxsl.h"
@@ -38,14 +39,13 @@ static char *rvalTypeNames[] = {
 };
 #endif
 
+#define info(M, ...) fprintf(stdout, "INFO [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
+#define error(M, ...) fprintf(stderr, "ERROR [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
+
 #ifndef DEBUG
 #define debug(M, ...)
-#define error(M, ...)
 #else
-#include <stdio.h>
-
 #define debug(M, ...) fprintf(stderr, "DEBUG [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
-#define error(M, ...) fprintf(stderr, "ERROR [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 #endif
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
