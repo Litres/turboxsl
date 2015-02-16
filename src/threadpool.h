@@ -6,10 +6,7 @@
 #ifndef THREADPOOL_H_
 #define THREADPOOL_H_
 
-#include "node_cache.h"
-
 struct threadpool;
-
 
 /**
  * This function creates a newly allocated thread pool.
@@ -18,6 +15,8 @@ struct threadpool;
  * @return On success returns a newly allocated thread pool, on failure NULL is returned.
  */
 struct threadpool* threadpool_init(int num_of_threads);
+
+void threadpool_free(struct threadpool *pool);
 
 /**
  * This function waits for children to finish
@@ -30,6 +29,6 @@ void threadpool_wait(struct threadpool *pool);
 
 void threadpool_free(struct threadpool *pool);
 
-void threadpool_set_cache(struct threadpool *pool, node_cache *cache);
+void threadpool_set_cache(struct threadpool *pool);
 
 #endif /* THREADPOOL_H_ */

@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "ltr_xsl.h"
+#include "node_cache.h"
 
 #define XSL_MAIN
 #include "xslglobs.h"
@@ -21,7 +22,7 @@
 static void init_processor(XSLTGLOBALDATA *gctx)
 {
   if(!gctx->initialized) {
-    gctx->nthreads = 8;
+    gctx->nthreads = 4;
     init_hash();
     xsl_stylesheet = hash("xsl:stylesheet",-1,0);
     xsl_template   = hash("xsl:template",-1,0);
@@ -719,7 +720,10 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 void XSLTEnd(XSLTGLOBALDATA *data)
 {
   drop_hash();
+  threadpool_free(data->pool);
+  memory_cache_release();
   dict_free_data(data->urldict);
+
   free(data->perl_functions);
   free(data);
 }
@@ -730,6 +734,12 @@ XSLTGLOBALDATA *XSLTInit()
   memset(ret,0,sizeof(XSLTGLOBALDATA));
   init_processor(ret);
   ret->urldict = dict_new(300);
+
+  ret->pool = threadpool_init(ret->nthreads);
+  memory_cache_create();
+  memory_cache_add_entry(pthread_self(), 10000000);
+  threadpool_set_cache(ret->pool);
+
   return ret;
 }
 
@@ -826,6 +836,12 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   XMLNODE *t;
 
   if(!pctx) {
+    error("XSLTProcess:: pctx is NULL");
+    return NULL;
+  }
+
+  if(!document) {
+    error("XSLTProcess:: document is NULL");
     return NULL;
   }
 
@@ -833,10 +849,6 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   pctx->root_node = document;
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
-
-  pctx->gctx->pool = threadpool_init(pctx->gctx->nthreads);
-  pctx->gctx->cache = node_cache_create();
-  threadpool_set_cache(pctx->gctx->pool, pctx->gctx->cache);
 
   info("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);

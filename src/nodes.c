@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "ltr_xsl.h"
+#include "node_cache.h"
 
 void xml_unlink_node(XMLNODE *node)
 {
@@ -72,8 +73,7 @@ static unsigned int nuid = 0;
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
-    XMLNODE *ret = NULL;
-    if (pctx != NULL && pctx->gctx->cache != NULL) ret = node_cache_get(pctx->gctx->cache);
+    XMLNODE *ret = memory_cache_allocate(sizeof(XMLNODE));
     if (ret == NULL)
     {
         ret = (XMLNODE *) malloc(sizeof(XMLNODE));

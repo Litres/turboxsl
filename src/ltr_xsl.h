@@ -18,8 +18,7 @@
 #include "turboxsl.h"
 #include "xmldict.h"
 #include "threadpool.h"
-
-//#define DEBUG
+#include "logger.h"
 
 #ifdef DEBUG
 static char *nodeTypeNames[] = {
@@ -37,15 +36,6 @@ static char *nodeTypeNames[] = {
 static char *rvalTypeNames[] = {
   "VAL_NULL", "VAL_BOOL", "VAL_INT", "VAL_NUMBER", "VAL_STRING", "VAL_NODESET"
 };
-#endif
-
-#define info(M, ...) fprintf(stderr, "INFO [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
-#define error(M, ...) fprintf(stderr, "ERROR [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
-
-#ifndef DEBUG
-#define debug(M, ...)
-#else
-#define debug(M, ...) fprintf(stderr, "DEBUG [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 #endif
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
@@ -115,7 +105,6 @@ struct _globaldata {
   void (*perl_urlcode)();
   unsigned nthreads;
   struct threadpool *pool;
-  node_cache *cache;
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;

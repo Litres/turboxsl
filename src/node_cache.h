@@ -1,16 +1,18 @@
-#ifndef NODE_CACHE_H_
-#define NODE_CACHE_H_
+#ifndef MEMORY_CACHE_H_
+#define MEMORY_CACHE_H_
 
 #include <pthread.h>
 
-typedef struct node_cache_ node_cache;
+typedef struct memory_cache_ memory_cache;
 
-node_cache *node_cache_create();
+int memory_cache_create();
 
-void node_cache_release(node_cache *cache);
+void memory_cache_reset();
 
-void node_cache_add_entry(node_cache *cache, pthread_t thread, size_t size);
+void memory_cache_release();
 
-void *node_cache_get(node_cache *cache);
+void memory_cache_add_entry(pthread_t thread, size_t size);
+
+void *memory_cache_allocate(size_t size);
 
 #endif

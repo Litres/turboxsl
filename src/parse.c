@@ -318,8 +318,6 @@ void renumber_children(XMLNODE *node)
   }
 }
 
-#define CHUNK (10000)
-
 XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
 {
   XMLNODE *ret;
@@ -339,7 +337,7 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 	unsigned   length;
 	long       size;
 
-    info("XMLParseFile:: file %s", file);
+    debug("XMLParseFile:: file %s", file);
 	if (file == NULL)
 		return NULL;
 
