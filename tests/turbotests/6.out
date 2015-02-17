@@ -2,6 +2,7 @@
 <head xmlns:fo="http://www.w3.org/1999/XSL/Format"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head><body xmlns:fo="http://www.w3.org/1999/XSL/Format">
 		format-number: 00<br/>
 		format-number: 42<br/>
+		format-number: 5 853,64<br/>
 		translate: 50042<br/>
 		substring: 5<br/>
 		substring: 00<br/></body>
