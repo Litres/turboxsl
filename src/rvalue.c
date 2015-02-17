@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 
 #include "ltr_xsl.h"
@@ -89,7 +88,6 @@ int rval2bool(RVALUE *rv)
 char *rval2string(RVALUE *rv) {
   char s[200];
   char *res;
-  XMLNODE *node;
 
   switch(rv->type) {
     case VAL_NULL:
@@ -113,14 +111,12 @@ char *rval2string(RVALUE *rv) {
       rv->type=VAL_NULL;
       return rv->v.string;
 
-    case VAL_NODESET:   // TODO: take first in document order
+    case VAL_NODESET:
       res = NULL;
       if (rv->v.nodeset) {
-        res = nodes2string(
-          rv->v.nodeset->type == EMPTY_NODE
-            ? rv->v.nodeset->children
-              : rv->v.nodeset
-        );
+          // TODO take first in document order
+          XMLNODE *node = rv->v.nodeset;
+          res = node2string(node->type != EMPTY_NODE ? node : node->children);
       }
       rval_free(rv);
       return res;
