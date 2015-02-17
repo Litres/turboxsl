@@ -721,7 +721,6 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 {
   drop_hash();
   threadpool_free(data->pool);
-  memory_cache_release();
   dict_free_data(data->urldict);
 
   free(data->perl_functions);
@@ -736,9 +735,6 @@ XSLTGLOBALDATA *XSLTInit()
   ret->urldict = dict_new(300);
 
   ret->pool = threadpool_init(ret->nthreads);
-  memory_cache_create();
-  memory_cache_add_entry(pthread_self(), 10000000);
-  threadpool_set_cache(ret->pool);
 
   return ret;
 }
@@ -750,8 +746,7 @@ void XMLFreeDocument(XMLNODE *doc)
 
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
-  XMLNODE *tmp,*next;
-
+  memory_cache_release();
 
   dict_free(pctx->named_templ);
   if(pctx->keys)
@@ -761,10 +756,13 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   xpath_free_compiled(pctx);
   free_variables(pctx);
   xml_free_node(NULL,pctx->stylesheet);
+
+  XMLNODE *tmp,*next;
   for(tmp=pctx->node_cache;tmp;tmp=next) {
     next = tmp->next;
     free(tmp);
   }
+
   free(pctx->templtab);
   free(pctx->sort_keys);
   free(pctx->sort_nodes);
@@ -776,6 +774,11 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
 {
   info("XSLTNewProcessor:: stylesheet %s", stylesheet);
+
+  memory_cache_create();
+  memory_cache_add_entry(pthread_self(), 10000000);
+  threadpool_set_cache(gctx->pool);
+
   TRANSFORM_CONTEXT *ret = malloc(sizeof(TRANSFORM_CONTEXT));
   if(!ret) return NULL;
   memset(ret,0,sizeof(TRANSFORM_CONTEXT));
