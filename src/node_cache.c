@@ -126,8 +126,6 @@ void memory_cache_add_entry(pthread_t thread, size_t size)
 
 void *memory_cache_allocate(size_t size)
 {
-    debug("memory_cache_allocate:: allocate size %lu", size);
-
     pthread_t self = pthread_self();
     memory_cache_entry *t = global_cache->entry;
     while (t != NULL && t->thread != self) t = t->next_entry;
