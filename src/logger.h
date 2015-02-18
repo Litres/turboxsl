@@ -13,4 +13,10 @@
 #define debug(M, ...) fprintf(stderr, "DEBUG [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
 #endif
 
+#ifndef TRACE
+#define trace(M, ...)
+#else
+#define trace(M, ...) fprintf(stderr, "TRACE [%p] %d: " M "\n", pthread_self(), __LINE__, ##__VA_ARGS__)
+#endif
+
 #endif

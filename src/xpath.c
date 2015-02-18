@@ -187,6 +187,7 @@ unsigned int pos;
 
   if(!current)
     return NULL;
+  debug("xpath_select_nodes:: current: %s, name: %s", current->name, name);
   r = NULL;
   for(;current;current=current->next) {
     pos = 0; // restart numbering children for each node in source nodeset
@@ -460,7 +461,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     return;
   }
 
-  debug("xpath_execute_scalar::etree->type = %i (%s)", etree->type, nodeTypeNames[etree->type]);
+  debug("xpath_execute_scalar:: etree->type = %i (%s)", etree->type, nodeTypeNames[etree->type]);
 
   switch(etree->type) {
     case XPATH_NODE_INT:
@@ -1042,6 +1043,7 @@ XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, char **eptr, NODETYPE t)
 static
 XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_select_expr:: expression: %s", *eptr);
   XMLNODE *node1, *node2;
   char *p, *e;
   skip_ws(eptr);
@@ -1176,6 +1178,7 @@ char *errexp;
 static
 XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_node2_expr:: expression: %s", *eptr);
   XMLNODE *node1, *node2;
   skip_ws(eptr);
   if(**eptr=='\'') 
@@ -1281,6 +1284,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_node_expr:: expression: %s", *eptr);
   XMLNODE *node1, *node2, *node3;
   
   node1 = do_node2_expr(pctx,eptr);
@@ -1319,6 +1323,7 @@ XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_union_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_union_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
 
@@ -1349,6 +1354,7 @@ XMLNODE *do_union_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_not_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_not_expr:: expression: %s", *eptr);
   XMLNODE *ornode;
   char    *old;
 
@@ -1375,6 +1381,7 @@ XMLNODE *do_not_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_mul_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_mul_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
   node1 = do_not_expr(pctx,eptr);
@@ -1403,6 +1410,7 @@ XMLNODE *do_mul_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_add_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_add_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
   node1 = do_mul_expr(pctx,eptr);
@@ -1428,6 +1436,7 @@ XMLNODE *do_add_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_rel_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_rel_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
   node1 = do_add_expr(pctx,eptr);
@@ -1468,6 +1477,7 @@ XMLNODE *do_rel_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_eq_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_eq_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
 
@@ -1503,6 +1513,7 @@ XMLNODE *do_eq_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_and_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_and_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
 
@@ -1531,6 +1542,7 @@ XMLNODE *do_and_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 static
 XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
+  trace("do_or_expr:: expression: %s", *eptr);
   XMLNODE *node1;
   XMLNODE *ornode;
 

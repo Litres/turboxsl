@@ -320,6 +320,7 @@ void renumber_children(XMLNODE *node)
 
 XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
 {
+  info("XMLParse:: document");
   XMLNODE *ret;
   char *fn = hash("(string)",-1,0);
 
@@ -337,7 +338,7 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 	unsigned   length;
 	long       size;
 
-    debug("XMLParseFile:: file %s", file);
+    info("XMLParseFile:: file %s", file);
 	if (file == NULL)
 		return NULL;
 
