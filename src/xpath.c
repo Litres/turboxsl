@@ -1223,12 +1223,15 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     } 
     else 
     {
-      char c = *e;
-      *e = 0;
+      size_t number_size = e - p + 2;
+      char *number = malloc(number_size);
+      memcpy(number, p, e - p);
+
       node1->type = XPATH_NODE_INT;
       node1->extra.type = VAL_INT;
-      node1->extra.v.integer = atol(p);
-      *e = c;
+      node1->extra.v.integer = atol(number);
+
+      free(number);
     }
     *eptr = e;
     skip_ws(eptr);
