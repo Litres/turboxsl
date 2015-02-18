@@ -4,7 +4,8 @@
 
 int main(int argc, char *argv[])
 {
-    if (memory_cache_create() != 0)
+    memory_cache *cache = memory_cache_create();
+    if (cache == NULL)
     {
         printf("ERROR: cache not created");
         return 0;
@@ -12,7 +13,9 @@ int main(int argc, char *argv[])
 
     size_t size = 256;
     size_t object_size = 16;
-    memory_cache_add_entry(pthread_self(), size);
+    memory_cache_add_entry(cache, pthread_self(), size);
+    memory_cache_set_current(cache);
+
     for (size_t i = 0; i < size / object_size; i++)
     {
         void *r = memory_cache_allocate(object_size);
@@ -30,7 +33,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    memory_cache_release();
+    memory_cache_release(cache);
 
     return 0;
 }

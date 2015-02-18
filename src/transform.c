@@ -14,7 +14,6 @@
 #include <string.h>
 
 #include "ltr_xsl.h"
-#include "node_cache.h"
 
 #define XSL_MAIN
 #include "xslglobs.h"
@@ -663,8 +662,9 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
   }
 }
 
-void preformat_document(TRANSFORM_CONTEXT *pctx, XMLNODE *doc)  // apply strip-space
+void preformat_document(TRANSFORM_CONTEXT *pctx, XMLNODE *doc)
 {
+    // TODO apply strip-space
 }
 
 void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
@@ -741,13 +741,13 @@ XSLTGLOBALDATA *XSLTInit()
 
 void XMLFreeDocument(XMLNODE *doc)
 {
-  xml_free_node(NULL,doc);
+    debug("XMLFreeDocument:: file %s", doc->file);
+    memory_cache_release(doc->cache);
 }
 
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
-  memory_cache_release();
-
+  debug("XSLTFreeProcessor");
   dict_free(pctx->named_templ);
   if(pctx->keys)
     xml_free_node(NULL,pctx->keys);
@@ -755,13 +755,9 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
     xml_free_node(NULL,pctx->formats);
   xpath_free_compiled(pctx);
   free_variables(pctx);
-  xml_free_node(NULL,pctx->stylesheet);
+  XMLFreeDocument(pctx->stylesheet);
 
-  XMLNODE *tmp,*next;
-  for(tmp=pctx->node_cache;tmp;tmp=next) {
-    next = tmp->next;
-    free(tmp);
-  }
+  memory_cache_release(pctx->cache);
 
   free(pctx->templtab);
   free(pctx->sort_keys);
@@ -773,11 +769,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
 {
-  info("XSLTNewProcessor:: stylesheet %s", stylesheet);
-
-  memory_cache_create();
-  memory_cache_add_entry(pthread_self(), 10000000);
-  threadpool_set_cache(gctx->pool);
+  debug("XSLTNewProcessor:: stylesheet %s", stylesheet);
 
   TRANSFORM_CONTEXT *ret = malloc(sizeof(TRANSFORM_CONTEXT));
   if(!ret) return NULL;
@@ -786,6 +778,15 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   if(pthread_mutex_init(&(ret->lock), NULL)) {
     return NULL;
   }
+
+  ret->cache = memory_cache_create();
+  if (ret->cache == NULL)
+  {
+      return NULL;
+  }
+  memory_cache_add_entry(ret->cache, pthread_self(), 10000000);
+  memory_cache_set_current(ret->cache);
+
   ret->gctx = gctx;
   ret->stylesheet = XMLParseFile(gctx, stylesheet);
   if(!ret->stylesheet) {
@@ -834,6 +835,11 @@ XMLNODE *find_first_node(XMLNODE *n)
 
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 {
+  // memory cache for output document
+  memory_cache *cache = memory_cache_create();
+  memory_cache_add_entry(cache, pthread_self(), 10000000);
+  memory_cache_set_current(cache);
+
   XMLNODE *ret;
   XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
   XMLNODE *t;
@@ -849,9 +855,13 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   }
 
   ret = xml_new_node(pctx, "out",EMPTY_NODE);
+  ret->cache = cache;
+
   pctx->root_node = document;
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
+
+  threadpool_set_cache(cache, pctx->gctx->pool);
 
   info("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);
@@ -889,4 +899,3 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   xml_free_node(pctx,locals);
   return ret;
 }
-

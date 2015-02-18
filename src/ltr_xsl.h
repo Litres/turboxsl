@@ -18,6 +18,7 @@
 #include "turboxsl.h"
 #include "xmldict.h"
 #include "threadpool.h"
+#include "node_cache.h"
 #include "logger.h"
 
 #ifdef DEBUG
@@ -79,6 +80,7 @@ struct _xmlnode {
   char *name;
   char *content;
   NODETYPE type;
+  memory_cache *cache;
 };
 
 typedef struct _cbt {
@@ -128,6 +130,7 @@ typedef enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} OUTPUT_MODE;
 
 struct _context {
   XSLTGLOBALDATA *gctx;
+  memory_cache *cache;
   char *docname;
   char *fnbuf;
   char *local_part;
@@ -158,7 +161,6 @@ struct _context {
   char *encoding;       // + -- This one is not really useful now since only UTF-8 is supported
   XMLNODE *keys;        // xsl:key data
   XMLNODE *formats;     // xsl:decimal-format data
-  XMLNODE *node_cache;  // freed nodes are here for fast reuse
   pthread_mutex_t lock;
   OUTPUT_MODE outmode;
 };

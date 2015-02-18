@@ -975,15 +975,7 @@ void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current,
 
 void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel)
 {
-  debug("xpath_free_selection:: ");
-  XMLNODE *n;
-  while(sel) {
-    if(sel->type==EMPTY_NODE && (sel->flags&0x8000))
-       xpath_free_selection(pctx,sel->children);
-    n = sel->next;
-    nfree(pctx,sel);
-    sel=n;
-  }
+    // TODO
 }
 
 

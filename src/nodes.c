@@ -14,7 +14,6 @@
 #include <string.h>
 
 #include "ltr_xsl.h"
-#include "node_cache.h"
 
 void xml_unlink_node(XMLNODE *node)
 {

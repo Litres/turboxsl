@@ -320,12 +320,18 @@ void renumber_children(XMLNODE *node)
 
 XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
 {
-  info("XMLParse:: document");
+  debug("XMLParse:: document");
   XMLNODE *ret;
   char *fn = hash("(string)",-1,0);
 
+  memory_cache *cache = memory_cache_create();
+  memory_cache_add_entry(cache, pthread_self(), 10000000);
+  memory_cache_set_current(cache);
+
   ret = do_parse(gctx, document, fn);
   renumber_children(ret);
+
+  ret->cache = cache;
   return ret;
 }
 
@@ -338,7 +344,7 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 	unsigned   length;
 	long       size;
 
-    info("XMLParseFile:: file %s", file);
+    debug("XMLParseFile:: file %s", file);
 	if (file == NULL)
 		return NULL;
 
@@ -368,8 +374,14 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 	}
 	buffer[length] = 0;
 
+    memory_cache *cache = memory_cache_create();
+    memory_cache_add_entry(cache, pthread_self(), 10000000);
+    memory_cache_set_current(cache);
+
 	ret = do_parse(gctx, buffer, file);
-  renumber_children(ret);
+    renumber_children(ret);
+
+    ret->cache = cache;
 
 	free(buffer);
 	return ret;

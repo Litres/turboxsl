@@ -15,8 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "node_cache.h"
-
 struct threadpool_task {
     void (*routine_cb)();
 
@@ -306,13 +304,13 @@ void threadpool_free(struct threadpool *pool)
     free(pool);
 }
 
-void threadpool_set_cache(struct threadpool *pool)
+void threadpool_set_cache(memory_cache *cache, struct threadpool *pool)
 {
     if (!pool) return;
 
     debug("threadpool_set_cache:: setup");
     for (size_t i = 0; i < pool->num_of_threads; i++)
     {
-        memory_cache_add_entry(pool->thr_arr[i], 10000000);
+        memory_cache_add_entry(cache, pool->thr_arr[i], 10000000);
     }
 }

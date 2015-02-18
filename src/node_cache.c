@@ -6,7 +6,7 @@
 #include "logger.h"
 
 typedef struct memory_cache_data {
-    void *data;
+    void *area;
     size_t data_size;
     size_t offset;
     struct memory_cache_data *next_entry;
@@ -23,7 +23,7 @@ struct memory_cache_ {
     struct memory_cache_entry *entry;
 };
 
-memory_cache *global_cache = NULL;
+memory_cache *current_cache = NULL;
 
 memory_cache_data *memory_cache_create_data(size_t size)
 {
@@ -36,64 +36,56 @@ memory_cache_data *memory_cache_create_data(size_t size)
     memset(data, 0, sizeof(memory_cache_data));
     data->data_size = size;
 
-    data->data = malloc(size);
-    if (data->data == NULL)
+    data->area = malloc(size);
+    if (data->area == NULL)
     {
         error("memory_cache_data:: data malloc");
         return NULL;
     }
-    memset(data->data, 0, size);
+    memset(data->area, 0, size);
 
     return data;
 }
 
-void memory_cache_reset_data(memory_cache_data *data)
+void memory_cache_release_data(memory_cache_data *data)
 {
-    while (data != NULL)
+    memory_cache_data *current = data;
+    while (current != NULL)
     {
-        memset(data->data, 0, data->data_size);
-        data->offset = 0;
-        data = data->next_entry;
+        memory_cache_data *next = current->next_entry;
+        free(current->area);
+        free(current);
+        current = next;
     }
 }
 
-int memory_cache_create()
+memory_cache *memory_cache_create()
 {
     memory_cache *cache = malloc(sizeof(memory_cache));
     if (cache == NULL)
     {
         error("memory_cache_create:: malloc");
-        return 1;
+        return NULL;
     }
 
     memset(cache, 0, sizeof(memory_cache));
-    global_cache = cache;
-    return 0;
+    return cache;
 }
 
-void memory_cache_reset()
+void memory_cache_release(memory_cache *cache)
 {
-    memory_cache_entry *entry = global_cache->entry;
-    while (entry != NULL)
+    memory_cache_entry *current = cache->entry;
+    while (current != NULL)
     {
-        memory_cache_reset_data(entry->head);
-        entry = entry->next_entry;
+        memory_cache_entry *next = current->next_entry;
+        memory_cache_release_data(current->head);
+        free(current);
+        current = next;
     }
+    free(cache);
 }
 
-void memory_cache_release()
-{
-    memory_cache_entry *entry = global_cache->entry;
-    while (entry != NULL)
-    {
-        memory_cache_entry *t = entry->next_entry;
-        free(entry);
-        entry = t;
-    }
-    free(global_cache);
-}
-
-void memory_cache_add_entry(pthread_t thread, size_t size)
+void memory_cache_add_entry(memory_cache *cache, pthread_t thread, size_t size)
 {
     memory_cache_entry *e = malloc(sizeof(memory_cache_entry));
     if (e == NULL)
@@ -112,22 +104,27 @@ void memory_cache_add_entry(pthread_t thread, size_t size)
     }
     e->tail = e->head;
 
-    if (global_cache->entry == NULL)
+    if (cache->entry == NULL)
     {
-        global_cache->entry = e;
+        cache->entry = e;
     }
     else
     {
-        memory_cache_entry *t = global_cache->entry;
+        memory_cache_entry *t = cache->entry;
         while (t->next_entry != NULL) t = t->next_entry;
         t->next_entry = e;
     }
 }
 
+void memory_cache_set_current(memory_cache *cache)
+{
+    current_cache = cache;
+}
+
 void *memory_cache_allocate(size_t size)
 {
     pthread_t self = pthread_self();
-    memory_cache_entry *t = global_cache->entry;
+    memory_cache_entry *t = current_cache->entry;
     while (t != NULL && t->thread != self) t = t->next_entry;
     if (t == NULL || t->thread != self)
     {
@@ -155,7 +152,7 @@ void *memory_cache_allocate(size_t size)
         }
     }
 
-    void *result = data->data + data->offset;
+    void *result = data->area + data->offset;
     data->offset = data->offset + size;
 
     return result;
