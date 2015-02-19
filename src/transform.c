@@ -579,7 +579,7 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
       if(name) {
-        included = XMLParseFile(pctx->gctx, name);
+        included = xml_parse_file(pctx->gctx, name, 1);
         if(included) {
           node->type=EMPTY_NODE;
           node->children=included;
@@ -639,7 +639,7 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
         	pctx->local_part = s+1;
 
        	debug("process_imports:: include %s", name);
-        included = XMLParseFile(pctx->gctx, name);
+        included = xml_parse_file(pctx->gctx, name, 1);
         if(included != NULL) 
         {
           xsl_preprocess(pctx, included);  //process includes and clean-up

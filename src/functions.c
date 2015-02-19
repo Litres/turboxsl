@@ -618,7 +618,7 @@ void xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
     abs = get_abs_name(pctx, docname);
     debug("xf_document:: abs %s", abs);
     if(abs) {
-      doc = XMLParseFile(pctx->gctx, abs);
+      doc = xml_parse_file(pctx->gctx, abs, 1);
       doc = add_to_selection(NULL, doc, &p);
     }
   }

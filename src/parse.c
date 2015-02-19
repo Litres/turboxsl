@@ -325,7 +325,7 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
   char *fn = hash("(string)",-1,0);
 
   memory_cache *cache = memory_cache_create();
-  memory_cache_add_entry(cache, pthread_self(), 10000000);
+  memory_cache_add_entry(cache, pthread_self(), 1000000);
   memory_cache_set_current(cache);
 
   ret = do_parse(gctx, document, fn);
@@ -338,6 +338,10 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
 //*
 XMLNODE *
 XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
+    return xml_parse_file(gctx, file, 0);
+}
+
+XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)  {
 	XMLNODE   *ret;
 	FILE      *pFile;
 	char      *buffer;
@@ -374,9 +378,13 @@ XMLParseFile(XSLTGLOBALDATA *gctx, char *file)  {
 	}
 	buffer[length] = 0;
 
-    memory_cache *cache = memory_cache_create();
-    memory_cache_add_entry(cache, pthread_self(), 10000000);
-    memory_cache_set_current(cache);
+    memory_cache *cache = NULL;
+    if (has_cache == 0)
+    {
+        cache = memory_cache_create();
+        memory_cache_add_entry(cache, pthread_self(), 1000000);
+        memory_cache_set_current(cache);
+    }
 
 	ret = do_parse(gctx, buffer, file);
     renumber_children(ret);

@@ -166,6 +166,8 @@ struct _context {
 };
 
 
+XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache);
+
 /********************** cache.c -- global hash **********************/
 void init_hash();
 void drop_hash();
