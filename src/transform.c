@@ -742,7 +742,11 @@ XSLTGLOBALDATA *XSLTInit()
 void XMLFreeDocument(XMLNODE *doc)
 {
     debug("XMLFreeDocument:: file %s", doc->file);
-    memory_cache_release(doc->cache);
+
+    XMLNODE *children = doc->children;
+    if (children != NULL) XMLFreeDocument(children);
+
+    if (doc->cache != NULL) memory_cache_release(doc->cache);
 }
 
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
