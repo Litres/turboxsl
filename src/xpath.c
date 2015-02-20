@@ -457,6 +457,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
   unsigned pos = 0;
 
   if(!etree) {
+    debug("xpath_execute_scalar:: etree is NULL");
     res->type = VAL_NULL;
     return;
   }
@@ -706,6 +707,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       } else {
       	res->v.integer=0;
       }
+      debug("xpath_execute_scalar:: NE = %lu", res->v.integer);
       rval_free(&rv);
       rval_free(&rv1);
       return;

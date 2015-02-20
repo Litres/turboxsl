@@ -212,6 +212,7 @@ int rval_compare(RVALUE *left, RVALUE *right)
 
 int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
 {
+  debug("rval_equal:: a (%d) %s b (%d)", left->type, eq == 0 ? "!=" : "=", right->type);
   int rc;
   double ld,rd;
 
@@ -220,7 +221,7 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
   if(right->type == VAL_NULL)
     return 0;
 
-  if(left->type == VAL_BOOL || left->type == VAL_BOOL) {
+  if(left->type == VAL_BOOL || right->type == VAL_BOOL) {
     int lb,rb;
     lb = rval2bool(left);
     rb = rval2bool(right);
@@ -234,18 +235,19 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
       l=node2string(ln);
       for(rn=right->v.nodeset;rn;rn=rn->next) {
         r=node2string(rn);
-        if(0==xml_strcmp(l,r)) {
+        // depends on eq search for non equal or equal pair
+        if(eq == 0 ? xml_strcmp(l,r) != 0 : xml_strcmp(l,r) == 0) {
           free(r);
           free(l);
           rval_free(left);
           rval_free(right);
-          return eq;
+          return 1;
         }
         free(r);
       }
       free(l);
     }
-    return !eq;
+    return 0;
   }
 
   if(left->type == VAL_NODESET) {
@@ -254,17 +256,18 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
     r = rval2string(right);
     for(p=left->v.nodeset;p;p=p->next) {
       l = node2string(p);
-      if(0==xml_strcmp(l,r)) {
+      // depends on eq search for non equal or equal pair
+      if(eq == 0 ? xml_strcmp(l,r) != 0 : xml_strcmp(l,r) == 0) {
         free(r);
         free(l);
         rval_free(left);
-        return eq;
+        return 1;
       }
       free(l);
     }
     free(r);
     rval_free(left);
-    return !eq;
+    return 0;
   } else if(right->type == VAL_NODESET) {
     XMLNODE *p;
     char *l, *r;
