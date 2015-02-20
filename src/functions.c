@@ -503,45 +503,44 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 
 void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  short *src,*pat,*sub;
-  char *s;
-  unsigned i,j;
-  RVALUE rv;
-  XMLSTRING xs;
-
   res->type = VAL_STRING;
+  RVALUE rv;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  s = rval2string(&rv);
+  char *s = rval2string(&rv);
   if(!s) {
     res->v.string = NULL;
     return;
   }
-  
-  src = utf2ws(s);
-  xs = xmls_new(strlen(s)+10);
-  free(s);
-  if(args->next) {
-    xpath_execute_scalar(pctx, locals, args->next, current, &rv);
-    s = rval2string(&rv);
-    pat = utf2ws(s);
+
+  if(args->next == NULL || args->next->next == NULL) {
+    res->v.string = NULL;
     free(s);
-    if(args->next->next) {
-      xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
-      s = rval2string(&rv);
-      sub = utf2ws(s);
-      free(s);
-    }
+    return;
   }
 
-  for(i=0;src[i];++i) {
+  short *src = utf2ws(s);
+  XMLSTRING xs = xmls_new(strlen(s)+10);
+  free(s);
+
+  xpath_execute_scalar(pctx, locals, args->next, current, &rv);
+  s = rval2string(&rv);
+  short *pat = utf2ws(s);
+  free(s);
+
+  xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
+  s = rval2string(&rv);
+  short *sub = utf2ws(s);
+  free(s);
+
+  for(int i=0;src[i];++i) {
     short v = src[i];
-    for(j=0;pat[j];++j) {
+    for(int j=0;pat[j];++j) {
       if(v==pat[j]) {
         v = sub[j];
         continue;
       }
     }
-    xmls_add_utf(xs,v);
+    if (v != 0) xmls_add_utf(xs,v);
   }
   xmls_add_char(xs,0);
 
