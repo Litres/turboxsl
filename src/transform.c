@@ -21,7 +21,6 @@
 static void init_processor(XSLTGLOBALDATA *gctx)
 {
   if(!gctx->initialized) {
-    gctx->nthreads = 4;
     init_hash();
     xsl_stylesheet = hash("xsl:stylesheet",-1,0);
     xsl_template   = hash("xsl:template",-1,0);
@@ -720,7 +719,6 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 void XSLTEnd(XSLTGLOBALDATA *data)
 {
   drop_hash();
-  threadpool_free(data->pool);
   dict_free_data(data->urldict);
 
   free(data->perl_functions);
@@ -733,8 +731,6 @@ XSLTGLOBALDATA *XSLTInit()
   memset(ret,0,sizeof(XSLTGLOBALDATA));
   init_processor(ret);
   ret->urldict = dict_new(300);
-
-  ret->pool = threadpool_init(ret->nthreads);
 
   return ret;
 }
@@ -751,7 +747,7 @@ void XMLFreeDocument(XMLNODE *doc)
 
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
-  debug("XSLTFreeProcessor");
+  info("XSLTFreeProcessor");
   dict_free(pctx->named_templ);
   if(pctx->keys)
     xml_free_node(NULL,pctx->keys);
@@ -762,6 +758,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   XMLFreeDocument(pctx->stylesheet);
 
   memory_cache_release(pctx->cache);
+  threadpool_free(pctx->pool);
 
   free(pctx->templtab);
   free(pctx->sort_keys);
@@ -773,7 +770,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
 {
-  debug("XSLTNewProcessor:: stylesheet %s", stylesheet);
+  info("XSLTNewProcessor:: stylesheet %s", stylesheet);
 
   TRANSFORM_CONTEXT *ret = malloc(sizeof(TRANSFORM_CONTEXT));
   if(!ret) return NULL;
@@ -790,6 +787,8 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   }
   memory_cache_add_entry(ret->cache, pthread_self(), 10000000);
   memory_cache_set_current(ret->cache);
+
+  ret->pool = threadpool_init(4);
 
   ret->gctx = gctx;
   ret->stylesheet = XMLParseFile(gctx, stylesheet);
@@ -865,11 +864,11 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
 
-  threadpool_set_cache(cache, pctx->gctx->pool);
+  threadpool_set_cache(cache, pctx->pool);
 
   info("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);
-  threadpool_wait(pctx->gctx->pool);
+  threadpool_wait(pctx->pool);
   info("XSLTProcess:: end process");
 
 /****************** add dtd et al if required *******************/

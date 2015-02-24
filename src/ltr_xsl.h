@@ -105,8 +105,6 @@ struct _globaldata {
   unsigned perl_cb_ptr;
   char *(*perl_cb_dispatcher)(void (*fun)(),char **args);
   void (*perl_urlcode)();
-  unsigned nthreads;
-  struct threadpool *pool;
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;
@@ -130,6 +128,7 @@ typedef enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} OUTPUT_MODE;
 
 struct _context {
   XSLTGLOBALDATA *gctx;
+  struct threadpool *pool;
   memory_cache *cache;
   char *docname;
   char *fnbuf;

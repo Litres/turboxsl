@@ -106,7 +106,7 @@ void threadpool_wait(struct threadpool *pool)
 
 void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode)
 {
-    struct threadpool *pool = pctx->gctx->pool;
+    struct threadpool *pool = pctx->pool;
     if (!pool)
     {
         (*routine)(pctx, ret, source, params, locals, mode);
