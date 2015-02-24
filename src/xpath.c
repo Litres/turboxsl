@@ -1080,63 +1080,75 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
   else 
   {
     node1 = xml_new_node(pctx,NULL,XPATH_NODE_SELECT);
-    if(!match(eptr,"child::")) //skip default child prefix
+    if(match(eptr,"child::"))
     {
-      if(match(eptr,"attribute::"))
+      if(**eptr=='*')
       {
-        if(**eptr=='*') 
-        {
-          ++(*eptr);
-          node1->type = XPATH_NODE_ATTR_ALL;
-          return node1;
-        }
-        else
-          node1->type = XPATH_NODE_ATTR;
-      }
-      else if(match(eptr,"ancestor::")) 
-      {
-        node1->type = XPATH_NODE_ANCESTOR;
-
-        if(**eptr=='*') 
-        {
-          ++(*eptr);
-          node1->name = NULL;
-          return node1;
-        }
-      } 
-      else if(match(eptr,"descendant::")) {
-        node1->type = XPATH_NODE_DESCENDANTS;
-
-        if(**eptr=='*') 
-        {
-          ++(*eptr);
-          node1->name = NULL;
-          return node1;
-        }
-      } 
-      else if(match(eptr,"preceding-sibling::")) 
-      {
-        node1->type = XPATH_NODE_PRE_SIBLING;
-        
-        if(**eptr=='*') 
-        {
-          ++(*eptr);
-          node1->name = NULL;
-          return node1;
-        }
-      } 
-      else if(match(eptr,"following-sibling::")) 
-      {
-        node1->type = XPATH_NODE_AFT_SIBLING;
-        
-        if(**eptr=='*') 
-        {
-          ++(*eptr);
-          node1->name = NULL;
-          return node1;
-        }
+        ++(*eptr);
+        node1->name = NULL;
+        return node1;
       }
     }
+    else if(match(eptr,"attribute::"))
+    {
+      if(**eptr=='*')
+      {
+        ++(*eptr);
+        node1->type = XPATH_NODE_ATTR_ALL;
+        return node1;
+      }
+      else
+        node1->type = XPATH_NODE_ATTR;
+    }
+    else if(match(eptr,"ancestor::"))
+    {
+      node1->type = XPATH_NODE_ANCESTOR;
+
+      if(**eptr=='*')
+      {
+        ++(*eptr);
+        node1->name = NULL;
+        return node1;
+      }
+    }
+    else if(match(eptr,"descendant::")) {
+      node1->type = XPATH_NODE_DESCENDANTS;
+
+      if(**eptr=='*')
+      {
+        ++(*eptr);
+        node1->name = NULL;
+        return node1;
+      }
+    }
+    else if(match(eptr,"preceding-sibling::"))
+    {
+      node1->type = XPATH_NODE_PRE_SIBLING;
+
+      if(**eptr=='*')
+      {
+        ++(*eptr);
+        node1->name = NULL;
+        return node1;
+      }
+    }
+    else if(match(eptr,"following-sibling::"))
+    {
+      node1->type = XPATH_NODE_AFT_SIBLING;
+
+      if(**eptr=='*')
+      {
+        ++(*eptr);
+        node1->name = NULL;
+        return node1;
+      }
+    }
+    else if(match(eptr,"self::"))
+    {
+      node1->type = XPATH_NODE_SELF;
+      return node1;
+    }
+
     p = *eptr;
   }
 
