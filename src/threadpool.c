@@ -236,6 +236,7 @@ struct threadpool *threadpool_init(int num_of_threads)
         free(pool);
         return NULL;
     }
+    memset(pool->tasks, 0, sizeof(struct threadpool_task) * num_of_threads);
 
     locks = malloc(sizeof(struct thread_lock) * 10);
     memset(locks, 0, sizeof(struct thread_lock) * 10);
@@ -245,9 +246,6 @@ struct threadpool *threadpool_init(int num_of_threads)
     /* Start the worker threads. */
     for (size_t i = 0; i < num_of_threads; i++)
     {
-        pool->tasks[i].signature = 0;
-        pool->tasks[i].terminate = 0;
-
         if (pthread_mutex_init(&(pool->tasks[i].rmutex), NULL))
         {
             perror("pthread_mutex_init: ");
