@@ -59,7 +59,7 @@ void memory_cache_release_data(memory_cache_data *data)
         free(current);
         current = next;
     }
-    info("memory_cache_release_data:: free memory: %lu bytes", total_data_size);
+    debug("memory_cache_release_data:: free memory: %lu bytes", total_data_size);
 }
 
 size_t memory_cache_entry_size(memory_cache_entry *entry)
@@ -101,7 +101,7 @@ memory_cache *memory_cache_create()
 
 void memory_cache_release(memory_cache *cache)
 {
-    info("memory_cache_release:: cache size: %lu bytes", memory_cache_size(cache));
+    debug("memory_cache_release:: cache size: %lu bytes", memory_cache_size(cache));
     memory_cache_entry *current = cache->entry;
     while (current != NULL)
     {
