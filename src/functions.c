@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 #include "ltr_xsl.h"
 #include "md5.h"
@@ -143,43 +144,45 @@ void xf_concat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 
 void xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
-  char *s = NULL;
-  char *p;
-  char *d;
-  int n;
   res->type = VAL_STRING;
+
+  RVALUE rv;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  s = rval2string(&rv);
+  char *s = rval2string(&rv);
   if(!s) {
     res->v.string = NULL;
     return;
   }
+
+
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
-  n = (int)floor(rval2number(&rv));
+  int start = (int)floor(rval2number(&rv));
 
-  for(p=s;n>1;--n) {
-    if(*p++==0)
-      break;
-    if((0x0C0 & *p)==0x080)
-      ++n;
-  }
-
+  int length = INT_MAX;
   if(args->next->next) {
     xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
-    n = (int)floor(rval2number(&rv));
-  } else n = 100500;
-  for(d=s;n>0;--n) {
-    *d = *p;
-    if(*p++==0)
-      break;
-    ++d;
-    if((0x0C0 & *p)==0x080)
-      ++n;
+    length = (int)floor(rval2number(&rv));
+    if (length < 0) {
+      res->v.string = NULL;
+      free(s);
+      return;
+    }
   }
-  *d = 0;
 
-  res->v.string = s;
+  debug("xf_substr:: start: %d, length: %d", start, length);
+
+  short *src = utf2ws(s);
+  free(s);
+
+  XMLSTRING xs = xmls_new(100);
+  size_t p = 0;
+  while (src[p] != 0) {
+    if (p + 1 >= start && p + 1 < start + length) xmls_add_utf(xs, src[p]);
+    p = p + 1;
+  }
+
+  res->v.string = xmls_detach(xs);
+  free(src);
 }
 
 void xf_tostr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -519,7 +522,6 @@ void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   }
 
   short *src = utf2ws(s);
-  XMLSTRING xs = xmls_new(strlen(s)+10);
   free(s);
 
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
@@ -532,6 +534,7 @@ void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   short *sub = utf2ws(s);
   free(s);
 
+  XMLSTRING xs = xmls_new(100);
   for(int i=0;src[i];++i) {
     short v = src[i];
     for(int j=0;pat[j];++j) {
