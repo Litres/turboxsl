@@ -974,6 +974,59 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
 {
   res->type = VAL_NODESET;
   res->v.nodeset = NULL;
+  
+  RVALUE rv;
+  xpath_execute_scalar(pctx, locals, args, current, &rv);
+  char *key_name = rval2string(&rv);
+  if(!key_name) {
+    error("xf_key:: key name is NULL");
+    return;
+  }
+
+  if (args->next == NULL) {
+    error("xf_key:: syntax error");
+    free(key_name);
+    return;
+  }
+
+  xpath_execute_scalar(pctx, locals, args->next, current, &rv);
+  char *key_value = rval2string(&rv);
+  if(!key_value) {
+    error("xf_key:: key value is NULL");
+    free(key_name);
+    return;
+  }
+  
+  XMLNODE *key = pctx->keys;
+  while (key != NULL) {
+    if (strcmp(key->name, key_name) == 0) {
+      break;
+    }
+    key = key->next;
+  }
+  if (key == NULL) {
+    error("xf_key:: unknown key name: %s", key_name);
+    free(key_name);
+    free(key_value);
+    return;
+  }
+
+  debug("xf_key:: key: %s, value: %s", key_name, key_value);
+
+  char *format = key->content;
+  int size = snprintf(NULL, 0, format, key_value);
+  if (size > 0) {
+    int buffer_size = size + 1;
+    char *buffer = memory_cache_allocate(buffer_size);
+    if (snprintf(buffer, buffer_size, format, key_value) == size) {
+      debug("xf_key:: key predicate: %s", buffer);
+      XPATH_EXPR *expression = xpath_find_expr(pctx, buffer);
+      res->v.nodeset = xpath_eval_selection(pctx, locals, current, expression);
+    }
+  }
+
+  free(key_name);
+  free(key_value);
 }
 
 /*******************************************************************************/

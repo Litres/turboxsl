@@ -682,9 +682,20 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     if(node->name==xsl_key) {
       name = xml_get_attr(node, xsl_a_name);
       tmp = xml_new_node(pctx, name, KEY_NODE);
-      tmp->content = xml_strdup(xml_get_attr(node, xsl_a_match));
-      name = xml_get_attr(node, xsl_a_use);
-      tmp->compiled = xpath_find_expr(pctx, name);
+
+      char *match = xml_get_attr(node, xsl_a_match);
+      char *use = xml_get_attr(node, xsl_a_use);
+      char *format = "descendant::%s[%s = '%%s']";
+      int size = snprintf(NULL, 0, format, match, use);
+      if (size > 0) {
+        int buffer_size = size + 1;
+        char *buffer = memory_cache_allocate(buffer_size);
+        if (snprintf(buffer, buffer_size, format, match, use) == size) {
+          debug("process_global_flags:: key predicate: %s", buffer);
+          tmp->content = buffer;
+        }
+      }
+
       tmp->next = pctx->keys;
       pctx->keys = tmp;
     }

@@ -144,7 +144,7 @@ char *node2string(XMLNODE *node)
 
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position)
 {
-  debug("add_to_selection:: previous %s, source %s", prev == NULL ? NULL : prev->name, src == NULL ? NULL : src->name);
+  debug("add_to_selection:: previous: %s, source: %s", prev == NULL ? NULL : prev->name, src == NULL ? NULL : src->name);
   if(src==NULL)
     return prev;
 
@@ -227,6 +227,8 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
   RVALUE rv;
   unsigned int pos = 0;
   tmp = NULL;
+
+  if (nodeset->type == EMPTY_NODE) nodeset = nodeset->children;
   
   if(expr->type == XPATH_NODE_INT) { // select n-th node from selection
     long n = expr->extra.v.integer;
@@ -241,6 +243,7 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
   }
   else { // execute check expr for each node in nodeset, if true - add to new set
     for(;nodeset;nodeset=nodeset->next) {
+      trace("xpath_filter:: node: %s", nodeset->name);
       xpath_execute_scalar(pctx, locals, expr, nodeset, &rv);
 
       if (rv.type == VAL_INT) 
@@ -275,7 +278,7 @@ static
 XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, unsigned int *pos, XMLNODE **head)
 {
   for(;node;node=node->next) {
-    debug("add_all_children:: child %s (%s)", node->name, nodeTypeNames[node->type]);
+    trace("add_all_children:: child: %s (%s)", node->name, nodeTypeNames[node->type]);
     if(node->type == EMPTY_NODE) {
       tmp = add_all_children(tmp,node->children,pos,head);
       continue;
@@ -295,7 +298,7 @@ XMLNODE *xpath_get_descendants(XMLNODE *nodeset)
   XMLNODE *head = xml_new_node(NULL, NULL, EMPTY_NODE);
   unsigned pos = 0;
   for(;nodeset;nodeset=nodeset->next) {
-    debug("xpath_get_descendants:: node %s", nodeset->name);
+    trace("xpath_get_descendants:: node: %s", nodeset->name);
     tmp = add_all_children(tmp,nodeset->children,&pos,&(head->children));
   }
   head->flags|=0x8000;
