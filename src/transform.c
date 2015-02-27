@@ -625,6 +625,7 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
   for(;node;node=node->next) 
   {
+    trace("process_imports:: node: %s", node->name);
     if(node->name == xsl_import) 
     {
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
@@ -647,15 +648,15 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
           node->children = included;
           debug("process_imports:: importing %s", pctx->fnbuf);
           precompile_templates(pctx, included);
-          node = included;
-        } 
+        }
         else {
           debug("process_imports:: failed to import %s", pctx->fnbuf);
         }
         pctx->local_part = save_local;
       }
-    } 
+    }
     else if(node->children) {
+      trace("process_imports:: process children");
       process_imports(pctx,node->children); //process imports if any
     }
   }

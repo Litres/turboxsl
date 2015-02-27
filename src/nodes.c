@@ -10,7 +10,6 @@
 **/
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "ltr_xsl.h"
@@ -75,15 +74,10 @@ XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
     XMLNODE *ret = memory_cache_allocate(sizeof(XMLNODE));
     if (ret == NULL)
     {
-        ret = (XMLNODE *) malloc(sizeof(XMLNODE));
-        if (ret == NULL)
-        {
-            error("xml_new_node:: malloc");
-            return NULL;
-        }
+        error("xml_new_node:: malloc");
+        return NULL;
     }
 
-    memset(ret, 0, sizeof(XMLNODE));
     ret->type = type;
     ret->name = name;
     ret->uid = nuid++;

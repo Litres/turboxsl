@@ -98,8 +98,7 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
 
 static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name, char *match, char *mode)
 {
-  char *pp;
-
+  trace("add_template:: name: %s, match: %s", name, match);
   if(match) 
   {
     while(match) 
@@ -111,7 +110,7 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
       }
       else 
       {
-        pp = strchr(match,'|');
+        char *pp = strchr(match,'|');
         if(pp) 
         {
           *pp = 0;
@@ -129,7 +128,15 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
   } 
   else 
   {
-    dict_add(pctx->named_templ, name, content);
+    if (dict_find(pctx->named_templ, name) != NULL)
+    {
+      debug("add_template:: replace template: %s", name);
+      dict_replace(pctx->named_templ, name, content);
+    }
+    else
+    {
+      dict_add(pctx->named_templ, name, content);
+    }
   }
 }
 
@@ -382,6 +389,7 @@ void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
   for(;node;node=node->next) 
   {
+    trace("precompile_templates:: node: %s", node->name);
     if(node->type==ELEMENT_NODE && node->name==xsl_template) 
     {
       char *name  = hash(xml_get_attr(node,xsl_a_name),-1,0);
