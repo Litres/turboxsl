@@ -21,9 +21,41 @@ static XMLNODE enode;
 char *fn_text = NULL;
 char *fn_node = NULL;
 
+XMLNODE *find_logic_parent(XMLNODE *node)
+{
+  // first search xsl:include node
+  XMLNODE *current = node;
+  while (current != NULL)
+  {
+    XMLNODE *parent = current->parent;
+    if (parent == NULL) break;
+    if (strcmp(parent->name, xsl_include) == 0)
+    {
+      return parent->parent;
+    }
+
+    current = parent;
+  }
+
+  // if not included, search root
+  current = node;
+  while (current != NULL)
+  {
+    XMLNODE *parent = current->parent;
+    if (strcmp(parent->name, "root") == 0)
+    {
+      return current;
+    }
+
+    current = parent;
+  }
+
+  return node;
+}
+
 static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 {
-  unsigned r;
+  trace("templtab_add:: name: %s", name);
 
   if(pctx->templcnt>=pctx->templno) 
   {
@@ -38,7 +70,7 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
     pctx->templtab = realloc(pctx->templtab, pctx->templno*sizeof(TEMPLATE));
   }
 
-  r = pctx->templcnt++;
+  unsigned r = pctx->templcnt++;
   pctx->templtab[r].name = hash(name,-1,0);
   pctx->templtab[r].content = content;
   pctx->templtab[r].match = NULL;
@@ -51,12 +83,12 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 
 static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *match, char *mode)
 {
-  unsigned r;
-  char *m1;
+  trace("add_templ_match:: match: %s", match);
 
   while(x_is_ws(*match))  // skip leading whitespace;
     ++match;
-  for(r=strlen(match);r;--r) {  //trailing whitespace
+
+  for(unsigned r=strlen(match);r;--r) {  //trailing whitespace
     if(x_is_ws(match[r-1])) {
       match[r-1]=0;
     } 
@@ -69,9 +101,22 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
     content = &enode;
 
   mode = hash(mode,-1,0);
-  m1 = hash(match,-1,0);
+  char *m1 = hash(match,-1,0);
 
-  r = templtab_add(pctx, content, NULL);
+  for (unsigned i = 0; i < pctx->templcnt; i++) {
+    if (pctx->templtab[i].match == m1 && pctx->templtab[i].mode == mode) {
+      debug("add_templ_match:: found existing template: %d", i);
+      XMLNODE *parent = find_logic_parent(pctx->templtab[i].content);
+      XMLNODE *current_parent = find_logic_parent(content);
+      if (parent == current_parent) {
+        debug("add_templ_match:: replace existing template");
+        pctx->templtab[i].content = content;
+        return i;
+      }
+    }
+  }
+
+  unsigned r = templtab_add(pctx, content, NULL);
   pctx->templtab[r].match = m1;
   pctx->templtab[r].mode = mode;
   if(match[0]=='*' && match[1]==0) 
@@ -321,8 +366,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
 XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // name here is node name, so is already hashed
 {
-  XMLNODE *tmp = NULL;
-  XMLNODE *selection;
+  trace("find_template:: name: %s", node->name);
 
   char *name = node->name;
   int i;
@@ -356,7 +400,7 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
       case TMATCH_SELECT:
         if(select_match(pctx, node, pctx->templtab[i].expr))
           return pctx->templtab[i].content;
-        
+
         break;
     }
   }
@@ -364,6 +408,7 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
   if(node!=pctx->root_node) {
     for(i=0;i<pctx->templcnt;++i) {
       if(pctx->templtab[i].mode==mode && pctx->templtab[i].matchtype==TMATCH_ALWAYS) {
+        trace("find_template:: always match");
         return pctx->templtab[i].content;
       }
     }
@@ -400,6 +445,9 @@ void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     }
 
     if(node->children)
+    {
+      trace("precompile_templates:: children");
       precompile_templates(pctx, node->children);
+    }
   }
 }

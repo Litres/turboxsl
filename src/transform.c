@@ -524,6 +524,7 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
   templ = find_template(pctx, source, mode);
 
   if(templ) {
+    trace("process_one_node:: found template: %s", templ->name);
     apply_xslt_template(pctx, ret, source, templ, params, locals);
   } else {
     apply_default_process(pctx, ret, source, params, locals, mode);
@@ -578,8 +579,10 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
       if(name) {
+        trace("xsl_preprocess:: include file: %s", name);
         included = xml_parse_file(pctx->gctx, name, 1);
         if(included) {
+          included->parent = node;
           node->type=EMPTY_NODE;
           node->children=included;
         } else {
@@ -625,21 +628,17 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
   for(;node;node=node->next) 
   {
-    trace("process_imports:: node: %s", node->name);
     if(node->name == xsl_import) 
     {
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
-      XMLNODE *included;
       if(name) 
       {
         char *save_local = pctx->local_part;
         char *s = strrchr(pctx->local_part, '/');
+        if (s) pctx->local_part = s + 1;
 
-        if (s) 
-        	pctx->local_part = s+1;
-
-       	debug("process_imports:: include %s", name);
-        included = xml_parse_file(pctx->gctx, name, 1);
+       	debug("process_imports:: import %s", name);
+        XMLNODE *included = xml_parse_file(pctx->gctx, name, 1);
         if(included != NULL) 
         {
           xsl_preprocess(pctx, included);  //process includes and clean-up
