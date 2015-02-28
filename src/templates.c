@@ -23,6 +23,8 @@ char *fn_node = NULL;
 
 XMLNODE *find_logic_parent(XMLNODE *node)
 {
+  if (node->parent == NULL) return NULL;
+
   // first search xsl:include node
   XMLNODE *current = node;
   while (current != NULL)

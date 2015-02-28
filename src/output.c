@@ -168,5 +168,4 @@ void XMLOutputFile(TRANSFORM_CONTEXT *ctx, XMLNODE *tree, char *filename)
     fputs("\n",f);
   }
   fclose(f);
-  free(result);
 }

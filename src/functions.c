@@ -34,7 +34,6 @@ void xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
     mode = rval2string(&rv);
     if(xml_strcmp(mode,"js"))
       js = 0;
-    free(mode);
   }
   res->type = VAL_STRING;
   if(js && str) {
@@ -58,7 +57,6 @@ void xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
       }
     }
     res->v.string = xmls_detach(s);
-    free(str);
   } else {
     res->v.string = str;
   }
@@ -79,7 +77,7 @@ void xf_getid(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *
   if(current) {
     sprintf(buf,"id%x",current->uid);
     res->type = VAL_STRING;
-    res->v.string = strdup(buf);
+    res->v.string = xml_strdup(buf);
   } else {
     res->type = VAL_NULL;
   }
@@ -130,9 +128,11 @@ void xf_concat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
     if(s) {
       t = rval2string(&rv);
       if(t) {
-        s = realloc(s, strlen(s)+strlen(t)+3);
+        char *data = s;
+        size_t data_size = strlen(s);
+        s = memory_cache_allocate(data_size + strlen(t) + 3);
+        memcpy(s, data, data_size);
         strcat(s,t);
-        free(t);
       }
     } else {
       s = rval2string(&rv);
@@ -164,7 +164,6 @@ void xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
     length = (int)floor(rval2number(&rv));
     if (length < 0) {
       res->v.string = NULL;
-      free(s);
       return;
     }
   }
@@ -172,7 +171,6 @@ void xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   debug("xf_substr:: start: %d, length: %d", start, length);
 
   short *src = utf2ws(s);
-  free(s);
 
   XMLSTRING xs = xmls_new(100);
   size_t p = 0;
@@ -182,7 +180,6 @@ void xf_substr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   }
 
   res->v.string = xmls_detach(xs);
-  free(src);
 }
 
 void xf_tostr(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -257,7 +254,6 @@ void xf_sum(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
       for(node=rv.v.nodeset;node;node=node->next) {
         char *s = node2string(node);
         d = d + strtod(s, NULL);
-        free(s);
       }
     } else {
       d = d + rval2number(&rv);
@@ -280,9 +276,6 @@ void xf_contains(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   res->v.integer = 0;
   if(s && p && strstr(s,p))
     res->v.integer = 1;
-//fprintf(stderr,"contains(%s,%s)=%d\n",s,p,res->v.integer);
-  free(s);
-  free(p);
 }
 
 void xf_starts(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -297,9 +290,6 @@ void xf_starts(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   res->v.integer = 0;
   if(s && p && strstr(s,p)==s)
     res->v.integer = 1;
-//fprintf(stderr,"contains(%s,%s)=%d\n",s,p,res->v.integer);
-  free(s);
-  free(p);
 }
 
 void xf_sub_before(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -319,7 +309,6 @@ void xf_sub_before(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
       res->v.string = s;
     }
   }
-  free(p);
 }
 
 void xf_sub_after(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -336,10 +325,9 @@ void xf_sub_after(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
     z = strstr(s,p);
     if(z) {
       z+=strlen(p);
-      res->v.string = strdup(z);
+      res->v.string = xml_strdup(z);
     }
   }
-  free(p);
 }
 
 void xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -419,7 +407,6 @@ void xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   }
   res->type = VAL_INT;
   res->v.integer = i;
-  free(s);  
 }
 
 
@@ -498,10 +485,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   // sprintf(fmt_buf, fmt, num);
 
   res->type     = VAL_STRING;
-  res->v.string = strdup(fmt_buf);
-
-  free(pat);
-  free(decf);
+  res->v.string = xml_strdup(fmt_buf);
 }
 
 void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -517,22 +501,18 @@ void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 
   if(args->next == NULL || args->next->next == NULL) {
     res->v.string = NULL;
-    free(s);
     return;
   }
 
   short *src = utf2ws(s);
-  free(s);
 
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
   s = rval2string(&rv);
   short *pat = utf2ws(s);
-  free(s);
 
   xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
   s = rval2string(&rv);
   short *sub = utf2ws(s);
-  free(s);
 
   XMLSTRING xs = xmls_new(100);
   for(int i=0;src[i];++i) {
@@ -548,10 +528,6 @@ void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   xmls_add_char(xs,0);
 
   res->v.string = xmls_detach(xs);
-
-  free(src);
-  free(pat);
-  free(sub);
 }
 
 void xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -568,9 +544,9 @@ void xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *c
     }
   }
   if(current && current->name)
-    s = strdup(current->name);
+    s = xml_strdup(current->name);
   else
-    s = strdup("");
+    s = xml_strdup("");
 
   res->type = VAL_STRING;
   res->v.string = s;
@@ -583,13 +559,13 @@ void xf_lname(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *
   if(current && current->name) {
     s = strchr(current->name,':');
     if(s) {
-      s = strdup(s+1);
+      s = xml_strdup(s+1);
     } else {
-      s = strdup(current->name);
+      s = xml_strdup(current->name);
     }
   }
   else
-    s = strdup("");
+    s = xml_strdup("");
 
   res->type = VAL_STRING;
   res->v.string = s;
@@ -632,8 +608,6 @@ void xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
   else {
     res->type = VAL_NULL;
   }
-
-  free(docname);
 }
 
 
@@ -673,9 +647,7 @@ void xf_check(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *
       if(rights) {
         if(strstr(rights,str))
           res->v.integer = 1;
-        free(rights);
       }
-      free(str);
     }
   }
 }
@@ -699,21 +671,19 @@ void xf_md5(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
     str = rval2string(&rv);
     if(str) {
       xmls_add_str(msg, str);
-      free(str);
     }
   }
   str = xmls_detach(msg);
   md5_buffer(str,strlen(str),md5sig);
   md5_sig_to_string(md5sig,md5hex,33);
-  free(str);
   res->type = VAL_STRING;
-  res->v.string = strdup(md5hex);
+  res->v.string = xml_strdup(md5hex);
 }
 
 void xf_base64(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   res->type = VAL_STRING;
-  res->v.string = strdup("Aa3b24455632+30h");
+  res->v.string = xml_strdup("Aa3b24455632+30h");
 }
 
 static char *url_get_specials(TRANSFORM_CONTEXT *pctx, char *name)
@@ -734,7 +704,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   debug("xf_urlcode:: ");
   res->type = VAL_STRING;
   if(args==NULL) {
-    res->v.string = strdup("/");
+    res->v.string = xml_strdup("/");
     return;
   }
 
@@ -746,13 +716,11 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       xpath_execute_scalar(pctx, locals, parg, current, &rv);
       str = rval2string(&rv);
       xmls_add_str(key,str);
-      free(str);
       if(parg->next)
         xmls_add_char(key,',');
     }
     p = xmls_detach(key);
     str = hash(p,-1,0);
-    free(p);
     p = dict_find(pctx->gctx->urldict,str);
     if(!p) {
       p_args[0] = str;
@@ -760,7 +728,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       p = (pctx->gctx->perl_cb_dispatcher)(pctx->gctx->perl_urlcode, p_args);
       dict_add(pctx->gctx->urldict,str,p);
     }
-    res->v.string = strdup(p);
+    res->v.string = xml_strdup(p);
     return;
   }
   url = xmls_new(100);
@@ -794,10 +762,8 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
           separ = '&';
         }
       }
-      free(str);
     } else {
       xmls_add_str(url,str);
-      free(str);
       for(args=args->next;args;args=args->next) { // start from second arg
         xpath_execute_scalar(pctx, locals, args, current, &rv);
          str = rval2string(&rv);
@@ -816,10 +782,8 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
             xmls_add_str(url,ps);
             xmls_add_char(url,'=');
             xmls_add_str(url,value);
-            free(value);
             separ = '&';
           }
-          free(str);
         }
       }
     }
@@ -856,9 +820,7 @@ void xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
     if(rev) {
       xmls_add_char(url,'?');
       xmls_add_str(url,rev);
-      free(rev);
     }
-    free(str);
   }
 
   res->v.string = xmls_detach(url);
@@ -897,7 +859,6 @@ void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
         xmls_add_char(url,c);
       }
     }
-    free(tofree);
   }
 
   res->v.string = xmls_detach(url);
@@ -926,16 +887,13 @@ void xf_veristatl(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
     if(rev) {
       xmls_add_str(url,rev);
       xmls_add_char(url,'/');
-      free(rev);
     }
     xmls_add_str(url,str);
     rev = xsl_get_global_key(pctx, "staticFileRevisions",str);
     if(rev) {
       xmls_add_char(url,'?');
       xmls_add_str(url,rev);
-      free(rev);
     }
-    free(str);
   }
 
   res->v.string = xmls_detach(url);
@@ -985,7 +943,6 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
 
   if (args->next == NULL) {
     error("xf_key:: syntax error");
-    free(key_name);
     return;
   }
 
@@ -993,7 +950,6 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
   char *key_value = rval2string(&rv);
   if(!key_value) {
     error("xf_key:: key value is NULL");
-    free(key_name);
     return;
   }
   
@@ -1006,8 +962,6 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
   }
   if (key == NULL) {
     error("xf_key:: unknown key name: %s", key_name);
-    free(key_name);
-    free(key_value);
     return;
   }
 
@@ -1024,9 +978,6 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
       res->v.nodeset = xpath_eval_selection(pctx, locals, current, expression);
     }
   }
-
-  free(key_name);
-  free(key_value);
 }
 
 /*******************************************************************************/
@@ -1071,7 +1022,7 @@ static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args,
     xpath_execute_scalar(pctx, locals, args, current, &rv);
     s = rval2string(&rv);
     if(!s)
-      s = strdup("");
+      s = xml_strdup("");
     f_arg[i]=s;
     args=args->next;
   }
@@ -1082,9 +1033,6 @@ static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args,
     s = (pctx->gctx->perl_cb_dispatcher)(fun, f_arg);
   }
 
-  for(i=0;f_arg[i];++i) {
-    free(f_arg[i]);
-  }
   res->type = VAL_STRING;
   res->v.string = xml_strdup(s);
 }

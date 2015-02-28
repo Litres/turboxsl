@@ -163,7 +163,7 @@ void *memory_cache_allocate(size_t size)
     memory_cache_data *data = t->tail;
     if (data->offset + size > data->data_size)
     {
-        debug("memory_cache_allocate:: data entry full");
+        trace("memory_cache_allocate:: data entry full");
         if (data->next_entry == NULL)
         {
             memory_cache_data *new_data = memory_cache_create_data(data->data_size);

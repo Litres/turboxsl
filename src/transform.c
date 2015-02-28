@@ -162,10 +162,7 @@ void xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, char *name, cha
     tmp->name = name;
     tmp->next = parent->attributes;
     parent->attributes = tmp;
-  } else {
-    free(tmp->content);
   }
-
   tmp->content = value;
 }  
 
@@ -306,16 +303,13 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       for(p=value;*p && x_is_ws(*p);++p)  //remove extra ws at start
           ;
       p=xml_strdup(p);
-      free(value);
       xml_add_attribute(pctx,ret,aname,p);
-      free(aname);
     }
 /************************** <xsl:element> *****************************/
     else if(instr->name == xsl_element) {
       char *name = xml_process_string(pctx, locals, source, xml_get_attr(instr,xsl_a_name));
       tmp = xml_append_child(pctx,ret,ELEMENT_NODE);
       tmp->name = hash(name,-1,0);
-      free(name);
       name = xml_get_attr(instr,xsl_a_xmlns);
       if(name) {
         name = xml_process_string(pctx, locals, source, name);
@@ -440,7 +434,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       for(newtempl=instr->children;newtempl;newtempl=newtempl->next) {
         if(newtempl->type==TEXT_NODE) {
           tmp = xml_append_child(pctx,ret,TEXT_NODE);
-          tmp->content = strdup(newtempl->content);
+          tmp->content = xml_strdup(newtempl->content);
           tmp->flags |= instr->flags & XML_FLAG_NOESCAPE;
         }
       }
@@ -456,14 +450,13 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       char *msg = xml_eval_string(pctx, locals, source, instr->children);
       if(msg) {
         debug("apply_xslt_template:: message %s", msg);
-        free(msg);
       } else {
         error("apply_xslt_template:: fail to get message");
       }
 /************************** <xsl:number> ***********************/
     } else if(instr->name == xsl_number) { // currently unused by litres
       tmp = xml_append_child(pctx,ret,TEXT_NODE);
-      tmp->content = strdup("1.");
+      tmp->content = xml_strdup("1.");
 /************************** <xsl:comment> ***********************/
     } else if(instr->name == xsl_comment) {
       tmp = xml_append_child(pctx,ret,COMMENT_NODE);
@@ -598,7 +591,6 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
           break;
       }
       if(*p==0) {
-        free(node->content);
         node->content = NULL;
         xml_unlink_node(node);
         nfree(pctx,node);
@@ -898,7 +890,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
     sel = xpath_eval_selection(pctx, locals, t, xpath_find_expr(pctx,"head"));
     if(sel) {
       XMLNODE *meta = xml_new_node(pctx, NULL,TEXT_NODE);
-      meta->content = strdup("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
+      meta->content = xml_strdup("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
       meta->flags = XML_FLAG_NOESCAPE;
       meta->next = sel->children;
       if(sel->children) {

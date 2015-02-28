@@ -34,7 +34,7 @@ char *skip_spaces(char *p, unsigned *ln)  // TODO add UTF8 spaces
 static
 char *make_string(char *p, char *s)
 {
-  char * buf = malloc(s-p+2);
+  char * buf = memory_cache_allocate(s-p+2);
   memcpy(buf,p,s-p);
   buf[s-p]=0;
   return buf;

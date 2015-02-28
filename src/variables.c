@@ -64,7 +64,7 @@ void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content)
   unsigned i;
 
   name = hash(name,-1,0);
-  content = strdup(content);
+  content = xml_strdup(content);
   if(pctx->var_max==0) {
     pctx->var_max = 200;
     pctx->var_pos = 0;

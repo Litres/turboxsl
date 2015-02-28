@@ -228,6 +228,8 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
   unsigned int pos = 0;
   tmp = NULL;
 
+  if (nodeset == NULL) return NULL;
+
   if (nodeset->type == EMPTY_NODE) nodeset = nodeset->children;
   
   if(expr->type == XPATH_NODE_INT) { // select n-th node from selection
@@ -359,7 +361,9 @@ XMLNODE *xpath_get_attrs(XMLNODE *nodeset)
   unsigned pos = 0;
 
   for(;nodeset;nodeset=nodeset->next) {
+    trace("xpath_get_attrs:: node: %s", nodeset->name);
     for(attr=nodeset->attributes;attr;attr=attr->next) {
+      trace("xpath_get_attrs:: attribute: %s", attr->name);
       tmp = add_to_selection(tmp,attr,&pos);
       if(!head)
         head = tmp;
@@ -827,7 +831,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
 
     case TEXT_NODE:
       res->type=VAL_STRING;
-      res->v.string = strdup(etree->content);
+      res->v.string = xml_strdup(etree->content);
       return;
 
     case XPATH_NODE_CALL:
@@ -848,7 +852,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
             name = xml_get_attr(rv.v.nodeset,etree->name);
             if(name) {
               res->type = VAL_STRING;
-              res->v.string = strdup(name);
+              res->v.string = xml_strdup(name);
             } else {
               res->type = VAL_NULL;
             }
@@ -882,7 +886,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         name=current?xml_get_attr(current,etree->name):NULL;
         if(name) {
           res->type = VAL_STRING;
-          res->v.string = strdup(name);
+          res->v.string = xml_strdup(name);
         } else {
           res->type = VAL_NULL;
         }
@@ -1200,7 +1204,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     node1 = xml_new_node(pctx,NULL,TEXT_NODE);
     for(e=p;*e && *e != '\'';++e)
         ;
-    node1->content = malloc((e-p)+2);
+    node1->content = memory_cache_allocate((e-p)+2);
     memcpy(node1->content,p,e-p);
     node1->content[e-p]=0;
     if(*e)++e;
@@ -1237,21 +1241,19 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
         ;
     if(f_fl) 
     {
-      node1->content = malloc(e-p+2);
+      node1->content = memory_cache_allocate(e-p+2);
       memcpy(node1->content,p,e-p);
       node1->content[e-p]=0;
     } 
     else 
     {
       size_t number_size = e - p + 2;
-      char *number = malloc(number_size);
+      char *number = memory_cache_allocate(number_size);
       memcpy(number, p, e - p);
 
       node1->type = XPATH_NODE_INT;
       node1->extra.type = VAL_INT;
       node1->extra.v.integer = atol(number);
-
-      free(number);
     }
     *eptr = e;
     skip_ws(eptr);

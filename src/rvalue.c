@@ -11,7 +11,6 @@
 
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -30,16 +29,6 @@ void rval_init(RVALUE *rv)
 
 void rval_free(RVALUE *rv)
 {
-  switch(rv->type) {
-    case VAL_STRING:
-      if(rv->v.string)
-        free(rv->v.string);
-      break;
-    case VAL_NODESET:
-      if(rv->v.nodeset)
-        xpath_free_selection(NULL, rv->v.nodeset);
-      break;
-  }
   rv->type = VAL_NULL;
 }
 
@@ -96,16 +85,16 @@ char *rval2string(RVALUE *rv) {
     case VAL_INT:
       rv->type=VAL_NULL;
       sprintf(s,"%ld",rv->v.integer);
-      return strdup(s);
+      return xml_strdup(s);
 
     case VAL_BOOL:
       rv->type=VAL_NULL;
-      return strdup(rv->v.integer?"true":"false");
+      return xml_strdup(rv->v.integer?"true":"false");
 
     case VAL_NUMBER:
       rv->type=VAL_NULL;
       sprintf(s,"%g",rv->v.number);
-      return strdup(s);
+      return xml_strdup(s);
 
     case VAL_STRING:
       rv->type=VAL_NULL;
@@ -157,7 +146,6 @@ char *p,*n;
             r = strtod(n, NULL);
         else
             r = nan("");
-        free(rv->v.string);
       } else {
         r = 0.0;
       }
@@ -170,7 +158,6 @@ char *p,*n;
           r = strtod(p,NULL);
         else
           r = nan("");
-        free(p);
       } else {
         r = nan("");
       }
@@ -237,15 +224,11 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
         r=node2string(rn);
         // depends on eq search for non equal or equal pair
         if(eq == 0 ? xml_strcmp(l,r) != 0 : xml_strcmp(l,r) == 0) {
-          free(r);
-          free(l);
           rval_free(left);
           rval_free(right);
           return 1;
         }
-        free(r);
       }
-      free(l);
     }
     return 0;
   }
@@ -258,14 +241,10 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
       l = node2string(p);
       // depends on eq search for non equal or equal pair
       if(eq == 0 ? xml_strcmp(l,r) != 0 : xml_strcmp(l,r) == 0) {
-        free(r);
-        free(l);
         rval_free(left);
         return 1;
       }
-      free(l);
     }
-    free(r);
     rval_free(left);
     return 0;
   } else if(right->type == VAL_NODESET) {
@@ -275,14 +254,10 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
     for(p=right->v.nodeset;p;p=p->next) {
       r = node2string(p);
       if(0==xml_strcmp(l,r)) {
-        free(r);
-        free(l);
         rval_free(right);
         return eq;
       }
-      free(r);
     }
-    free(l);
     rval_free(right);
     return !eq;
   }
@@ -292,8 +267,6 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
     l = rval2string(left);
     r = rval2string(right);
     rc = xml_strcmp(l,r)?!eq:eq;
-    free(l);
-    free(r);
     return rc;
   }
 
