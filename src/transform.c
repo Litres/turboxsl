@@ -708,6 +708,7 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     else if(node->name==xsl_decimal) {
       name = xml_get_attr(node, xsl_a_name);
       tmp = xml_new_node(pctx, name, ATTRIBUTE_NODE);
+      tmp->children = node;
       tmp->next = pctx->formats;
       pctx->formats = tmp;
     }

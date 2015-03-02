@@ -413,79 +413,176 @@ void xf_strlen(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 // format-number
 void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
+  res->type = VAL_STRING;
+
+  char *decimal_separator_sign = ".";
+  char *grouping_sign = ",";
+  char *percent_sign = "%";
+  char *digit_zero_sign = "0";
+  char *digit_sign = "#";
+  char *pattern_separator_sign = ";";
+  char *infinity_symbol = "Infinity";
+  char *nan_symbol = "NaN";
+  char *minus_symbol = "-";
+
   RVALUE rv;
-  double num;
-  char   fmt_buf[200];
-  char  *pat;
-  char  *decf = NULL;
-  char  *fmt;
-  int   l, i;
-
   rv.type = VAL_NULL;
-
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  num = rval2number(&rv);
+  double number = rval2number(&rv);
 
   xpath_execute_scalar(pctx, locals, args->next, current, &rv);
-  pat = rval2string(&rv);
+  char *pattern = rval2string(&rv);
+  size_t pattern_length = strlen(pattern);
+  if (pattern_length > 120) {
+    error("xf_format:: patten length error");
+    res->v.string = NULL;
+  }
 
   if (args->next->next) {
     xpath_execute_scalar(pctx, locals, args->next->next, current, &rv);
-    decf = rval2string(&rv);
+    char *format_name = rval2string(&rv);
+
+    XMLNODE *format = pctx->formats;
+    while (format != NULL) {
+      if (strcmp(format->name, format_name) == 0) {
+        break;
+      }
+      format = format->next;
+    }
+    if (format == NULL) {
+      error("xf_format:: unknown decimal format: %s", format_name);
+      res->v.string = NULL;
+      return;
+    }
+
+    debug("xf_format:: decimal format: %s", format_name);
+    XMLNODE *node = format->children;
+    char *value = xml_get_attr(node, "decimal-separator");
+    if (value != NULL) decimal_separator_sign = value;
+
+    value = xml_get_attr(node, "grouping-separator");
+    if (value != NULL) grouping_sign = value;
+
+    value = xml_get_attr(node, "percent");
+    if (value != NULL) percent_sign = value;
+
+    value = xml_get_attr(node, "zero-digit");
+    if (value != NULL) digit_zero_sign = value;
+
+    value = xml_get_attr(node, "digit");
+    if (value != NULL) digit_sign = value;
+
+    value = xml_get_attr(node, "pattern-separator");
+    if (value != NULL) pattern_separator_sign = value;
+
+    value = xml_get_attr(node, "infinity");
+    if (value != NULL) infinity_symbol = value;
+
+    value = xml_get_attr(node, "NaN");
+    if (value != NULL) nan_symbol = value;
+
+    value = xml_get_attr(node, "minus-sign");
+    if (value != NULL) minus_symbol = value;
   }
 
-  if (strchr(pat,',')) {
-    if (strstr(pat,".00")) {
-      fmt = "%02f";
-      sprintf(fmt_buf, fmt, num);
-    }
-    else if (strstr(pat,",0")) {
-      fmt = "%.01f";
-      sprintf(fmt_buf, fmt, num);
-
-      l = strlen(fmt_buf);
-      for (i = 0; i < l; i++) {
-        if (fmt_buf[i] == '.') {
-          fmt_buf[i] = ','; break;
-        }
-      }
-    }
-    else if (strstr(pat,",##")) {
-      fmt = "%.2f";
-      sprintf(fmt_buf, fmt, num);
-
-      l = strlen(fmt_buf);
-      for (i = 0; i < l; i++) {
-        if (fmt_buf[i] == '.') {
-          fmt_buf[i] = ','; break;
-        }
-      }
-    }
-    else if (strstr(pat,",#")) {
-      fmt = "%.1f";
-      sprintf(fmt_buf, fmt, num);
-
-      l = strlen(fmt_buf);
-      for (i = 0; i < l; i++) {
-        if (fmt_buf[i] == '.') {
-          fmt_buf[i] = ','; break;
-        }
-      }
-    }
-    else {
-      fmt = "%f";
-      sprintf(fmt_buf, fmt, num);
-    }
-  }
-  else {
-    fmt = "%.0f";
-    sprintf(fmt_buf, fmt, num);
+  if (isnan(number)) {
+    res->v.string = xml_strdup(nan_symbol);
+    return;
   }
 
-  // sprintf(fmt_buf, fmt, num);
+  if (isinf(number)) {
+    res->v.string = xml_strdup(infinity_symbol);
+    return;
+  }
 
-  res->type     = VAL_STRING;
-  res->v.string = xml_strdup(fmt_buf);
+  // split pattern into integer and fractional parts
+  char integer_part[64];
+  memset(integer_part, 0, 64);
+  size_t integer_part_size = 0;
+
+  char fractional_part[64];
+  memset(fractional_part, 0, 64);
+  size_t fractional_part_size = 0;
+
+  char *p = strstr(pattern, decimal_separator_sign);
+  if (p != NULL) {
+    integer_part_size = p - pattern;
+    if (integer_part_size != 0) {
+      memcpy(integer_part, pattern, integer_part_size);
+    }
+    fractional_part_size = pattern_length - integer_part_size - 1;
+    if (fractional_part_size > 0) memcpy(fractional_part, p + 1, fractional_part_size);
+  } else {
+    integer_part_size = pattern_length;
+    memcpy(integer_part, pattern, integer_part_size);
+  }
+
+  char output[128];
+  memset(output, 0, 128);
+  unsigned int output_position = 0;
+
+  if (signbit(number)) output[output_position] = minus_symbol[0];
+
+  double integer_number = 0;
+  double fractional_number = modf(number, &integer_number);
+
+  // integer part sizes
+  unsigned int minimum_integer_part_size = 0;
+  unsigned int integer_part_grouping_position = 0;
+  debug("xf_format:: integer part: %s", integer_part);
+  for (size_t i = 0; i < integer_part_size; i++) {
+    if (integer_part[i] == digit_zero_sign[0]) minimum_integer_part_size++;
+    if (integer_part[i] == grouping_sign[0] && integer_part_grouping_position == 0)
+      integer_part_grouping_position = i;
+  }
+  if (minimum_integer_part_size == 0) minimum_integer_part_size = 1;
+
+  // process integer part
+  unsigned int precision = minimum_integer_part_size;
+  while (integer_number > pow(10, precision)) precision++;
+
+  for (int i = precision; i >= 0; i--) {
+    int digit = (int)floor(integer_number / pow(10, i)) % 10;
+    if (digit != 0) {
+      if (i != 0 && integer_part_grouping_position != 0 && i % integer_part_grouping_position == 0)
+        output[output_position++] = grouping_sign[0];
+      output[output_position++] = (char)(digit + 0x30);
+    } else {
+      if (i < minimum_integer_part_size) output[output_position++] = '0';
+    }
+  }
+
+  if (fractional_part_size > 0) {
+    // fractional part sizes
+    unsigned int minimum_fractional_part_size = 0;
+    unsigned int maximum_fractional_part_size = 0;
+    unsigned int fractional_part_grouping_position = 0;
+    debug("xf_format:: fractional part: %s", fractional_part);
+    for (size_t i = 0; i < fractional_part_size; i++) {
+      if (fractional_part[i] == digit_zero_sign[0]) {
+        minimum_fractional_part_size++;
+        maximum_fractional_part_size++;
+      }
+      if (fractional_part[i] == digit_sign[0]) maximum_fractional_part_size++;
+      if (fractional_part[i] == grouping_sign[0] && fractional_part_grouping_position == 0)
+        fractional_part_grouping_position = i;
+    }
+
+    // process fractional part
+    output[output_position++] = decimal_separator_sign[0];
+
+    for (unsigned int i = 0; i < maximum_fractional_part_size; i++) {
+      int digit = (int)floor(pow(10, i + 1) * fractional_number) % 10;
+      if (digit != 0) {
+        output[output_position++] = (char)(digit + 0x30);
+      } else {
+        if (i < minimum_fractional_part_size) output[output_position++] = '0';
+      }
+    }
+  }
+
+  res->type = VAL_STRING;
+  res->v.string = xml_strdup(output);
 }
 
 void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)

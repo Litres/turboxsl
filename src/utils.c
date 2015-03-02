@@ -58,7 +58,7 @@ char *xml_get_attr(XMLNODE *node, char *name)
 
   trace("xml_get_attr:: node %s, attribute %s ", node->name, name);
   for(attr=node->attributes;attr;attr=attr->next)
-    if(attr->name == name)
+    if(strcmp(attr->name, name) == 0)
       return attr->content;
 
   return NULL;
