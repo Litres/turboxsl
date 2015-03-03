@@ -21,40 +21,6 @@ static XMLNODE enode;
 char *fn_text = NULL;
 char *fn_node = NULL;
 
-XMLNODE *find_logic_parent(XMLNODE *node)
-{
-  if (node->parent == NULL) return NULL;
-
-  // first search xsl:include node
-  XMLNODE *current = node;
-  while (current != NULL)
-  {
-    XMLNODE *parent = current->parent;
-    if (parent == NULL) break;
-    if (strcmp(parent->name, xsl_include) == 0)
-    {
-      return parent->parent;
-    }
-
-    current = parent;
-  }
-
-  // if not included, search root
-  current = node;
-  while (current != NULL)
-  {
-    XMLNODE *parent = current->parent;
-    if (strcmp(parent->name, "root") == 0)
-    {
-      return current;
-    }
-
-    current = parent;
-  }
-
-  return node;
-}
-
 static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 {
   trace("templtab_add:: name: %s", name);
@@ -162,15 +128,7 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
   } 
   else 
   {
-    if (dict_find(pctx->named_templ, name) != NULL)
-    {
-      debug("add_template:: replace template: %s", name);
-      dict_replace(pctx->named_templ, name, content);
-    }
-    else
-    {
-      dict_add(pctx->named_templ, name, content);
-    }
+    dict_add(pctx->named_templ, name, content);
   }
 }
 
