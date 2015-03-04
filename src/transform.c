@@ -752,6 +752,7 @@ void XMLFreeDocument(XMLNODE *doc)
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
+  hash_memory_usage();
   dict_free(pctx->named_templ);
   if(pctx->keys)
     xml_free_node(NULL,pctx->keys);

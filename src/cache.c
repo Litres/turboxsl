@@ -151,3 +151,17 @@ char *ret;
     pthread_mutex_unlock(&hashMutex);
  return ret;
 }
+
+void hash_memory_usage()
+{
+  size_t total = 0;
+  for (size_t i=0; i < NSEEDS; i++) {
+    hashelem *e = seeds[i];
+    while (e) {
+      total = total + sizeof(hashelem);
+      total = total + e->len;
+      e = e->next;
+    }
+  }
+  info("hash_memory_usage:: %lu bytes", total);
+}

@@ -170,6 +170,7 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache);
 /********************** cache.c -- global hash **********************/
 void init_hash();
 void drop_hash();
+void hash_memory_usage();
 char *hash(char *name, int len, int lock);
 char *add_hash(char *name, int len, int lock);
 char *find_hash(char *name, int len, int lock);
