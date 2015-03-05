@@ -71,6 +71,14 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   mode = hash(mode,-1,0);
   char *m1 = hash(match,-1,0);
 
+  for (unsigned i = 0; i < pctx->templcnt; i++) {
+    if (pctx->templtab[i].match == m1 && pctx->templtab[i].mode == mode) {
+      debug("add_templ_match:: found existing template: %d", i);
+      pctx->templtab[i].content = content;
+      return i;
+    }
+  }
+
   unsigned r = templtab_add(pctx, content, NULL);
   pctx->templtab[r].match = m1;
   pctx->templtab[r].mode = mode;
