@@ -350,13 +350,13 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)  {
 	unsigned   length;
 	long       size;
 
-    debug("XMLParseFile:: file %s", file);
+    debug("xml_parse_file:: file %s", file);
 	if (file == NULL)
 		return NULL;
 
 	file = hash(file,-1,0);
 	if ((pFile = fopen(file, "r")) == NULL) {
-		error("XMLParseFile:: can't open %s: %s", file, strerror(errno));
+		error("xml_parse_file:: can't open %s: %s", file, strerror(errno));
 		return NULL;
 	}
 

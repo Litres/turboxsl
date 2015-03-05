@@ -472,7 +472,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     return;
   }
 
-  debug("xpath_execute_scalar:: etree->type = %i (%s)", etree->type, nodeTypeNames[etree->type]);
+  trace("xpath_execute_scalar:: etree->type = %i (%s)", etree->type, nodeTypeNames[etree->type]);
 
   switch(etree->type) {
     case XPATH_NODE_INT:
