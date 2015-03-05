@@ -720,6 +720,7 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 
 void XSLTEnd(XSLTGLOBALDATA *data)
 {
+  info("XSLTEnd");
   drop_hash();
   dict_free_data(data->urldict);
 
@@ -729,6 +730,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 
 XSLTGLOBALDATA *XSLTInit()
 {
+  info("XSLTInit");
   XSLTGLOBALDATA *ret = malloc(sizeof(XSLTGLOBALDATA));
   memset(ret,0,sizeof(XSLTGLOBALDATA));
   init_processor(ret);
@@ -737,20 +739,26 @@ XSLTGLOBALDATA *XSLTInit()
   return ret;
 }
 
+void xml_free_document(XMLNODE *doc)
+{
+  debug("xml_free_document:: file %s", doc->file);
+
+  XMLNODE *children = doc->children;
+  if (children != NULL) xml_free_document(children);
+
+  if (doc->cache != NULL) memory_cache_release(doc->cache);
+}
+
 void XMLFreeDocument(XMLNODE *doc)
 {
-    debug("XMLFreeDocument:: file %s", doc->file);
-
-    XMLNODE *children = doc->children;
-    if (children != NULL) XMLFreeDocument(children);
-
-    if (doc->cache != NULL) memory_cache_release(doc->cache);
+  info("XMLFreeDocument:: document: %s", doc->file == NULL ? "STRING" : doc->file);
+  xml_free_document(doc);
+  hash_memory_usage();
 }
 
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
-  hash_memory_usage();
   dict_free(pctx->named_templ);
   if(pctx->keys)
     xml_free_node(NULL,pctx->keys);
@@ -758,7 +766,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
     xml_free_node(NULL,pctx->formats);
   xpath_free_compiled(pctx);
   free_variables(pctx);
-  XMLFreeDocument(pctx->stylesheet);
+  xml_free_document(pctx->stylesheet);
 
   memory_cache_release(pctx->cache);
   threadpool_free(pctx->pool);
