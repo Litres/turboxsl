@@ -637,8 +637,6 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
           process_imports(pctx, included); //process imports if any
           node->type = EMPTY_NODE;
           node->children = included;
-          debug("process_imports:: importing %s", pctx->fnbuf);
-          precompile_templates(pctx, included);
         }
         else {
           debug("process_imports:: failed to import %s", pctx->fnbuf);
@@ -821,8 +819,8 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   ret->named_templ = dict_new(300);
 
   ret->stylesheet = xsl_preprocess(ret, ret->stylesheet);  //root node is always empty
-  precompile_templates(ret, ret->stylesheet);
   process_imports(ret, ret->stylesheet->children);
+  precompile_templates(ret, ret->stylesheet);
   process_global_flags(ret, ret->stylesheet);
   return ret;
 }

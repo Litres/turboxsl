@@ -136,7 +136,15 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
   } 
   else 
   {
-    dict_add(pctx->named_templ, name, content);
+    if (dict_find(pctx->named_templ, name) != NULL)
+    {
+      debug("add_template:: replace template: %s", name);
+      dict_replace(pctx->named_templ, name, content);
+    }
+    else
+    {
+      dict_add(pctx->named_templ, name, content);
+    }
   }
 }
 

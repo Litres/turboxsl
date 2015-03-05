@@ -144,7 +144,7 @@ char *node2string(XMLNODE *node)
 
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position)
 {
-  debug("add_to_selection:: previous: %s, source: %s", prev == NULL ? NULL : prev->name, src == NULL ? NULL : src->name);
+  trace("add_to_selection:: previous: %s, source: %s", prev == NULL ? NULL : prev->name, src == NULL ? NULL : src->name);
   if(src==NULL)
     return prev;
 
@@ -188,7 +188,7 @@ unsigned int pos;
 
   if(!current)
     return NULL;
-  debug("xpath_select_nodes:: current: %s, name: %s", current->name, name);
+  trace("xpath_select_nodes:: current: %s, name: %s", current->name, name);
   r = NULL;
   for(;current;current=current->next) {
     pos = 0; // restart numbering children for each node in source nodeset
@@ -717,7 +717,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       } else {
       	res->v.integer=0;
       }
-      debug("xpath_execute_scalar:: NE = %lu", res->v.integer);
+      trace("xpath_execute_scalar:: NE = %lu", res->v.integer);
       rval_free(&rv);
       rval_free(&rv1);
       return;
