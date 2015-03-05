@@ -751,7 +751,7 @@ void xml_free_document(XMLNODE *doc)
 
 void XMLFreeDocument(XMLNODE *doc)
 {
-  info("XMLFreeDocument:: document: %s", doc->file == NULL ? "STRING" : doc->file);
+  info("XMLFreeDocument:: file: %s", doc->file);
   xml_free_document(doc);
   hash_memory_usage();
 }
@@ -784,12 +784,23 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   info("XSLTNewProcessor:: stylesheet %s", stylesheet);
 
   TRANSFORM_CONTEXT *ret = malloc(sizeof(TRANSFORM_CONTEXT));
-  if(!ret) return NULL;
-  memset(ret,0,sizeof(TRANSFORM_CONTEXT));
-
-  if(pthread_mutex_init(&(ret->lock), NULL)) {
+  if(!ret) {
+    error("XSLTNewProcessor:: create context");
     return NULL;
   }
+  memset(ret,0,sizeof(TRANSFORM_CONTEXT));
+
+  pthread_mutexattr_t attribute;
+  if (pthread_mutexattr_init(&attribute)) {
+    error("XSLTNewProcessor:: create lock");
+    return NULL;
+  }
+  pthread_mutexattr_settype(&attribute, PTHREAD_MUTEX_RECURSIVE);
+  if(pthread_mutex_init(&(ret->lock), &attribute)) {
+    error("XSLTNewProcessor:: create lock");
+    return NULL;
+  }
+  pthread_mutexattr_destroy(&attribute);
 
   ret->cache = memory_cache_create();
   if (ret->cache == NULL)

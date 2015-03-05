@@ -41,28 +41,23 @@ void xpath_free_compiled(TRANSFORM_CONTEXT *pctx)
 
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 {
-// #ifdef DEBUG
-//   fprintf(stderr, "xpath_find_expr::expr = %s\n", expr);
-// #endif
+  char *e = hash(expr,-1,0);
+  if(e==NULL) return NULL;
+
+  if (pthread_mutex_lock(&(pctx->lock))) {
+    error("xpath_find_expr:: lock");
+    return NULL;
+  }
 
   XMLNODE *etree = NULL;
-  char *e = hash(expr,-1,0);
-// #ifdef DEBUG
-//   fprintf(stderr, "xpath_find_expr::e = %s\n", e);
-// #endif
-
-  if(e==NULL)
-    return NULL;
   unsigned i;
   for(i=0;i<pctx->n_exprs;++i) {
     if(pctx->compiled[i].expr==e) {
-// #ifdef DEBUG
-//       fprintf(stderr, "xpath_find_expr::pctx->compiled[%i].expr = %s\n", i, pctx->compiled[i].expr);
-// #endif
       etree = pctx->compiled[i].comp;
       break;
     }
   }
+
   if(etree==NULL) {
     etree = xpath_compile(pctx, e);
     if(pctx->n_exprs>=pctx->m_exprs) {
@@ -75,6 +70,11 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
       ++ pctx->n_exprs;
     }
   }
+
+  if (pthread_mutex_unlock(&(pctx->lock))) {
+    error("xpath_find_expr:: unlock");
+  }
+
   return etree;
 }
 
@@ -384,6 +384,12 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
 
   if(selection==NULL||selection->next==NULL)  //do not attempt to sort single-element or empty nodesets;
     return selection;
+
+  if (pthread_mutex_lock(&(pctx->lock))) {
+    error("xpath_sort_selection:: lock");
+    return selection;
+  }
+
   newsel = selection;
   for(n=0;selection;selection=selection->next) { //first, count selection length and allocate tables
     ++n;
@@ -452,6 +458,11 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
   pctx->sort_nodes[n-1]->position = n;
   newsel = pctx->sort_nodes[0];
   free(nsk);
+
+  if (pthread_mutex_unlock(&(pctx->lock))) {
+    error("xpath_sort_selection:: unlock");
+  }
+
   return newsel;
 }
 
