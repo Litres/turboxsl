@@ -814,7 +814,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   memory_cache_add_entry(ret->cache, pthread_self(), 10000000);
   memory_cache_set_current(ret->cache);
 
-  ret->pool = threadpool_init(0);
+  ret->pool = threadpool_init(4);
 
   ret->gctx = gctx;
   ret->stylesheet = XMLParseFile(gctx, stylesheet);
