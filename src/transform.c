@@ -187,7 +187,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       tmp = copy_node_to_result(pctx, locals, source, ret, instr);
 
       if (instr->children) {
-        debug("apply_xslt_template:: starting in thread");
+        trace("apply_xslt_template:: starting in thread");
         threadpool_start_full(apply_xslt_template, pctx, tmp, source, instr->children, params, locals);
       }
 
@@ -317,7 +317,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         iter->content = name;
         tmp->attributes = iter;
       }
-      debug("apply_xslt_template:: starting in thread");
+      trace("apply_xslt_template:: starting in thread");
       threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
     }
 /************************** <xsl:if> *****************************/
@@ -383,7 +383,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       tmp = iter;
       for(;iter;iter=iter->next) {
         newtempl = xml_append_child(pctx,ret,EMPTY_NODE);
-        debug("apply_xslt_template:: starting in thread");
+        trace("apply_xslt_template:: starting in thread");
         threadpool_start_full(apply_xslt_template,pctx,newtempl,iter,child,params,locals);
       }
       xpath_free_selection(pctx,tmp);
@@ -476,7 +476,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     else {
       tmp = copy_node_to_result(pctx,locals,source,ret,instr);
       if(instr->children) {
-        debug("apply_xslt_template:: starting in thread");
+        trace("apply_xslt_template:: starting in thread");
         threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
       }
     }
@@ -502,7 +502,7 @@ void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *sourc
         break;
       default:
         tmp = xml_append_child(pctx,ret,EMPTY_NODE);
-        debug("apply_default_process:: starting in thread");
+        trace("apply_default_process:: starting in thread");
         threadpool_start_full(process_one_node,pctx,tmp,child,params,locals,mode);
     }
   }

@@ -41,6 +41,7 @@ void xpath_free_compiled(TRANSFORM_CONTEXT *pctx)
 
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 {
+  trace("xpath_find_expr:: expression: %s", expr);
   char *e = hash(expr,-1,0);
   if(e==NULL) return NULL;
 
@@ -394,6 +395,7 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
   for(n=0;selection;selection=selection->next) { //first, count selection length and allocate tables
     ++n;
   }
+  debug("xpath_sort_selection:: sorting %d nodes", n);
   if(pctx->sort_size<n) {
     pctx->sort_size = n*2;
     pctx->sort_keys = (char **)realloc(pctx->sort_keys, pctx->sort_size*sizeof(char *));
@@ -452,7 +454,6 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
     pctx->sort_nodes[i-1]->position = i;
     pctx->sort_nodes[i]->prev = pctx->sort_nodes[i-1];
     pctx->sort_nodes[i-1]->next = pctx->sort_nodes[i];
-    free(pctx->sort_keys[i]);
   }
   pctx->sort_nodes[n-1]->next = NULL;
   pctx->sort_nodes[n-1]->position = n;
