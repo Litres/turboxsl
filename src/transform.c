@@ -726,10 +726,14 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 
   free(data->perl_functions);
   free(data);
+
+  logger_release();
 }
 
 XSLTGLOBALDATA *XSLTInit()
 {
+  logger_create();
+
   info("XSLTInit");
   XSLTGLOBALDATA *ret = malloc(sizeof(XSLTGLOBALDATA));
   memset(ret,0,sizeof(XSLTGLOBALDATA));

@@ -21,7 +21,6 @@
 #include "node_cache.h"
 #include "logger.h"
 
-#ifdef DEBUG
 static char *nodeTypeNames[] = {
   "EMPTY_NODE",
   "ELEMENT_NODE",           "TEXT_NODE",              "ATTRIBUTE_NODE",      "PI_NODE",                "COMMENT_NODE",
@@ -37,7 +36,6 @@ static char *nodeTypeNames[] = {
 static char *rvalTypeNames[] = {
   "VAL_NULL", "VAL_BOOL", "VAL_INT", "VAL_NUMBER", "VAL_STRING", "VAL_NODESET"
 };
-#endif
 
 typedef enum {EMPTY_NODE=0, ELEMENT_NODE, TEXT_NODE, ATTRIBUTE_NODE, PI_NODE, COMMENT_NODE, INFO_NODE, XPATH_NODE_VAR, XPATH_NODE_NOT,
 XPATH_NODE_OR, XPATH_NODE_AND, XPATH_NODE_EQ, XPATH_NODE_NE, XPATH_NODE_LT, XPATH_NODE_GT, XPATH_NODE_CALL, KEY_NODE,
