@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Alpha>
+    <Bravo>
+        <Foxtrot></Foxtrot>
+        <Gold></Gold>
+    </Bravo>
+    <Charlie>
+        <Hotel></Hotel>
+        <India>
+            <Lima></Lima>
+            <Mike></Mike>
+            <November></November>
+        </India>
+    </Charlie>
+    <Delta>
+        <Juliet></Juliet>
+        <Kilo></Kilo>
+    </Delta>
+    <Echo></Echo>
+</Alpha>

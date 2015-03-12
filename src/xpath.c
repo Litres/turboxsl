@@ -94,39 +94,6 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
   }
 }
 
-
-char *nodes2string(XMLNODE *node)
-{
-  XMLNODE     *tmp_node;
-  char        *content = NULL;
-  char    *tmp_content = NULL;
-  size_t     content_len = 0;
-  size_t tmp_content_len = 0;
-
-  while (node) {
-    tmp_node    = node->next;
-    node->next  = NULL;
-    tmp_content = node2string(node);
-    node->next  = tmp_node;
-
-    tmp_content_len = strlen(tmp_content) + 1;
-
-    if (tmp_content)
-    {
-      content = realloc(content, content_len + tmp_content_len);
-      memcpy(content + content_len, tmp_content, tmp_content_len);
-      content_len = strlen(content);
-
-      free(tmp_content);
-    }
-
-    node = node->next;
-  }
-
-  return content;
-}
-
-
 char *node2string(XMLNODE *node) 
 {
   XMLSTRING str;
@@ -181,28 +148,18 @@ XMLNODE *xml_add_siblings(XMLNODE *prev, XMLNODE *src, unsigned int *position, X
   return src;
 }
 
-XMLNODE *xpath_select_nodes(TRANSFORM_CONTEXT *pctx, XMLNODE *current, char *name)
+XMLNODE *xml_append_node(XMLNODE *prev, XMLNODE *src)
 {
-XMLNODE *r, *iter;
-XMLNODE *set = NULL;
-unsigned int pos;
-
-  if(!current)
-    return NULL;
-  trace("xpath_select_nodes:: current: %s, name: %s", current->name, name);
-  r = NULL;
-  for(;current;current=current->next) {
-    pos = 0; // restart numbering children for each node in source nodeset
-    for(iter=current->children;iter;iter=iter->next) {
-      if(iter->type==ELEMENT_NODE && (!name || iter->name==name)) {
-        r = add_to_selection(r, iter, &pos);
-        if(!set) {
-          set = r;
-        }
-      }
-    }
+  if(src == NULL) return prev;
+  if(prev) {
+    prev->next = src;
+    src->prev = prev;
   }
-  return set;
+
+  XMLNODE *r = src;
+  while(r->next != NULL) r = r->next;
+
+  return r;
 }
 
 XMLNODE *xpath_copy_nodeset(XMLNODE *set)
@@ -276,82 +233,257 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
   return node;
 }
 
+int xpath_node_kind(XMLNODE *node, XMLNODE *kind)
+{
+  trace("xpath_node_kind:: node: %s (%s), kind: %s", node->name, nodeTypeNames[node->type], kind == NULL ? NULL : kind->name);
+  if(kind == NULL) return node->type == ELEMENT_NODE;
 
-static
-XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, unsigned int *pos, XMLNODE **head)
+  if(kind->type == XPATH_NODE_CALL)
+  {
+    if(strcmp(kind->name,"text") == 0)
+    {
+      return node->type == TEXT_NODE;
+    }
+    else if(strcmp(kind->name,"node") == 0)
+    {
+      // TODO
+      return 1;
+    }
+    else
+    {
+      error("xpath_node_kind:: not supported kind: %s", kind->name);
+      return 0;
+    }
+  }
+  else
+  {
+    return node->type == ELEMENT_NODE && strcmp(node->name, kind->name) == 0;
+  }
+}
+
+XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, unsigned int *pos, XMLNODE **head, XMLNODE *kind)
 {
   for(;node;node=node->next) {
     trace("add_all_children:: child: %s (%s)", node->name, nodeTypeNames[node->type]);
     if(node->type == EMPTY_NODE) {
-      tmp = add_all_children(tmp,node->children,pos,head);
+      tmp = add_all_children(tmp,node->children,pos,head,kind);
       continue;
     }
-    tmp = add_to_selection(tmp,node,pos);
-    if(!(*head))
-      *head = tmp;
+
+    if(xpath_node_kind(node, kind)) {
+      tmp = add_to_selection(tmp,node,pos);
+      if(!(*head)) *head = tmp;
+    }
+
     if(node->children)
-      tmp = add_all_children(tmp,node->children,pos,head);
+      tmp = add_all_children(tmp,node->children,pos,head,kind);
   }
   return tmp;
 }
 
-XMLNODE *xpath_get_descendants(XMLNODE *nodeset)
+XMLNODE *xpath_get_self(XMLNODE *current, XMLNODE *kind)
 {
-  XMLNODE *tmp = NULL;
-  XMLNODE *head = xml_new_node(NULL, NULL, EMPTY_NODE);
+  trace("xpath_get_self::");
   unsigned pos = 0;
-  for(;nodeset;nodeset=nodeset->next) {
-    trace("xpath_get_descendants:: node: %s", nodeset->name);
-    tmp = add_all_children(tmp,nodeset->children,&pos,&(head->children));
-  }
-  head->flags|=0x8000;
-  return head;
+  return xpath_node_kind(current, kind) ? add_to_selection(NULL, current, &pos) : NULL;
 }
 
-XMLNODE *xpath_get_ancestors(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *name)
+XMLNODE *xpath_get_parent(XMLNODE *current, XMLNODE *kind)
 {
+  trace("xpath_get_parent::");
+  XMLNODE *parent = current->parent;
+  if (parent == NULL || strcmp(parent->name, "root") == 0) return NULL;
+
+  unsigned pos = 0;
+  return xpath_node_kind(parent, kind) ? add_to_selection(NULL, parent, &pos) : NULL;
+}
+
+XMLNODE *xpath_get_child(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_child::");
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(node=node->parent;node;node=node->parent) {
-    if(!name || name==node->name) {
+  for(XMLNODE *node=current->children;node;node=node->next) {
+    if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
-      if(!ret)
-        ret = tmp;
+      if(!ret) ret = tmp;
     }
   }
   return ret;
 }
 
-
-XMLNODE *xpath_get_pre_sibs(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *name)
+XMLNODE *xpath_get_descendant(XMLNODE *current, XMLNODE *kind)
 {
-  XMLNODE *tmp = NULL;
+  trace("xpath_get_descendant::");
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(node=node->prev;node;node=node->prev) {
-    if(!name || name==node->name) {
-      tmp = add_to_selection(tmp,node,&pos);
-      if(!ret)
-        ret = tmp;
+  add_all_children(NULL, current->children, &pos, &ret, kind);
+  return ret;
+}
+
+XMLNODE *xpath_get_descendant_or_self(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_descendant_or_self::");
+  XMLNODE *result = xpath_get_self(current, kind);
+
+  XMLNODE *descendant = xpath_get_descendant(current, kind);
+  if (descendant != NULL)
+  {
+    if (result == NULL) result = descendant;
+    else
+    {
+      descendant->prev = result;
+      result->next = descendant;
+    }
+  }
+
+  return result;
+}
+
+XMLNODE *xpath_get_all(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_all::");
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned int pos;
+
+  for(XMLNODE *node=current;node;node=node->next) {
+    pos = 0; // restart numbering children for each node in source nodeset
+    for(XMLNODE *child=node->children; child; child = child->next) {
+      if(xpath_node_kind(child, kind)) {
+        tmp = add_to_selection(tmp, child, &pos);
+        if(!ret) ret = tmp;
+      }
     }
   }
   return ret;
 }
 
-XMLNODE *xpath_get_aft_sibs(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *name)
+XMLNODE *xpath_get_ancestor(XMLNODE *current, XMLNODE *kind)
 {
+  trace("xpath_get_ancestor::");
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(node=node->next;node;node=node->next) {
-    if(!name || name==node->name) {
+  for(XMLNODE *node=current->parent;node;node=node->parent) {
+    if (strcmp(node->name, "root") == 0) return ret;
+    if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
-      if(!ret)
-        ret = tmp;
+      if(!ret) ret = tmp;
     }
   }
   return ret;
+}
+
+XMLNODE *xpath_get_ancestor_or_self(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_ancestor_or_self::");
+  XMLNODE *result = xpath_get_self(current, kind);
+
+  XMLNODE *ancestor = xpath_get_ancestor(current, kind);
+  if (ancestor != NULL)
+  {
+    if (result == NULL) result = ancestor;
+    else
+    {
+      ancestor->prev = result;
+      result->next = ancestor;
+    }
+  }
+
+  return result;
+}
+
+XMLNODE *xpath_get_preceding_sibling(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_preceding_sibling::");
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned pos = 0;
+  for(XMLNODE *node=current->prev;node;node=node->prev) {
+    if(xpath_node_kind(node, kind)) {
+      tmp = add_to_selection(tmp,node,&pos);
+      if(!ret) ret = tmp;
+    }
+  }
+  return ret;
+}
+
+XMLNODE *xpath_get_preceding(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_preceding::");
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned pos = 0;
+  for(XMLNODE *node=current->prev;node;node=node->prev) {
+    if(xpath_node_kind(node, kind)) {
+      tmp = add_to_selection(tmp,node,&pos);
+      if(!ret) ret = tmp;
+    }
+    XMLNODE *descendant = xpath_get_descendant(node, kind);
+    if(descendant != NULL) {
+      tmp = xml_append_node(tmp, descendant);
+      if(!ret) ret = tmp;
+    }
+  }
+  return ret;
+}
+
+XMLNODE *xpath_get_following_sibling(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_following_sibling::");
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned pos = 0;
+  for(XMLNODE *node=current->next;node;node=node->next) {
+    if(xpath_node_kind(node, kind)) {
+      tmp = add_to_selection(tmp,node,&pos);
+      if(!ret) ret = tmp;
+    }
+  }
+  return ret;
+}
+
+XMLNODE *xpath_get_following(XMLNODE *current, XMLNODE *kind)
+{
+  trace("xpath_get_following::");
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned pos = 0;
+  for(XMLNODE *node=current->next;node;node=node->next) {
+    if(xpath_node_kind(node, kind)) {
+      tmp = add_to_selection(tmp,node,&pos);
+      if(!ret) ret = tmp;
+    }
+    XMLNODE *descendant = xpath_get_descendant(node, kind);
+    if(descendant != NULL)
+    {
+      tmp = xml_append_node(tmp, descendant);
+      if(!ret) ret = tmp;
+    }
+  }
+  return ret;
+}
+
+void xpath_select_common(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etree, XMLNODE *current, RVALUE *res, XMLNODE * (*selector)(XMLNODE *, XMLNODE *))
+{
+  res->type = VAL_NODESET;
+  if(etree->children) {
+    trace("xpath_select_common:: has child XPath");
+    RVALUE rv;
+    xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
+    if(rv.type == VAL_NODESET) {
+      res->v.nodeset = rv.v.nodeset == NULL ? NULL : selector(rv.v.nodeset, etree->attributes);
+    } else {
+      // can not select from non-nodeset
+      res->v.nodeset = NULL;
+    }
+    rval_free(&rv);
+    return;
+  }
+
+  res->v.nodeset = selector(current, etree->next);
 }
 
 XMLNODE *xpath_get_attrs(XMLNODE *nodeset)
@@ -484,7 +616,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     return;
   }
 
-  trace("xpath_execute_scalar:: etree->type = %i (%s)", etree->type, nodeTypeNames[etree->type]);
+  trace("xpath_execute_scalar:: type: %s", nodeTypeNames[etree->type]);
 
   switch(etree->type) {
     case XPATH_NODE_INT:
@@ -513,18 +645,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       res->v.nodeset = selection;
       return;
 
-    case XPATH_NODE_DESCENDANTS:
-      xpath_execute_scalar(pctx,locals,etree->children,current,&rv); // selection
-      res->type = VAL_NODESET;
-      if(rv.type == VAL_NODESET) {
-        selection = xpath_get_descendants(rv.v.nodeset);
-        res->v.nodeset = selection;
-      } else {  // can not select from non-nodeset
-        res->v.nodeset = NULL;
-      }
-      rval_free(&rv);
-      return;
-
     case XPATH_NODE_ATTR_ALL:
       res->type = VAL_NODESET;
       if(etree->children) {
@@ -546,38 +666,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       selection = add_to_selection(NULL,pctx->root_node,&pos);
       res->type = VAL_NODESET;
       res->v.nodeset = selection;
-      return;
-
-    case XPATH_NODE_PARENT:
-      if(etree->children)
-      {
-        XMLNODE *parent_node = NULL;
-        xpath_execute_scalar(pctx,locals,etree->children,current,&rv); // XXX
-
-        if (rv.v.nodeset)
-          parent_node = rv.v.nodeset->parent;
-
-        selection = add_to_selection(NULL, parent_node, &pos);
-
-        res->type      = VAL_NODESET;
-        res->v.nodeset = selection;
-      }
-      else
-      {
-        selection = add_to_selection(NULL,current->parent,&pos);
-        res->type = VAL_NODESET;
-        res->v.nodeset = selection;
-      }
-      return;
-
-    case XPATH_NODE_SELF:
-      if(etree->children) {
-        xpath_execute_scalar(pctx,locals,etree->children,current,res); // selection
-      } else {
-        selection = add_to_selection(NULL,current,&pos);
-        res->type = VAL_NODESET;
-        res->v.nodeset = selection;
-      }
       return;
 
     case XPATH_NODE_CONTEXT:
@@ -606,76 +694,52 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       rval_free(&rv);
       return;
 
+    case XPATH_NODE_ALL:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_all);
+      return;
+
     case XPATH_NODE_SELECT:
-      xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
-      res->type = VAL_NODESET;
-      if(rv.type == VAL_NODESET) {
-        selection = xpath_select_nodes(pctx,rv.v.nodeset,etree->name);
-        res->v.nodeset = selection;
-      } else {  // can not select from non-nodeset
-        res->v.nodeset = NULL;
-      }
-      rval_free(&rv);
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_child);
+      return;
+
+    case XPATH_NODE_PARENT:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_parent);
+      return;
+
+    case XPATH_NODE_SELF:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_self);
+      return;
+
+    case XPATH_NODE_DESCENDANT:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_descendant);
+      return;
+
+    case XPATH_NODE_DESCENDANT_OR_SELF:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_descendant_or_self);
       return;
 
     case XPATH_NODE_ANCESTOR:
-      res->type = VAL_NODESET;
-      if(etree->children) {
-        xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
-        if(rv.type == VAL_NODESET) {
-          selection = xpath_get_ancestors(pctx,rv.v.nodeset,etree->name);
-          res->v.nodeset = selection;
-        } else {  // can not select from non-nodeset
-          res->v.nodeset = NULL;
-        }
-        rval_free(&rv);
-      } else {
-        res->v.nodeset = xpath_get_ancestors(pctx,current,etree->name);
-      }
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_ancestor);
       return;
 
-    case XPATH_NODE_PRE_SIBLING:
-      res->type = VAL_NODESET;
-      if(etree->children) {
-        xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
-        if(rv.type == VAL_NODESET) {
-          selection = xpath_get_pre_sibs(pctx,rv.v.nodeset,etree->name);
-          res->v.nodeset = selection;
-        } else {  // can not select from non-nodeset
-          res->v.nodeset = NULL;
-        }
-        rval_free(&rv);
-      } else {
-        res->v.nodeset = xpath_get_pre_sibs(pctx,current,etree->name);
-      }
+    case XPATH_NODE_ANCESTOR_OR_SELF:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_ancestor_or_self);
       return;
 
-    case XPATH_NODE_AFT_SIBLING:
-      res->type = VAL_NODESET;
-      if(etree->children) {
-        xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
-        if(rv.type == VAL_NODESET) {
-          selection = xpath_get_aft_sibs(pctx,rv.v.nodeset,etree->name);
-          res->v.nodeset = selection;
-        } else {  // can not select from non-nodeset
-          res->v.nodeset = NULL;
-        }
-        rval_free(&rv);
-      } else {
-        res->v.nodeset = xpath_get_aft_sibs(pctx,current,etree->name);
-      }
+    case XPATH_NODE_PRECEDING_SIBLING:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_preceding_sibling);
       return;
 
-    case XPATH_NODE_ALL:
-      xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
-      res->type = VAL_NODESET;
-      if(rv.type == VAL_NODESET) {
-        selection = xpath_select_nodes(pctx,rv.v.nodeset,NULL);
-        res->v.nodeset = selection;
-      } else {  // can not select from non-nodeset
-        res->v.nodeset = NULL;
-      }
-      rval_free(&rv);
+    case XPATH_NODE_PRECEDING:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_preceding);
+      return;
+
+    case XPATH_NODE_FOLLOWING_SIBLING:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_following_sibling);
+      return;
+
+    case XPATH_NODE_FOLLOWING:
+      xpath_select_common(pctx, locals, etree, current, res, xpath_get_following);
       return;
 
     case XPATH_NODE_OR:
@@ -729,7 +793,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       } else {
       	res->v.integer=0;
       }
-      trace("xpath_execute_scalar:: NE = %lu", res->v.integer);
       rval_free(&rv);
       rval_free(&rv1);
       return;
@@ -876,12 +939,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
             if(name) {
               expr = xml_new_node(pctx, NULL,TEXT_NODE);
               expr->content = name;
-
-              // if (!r) {
-              //   t = add_to_selection(t,expr,&pos);
-              //   r = t;
-              // }
-
               t = add_to_selection(t, expr, &pos);
               if (!r) 
                 r = t;
@@ -965,9 +1022,6 @@ XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
 
   if(etree) {
     locals->parent = current;
-// #ifdef DEBUG
-//     fprintf(stderr, "xpath_eval_selection call xpath_execute_scalar()\n");
-// #endif
     xpath_execute_scalar(pctx,locals,etree,current,&rval);
     if(rval.type == VAL_NODESET) {
       return rval.v.nodeset;
@@ -1060,8 +1114,8 @@ static
 XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 {
   trace("do_select_expr:: expression: %s", *eptr);
-  XMLNODE *node1, *node2;
-  char *p, *e;
+  XMLNODE *result = NULL;
+
   skip_ws(eptr);
   if(**eptr=='*') 
   {
@@ -1083,10 +1137,10 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
   } 
   else if(**eptr=='/') 
   {
-    return xml_new_node(pctx,NULL,XPATH_NODE_DESCENDANTS);
+    return xml_new_node(pctx,NULL, XPATH_NODE_DESCENDANT);
   }
 
-  p = (*eptr);
+  char *p = (*eptr);
   if(*p=='@') 
   {
     ++p;
@@ -1096,109 +1150,135 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
       *eptr = p;
       return xml_new_node(pctx,NULL,XPATH_NODE_ATTR_ALL);
     } 
-    else 
-      node1 = xml_new_node(pctx,NULL,XPATH_NODE_ATTR);
+    else
+      result = xml_new_node(pctx,NULL,XPATH_NODE_ATTR);
   } 
   else 
   {
-    node1 = xml_new_node(pctx,NULL,XPATH_NODE_SELECT);
     if(match(eptr,"child::"))
     {
-      if(**eptr=='*')
-      {
-        ++(*eptr);
-        node1->name = NULL;
-        return node1;
-      }
+      result = xml_new_node(pctx,NULL,XPATH_NODE_SELECT);
+    }
+    else if(match(eptr,"descendant::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_DESCENDANT);
     }
     else if(match(eptr,"attribute::"))
     {
-      if(**eptr=='*')
-      {
-        ++(*eptr);
-        node1->type = XPATH_NODE_ATTR_ALL;
-        return node1;
-      }
-      else
-        node1->type = XPATH_NODE_ATTR;
-    }
-    else if(match(eptr,"ancestor::"))
-    {
-      node1->type = XPATH_NODE_ANCESTOR;
-
-      if(**eptr=='*')
-      {
-        ++(*eptr);
-        node1->name = NULL;
-        return node1;
-      }
-    }
-    else if(match(eptr,"descendant::")) {
-      node1->type = XPATH_NODE_DESCENDANTS;
-
-      if(**eptr=='*')
-      {
-        ++(*eptr);
-        node1->name = NULL;
-        return node1;
-      }
-    }
-    else if(match(eptr,"preceding-sibling::"))
-    {
-      node1->type = XPATH_NODE_PRE_SIBLING;
-
-      if(**eptr=='*')
-      {
-        ++(*eptr);
-        node1->name = NULL;
-        return node1;
-      }
-    }
-    else if(match(eptr,"following-sibling::"))
-    {
-      node1->type = XPATH_NODE_AFT_SIBLING;
-
-      if(**eptr=='*')
-      {
-        ++(*eptr);
-        node1->name = NULL;
-        return node1;
-      }
+      result = xml_new_node(pctx,NULL,XPATH_NODE_ATTR);
     }
     else if(match(eptr,"self::"))
     {
-      node1->type = XPATH_NODE_SELF;
-      return node1;
+      result = xml_new_node(pctx,NULL,XPATH_NODE_SELF);
+    }
+    else if(match(eptr,"descendant-or-self::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_DESCENDANT_OR_SELF);
+    }
+    else if(match(eptr,"following-sibling::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_FOLLOWING_SIBLING);
+    }
+    else if(match(eptr,"following::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_FOLLOWING);
+    }
+    else if(match(eptr,"parent::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_PARENT);
+    }
+    else if(match(eptr,"ancestor::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_ANCESTOR);
+    }
+    else if(match(eptr,"preceding-sibling::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_PRECEDING_SIBLING);
+    }
+    else if(match(eptr,"preceding::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_PRECEDING);
+    }
+    else if(match(eptr,"ancestor-or-self::"))
+    {
+      result = xml_new_node(pctx,NULL,XPATH_NODE_ANCESTOR_OR_SELF);
     }
 
-    p = *eptr;
+    if (result != NULL)
+    {
+      if(**eptr=='*')
+      {
+        trace("do_select_expr:: wildcard");
+        ++(*eptr);
+        result->name = NULL;
+        return result;
+      }
+
+      p = *eptr;
+
+      char *e;
+      for (e = p+1; *e && x_is_namechar(*e); ++e)
+        ;
+
+      char *name = hash(p,e-p,0);
+      *eptr=e;
+
+      if(**eptr=='(')
+      {
+        trace("do_select_expr:: kind test: %s", name);
+        while (**eptr!=')') ++(*eptr);
+
+        result->attributes = xml_new_node(pctx,name,XPATH_NODE_CALL);
+      }
+      else
+      {
+        trace("do_select_expr:: name: %s", name);
+        result->name = name;
+        result->attributes = xml_new_node(pctx,name,EMPTY_NODE);
+      }
+
+      return result;
+    }
   }
 
+  char *e;
   for (e = p+1; *e && x_is_namechar(*e); ++e)
       ;
 
-  node1->name = hash(p,e-p,0);
+  char *name = hash(p,e-p,0);
   *eptr=e;
 
   skip_ws(eptr);
   if(**eptr=='(') { // call function
     ++(*eptr);
-    node1->type = XPATH_NODE_CALL;
+    XMLNODE *node = xml_new_node(pctx,name,XPATH_NODE_CALL);
     for(;;) {
       skip_ws(eptr);
       if(**eptr==')') {
         ++ (*eptr);
         break;
       }
-      node2 = do_or_expr(pctx,eptr);
-      xml_add_child(pctx,node1,node2);
+      XMLNODE *argument = do_or_expr(pctx,eptr);
+      xml_add_child(pctx, node, argument);
       skip_ws(eptr);
       if(**eptr==',')
         ++(*eptr);
     }
+    return node;
   }
 
-  return node1;
+  if (result == NULL)
+  {
+    trace("do_select_expr:: select");
+    result = xml_new_node(pctx,name,XPATH_NODE_SELECT);
+    result->attributes = xml_new_node(pctx,name,EMPTY_NODE);
+  }
+  else
+  {
+    result->name = name;
+  }
+
+  return result;
 }
 
 char *errexp;
@@ -1299,7 +1379,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
       nt = XPATH_NODE_CONTEXT;
 
     node1 = do_select_expr(pctx, eptr);
-    if(node1->type == XPATH_NODE_SELECT||node1->type == XPATH_NODE_DESCENDANTS)
+    if(node1->type == XPATH_NODE_SELECT||node1->type == XPATH_NODE_DESCENDANT)
       node1->children = xml_new_node(pctx,NULL, nt); // case for root select
 
     return node1;
@@ -1340,7 +1420,7 @@ XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
 
       node3                 = xml_new_node(pctx,NULL,XPATH_NODE_FILTER);
       node3->children       = node1; // previous select
-      node3->children->next = node2;
+      node3->children->next = node2; // filter argument
       node1                 = node3;
     } 
     else

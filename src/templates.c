@@ -160,6 +160,8 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
   if (node == NULL)
     return 0;
 
+  trace("select_match:: template type: %s", nodeTypeNames[templ->type]);
+
   switch(templ->type) 
   {
     case XPATH_NODE_ROOT:
@@ -184,9 +186,6 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
     case XPATH_NODE_FILTER:
       if(!select_match(pctx, node, templ->children))
         return 0;
-
-      // if(templ->children->next->type==XPATH_NODE_UNION || templ->children->next->type==XPATH_NODE_SELECT)
-      //   return select_match(pctx,node->children,templ->children->next);
 
       if(templ->children->type==XPATH_NODE_UNION || templ->children->type==XPATH_NODE_SELECT)
         return select_match(pctx, node, templ->children->next);
@@ -397,13 +396,11 @@ void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
   for(;node;node=node->next) 
   {
-    trace("precompile_templates:: node: %s", node->name);
     if(node->type==ELEMENT_NODE && node->name==xsl_template) 
     {
       char *name  = hash(xml_get_attr(node,xsl_a_name),-1,0);
       char *match = xml_get_attr(node,xsl_a_match);
       char *mode  = xml_get_attr(node,xsl_a_mode);
-
       add_template(pctx, node->children,name,match,mode);
     }
 
