@@ -16,7 +16,7 @@
 
 #include "ltr_xsl.h"
 
-enum {INIT, OPEN, CLOSE, COMMENT, BODY, TEXT, XMLDECL, INSIDE_TAG, ATTR_VALUE, CDATA, ERROR} state;
+enum {INIT, OPEN, CLOSE, COMMENT, BODY, TEXT, XMLDECL, INSIDE_TAG, ATTR_VALUE, CDATA, DOCTYPE, ERROR} state;
 
 
 static
@@ -167,8 +167,11 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
         } else if(!memcmp(p,"![CDATA[",8)) {// cdata
           p+=8;
           state = CDATA;
+        } else if(!memcmp(p,"!DOCTYPE",8)) {
+          p+=8;
+          state = DOCTYPE;
         } else if(*p=='!') {
-          error("do_parse:: DOCTYPE instructions not supported!");
+          error("do_parse:: unknown instruction");
           return NULL;
         } else if(*p=='/') {// closing </element>
           state = CLOSE;
@@ -265,6 +268,11 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           p = c + 3;
         }
         state = INIT;
+        break;
+      case DOCTYPE:
+        while(!(p[0]==']' && p[1]=='>')) p++;
+        p+=2;
+        state = TEXT;
         break;
       case TEXT:
         for(c=p;(*c && *c != '<');++c)
@@ -389,11 +397,15 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)  {
     }
 
 	ret = do_parse(gctx, buffer, file);
-    renumber_children(ret);
+    free(buffer);
 
+    if (ret == NULL) {
+      memory_cache_release(cache);
+      return NULL;
+    }
+    renumber_children(ret);
     ret->cache = cache;
 
-	free(buffer);
 	return ret;
 }
 //*/
