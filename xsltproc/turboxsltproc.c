@@ -9,7 +9,7 @@ int main(int n, char *args[]) {
         exit(1);
     }
 
-    XSLTGLOBALDATA *gctx = XSLTInit();
+    XSLTGLOBALDATA *gctx = XSLTInit(NULL);
     if (!gctx) {
         fprintf(stderr, "error in style processing\n");
         exit(1);

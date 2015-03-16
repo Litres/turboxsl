@@ -3,7 +3,6 @@
 
 struct _xmlnode;
 typedef struct _xmlnode XMLNODE;
-typedef XMLNODE *XMLNODEPTR;
 
 struct _globaldata;
 typedef struct _globaldata XSLTGLOBALDATA;
@@ -11,7 +10,7 @@ typedef struct _globaldata XSLTGLOBALDATA;
 struct _context;
 typedef struct _context TRANSFORM_CONTEXT;
 
-XSLTGLOBALDATA *XSLTInit();
+XSLTGLOBALDATA *XSLTInit(void *interpreter);
 void XSLTEnd(XSLTGLOBALDATA *data);
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *data, char *stylesheet);
@@ -27,7 +26,7 @@ void XMLFreeDocument(XMLNODE *node);
 void set_ctx_global_var(TRANSFORM_CONTEXT *pctx, char *name, char *content);
 void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content);
 
-void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void (*fun)(),char **args), void (*fun)());
+void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void *fun,char **args,void *interpreter), void (*fun)());
 char *xml_strdup(char *s);
 
 #endif

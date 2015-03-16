@@ -730,7 +730,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
   logger_release();
 }
 
-XSLTGLOBALDATA *XSLTInit()
+XSLTGLOBALDATA *XSLTInit(void *interpreter)
 {
   logger_create();
 
@@ -739,6 +739,7 @@ XSLTGLOBALDATA *XSLTInit()
   memset(ret,0,sizeof(XSLTGLOBALDATA));
   init_processor(ret);
   ret->urldict = dict_new(300);
+  ret->interpreter = interpreter;
 
   return ret;
 }
