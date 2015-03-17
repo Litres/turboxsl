@@ -483,7 +483,7 @@ void xpath_select_common(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etre
     return;
   }
 
-  res->v.nodeset = selector(current, etree->next);
+  res->v.nodeset = selector(current, etree->attributes);
 }
 
 XMLNODE *xpath_get_attrs(XMLNODE *nodeset)
