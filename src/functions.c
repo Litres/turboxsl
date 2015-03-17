@@ -18,6 +18,18 @@
 #include "ltr_xsl.h"
 #include "md5.h"
 
+char *call_perl_function(TRANSFORM_CONTEXT *pctx, void *function, char **args)
+{
+  if (pthread_mutex_lock(&(pctx->lock))) {
+    error("call_perl_function:: lock");
+    return NULL;
+  }
+  char *result = (pctx->gctx->perl_cb_dispatcher)(function, args, pctx->gctx->interpreter);
+  if (pthread_mutex_unlock(&(pctx->lock))) {
+    error("call_perl_function:: unlock");
+  }
+  return result;
+}
 
 void xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
@@ -863,7 +875,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     if(!p) {
       p_args[0] = str;
       p_args[1] = NULL;
-      p = (pctx->gctx->perl_cb_dispatcher)(pctx->gctx->perl_urlcode, p_args, pctx->gctx->interpreter);
+      p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
       dict_add(pctx->gctx->urldict,str,p);
     }
     res->v.string = xml_strdup(p);
@@ -1168,7 +1180,7 @@ static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args,
 
   s = NULL;
   if(pctx->gctx->perl_cb_dispatcher) {
-    s = (pctx->gctx->perl_cb_dispatcher)(fun, f_arg, pctx->gctx->interpreter);
+    s = call_perl_function(pctx, fun, f_arg);
   }
 
   res->type = VAL_STRING;
@@ -1232,6 +1244,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
   if(pctx->gctx->perl_cb_dispatcher) { // first try perl overrides if any
     for(i=0;i<pctx->gctx->perl_cb_ptr;++i) {
       if(pctx->gctx->perl_functions[i].name == fname) {
+        debug("xpath_call_dispatcher:: Perl callback function: %s", fname);
         do_callback(pctx, locals, args, current, res, pctx->gctx->perl_functions[i].func);
         return;
       }
@@ -1240,6 +1253,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
 
   for(i=0;i<pctx->cb_ptr;++i) {
     if(pctx->functions[i].name == fname) {
+      debug("xpath_call_dispatcher:: internal function: %s", fname);
       (pctx->functions[i].func)(pctx, locals, args, current, res);
       return;
     }
