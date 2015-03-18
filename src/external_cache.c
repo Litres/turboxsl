@@ -4,6 +4,7 @@
 #include <libmemcached/memcached.h>
 
 #include "logger.h"
+#include "node_cache.h"
 
 typedef struct external_cache_entry {
     pthread_t thread;
@@ -40,19 +41,11 @@ void external_cache_add_client(external_cache *cache, pthread_t thread)
     }
     memset(entry, 0, sizeof(external_cache_entry));
 
+    entry->thread = thread;
     entry->object = memcached(cache->server_list, strlen(cache->server_list));
     if (entry->object == NULL)
     {
         error("external_cache_add_client:: memcached");
-        free(entry);
-        return;
-    }
-
-    memcached_return_t r = memcached_behavior_set(entry->object, MEMCACHED_BEHAVIOR_USE_UDP, 0);
-    if (r != MEMCACHED_SUCCESS)
-    {
-        error("external_cache_add_client:: UDP: %s", memcached_strerror(entry->object, r));
-        memcached_free(entry->object);
         free(entry);
         return;
     }
@@ -92,15 +85,15 @@ int external_cache_set(external_cache *cache, char *key, char *value)
     if (t == NULL || t->thread != self)
     {
         error("external_cache_set:: unknown thread");
-        return NULL;
+        return 0;
     }
 
     size_t key_length = strlen(key);
     size_t value_length = strlen(value);
-    memcached_return_t r = memcached_set(t->object, key, key_length, value, value_length, (time_t)0, 0);
+    memcached_return_t r = memcached_set(t->object, key, key_length, value, value_length, 0, 0);
     if (r != MEMCACHED_SUCCESS)
     {
-        error("external_cache_set:: %s", memcached_strerror(t->object, r));
+        error("external_cache_set:: set failed: %s", memcached_strerror(t->object, r));
         return 0;
     }
     return 1;
@@ -115,7 +108,7 @@ char *external_cache_get(external_cache *cache, char *key)
     while (t != NULL && t->thread != self) t = t->next_entry;
     if (t == NULL || t->thread != self)
     {
-        error("memory_cache_allocate:: unknown thread");
+        error("external_cache_get:: unknown thread");
         return NULL;
     }
 
@@ -126,8 +119,17 @@ char *external_cache_get(external_cache *cache, char *key)
     char *value = memcached_get(t->object, key, key_length, &value_length, &flags, &r);
     if (value == NULL)
     {
-        error("memory_cache_allocate:: %s", memcached_strerror(t->object, r));
+        if (r != MEMCACHED_NOTFOUND)
+        {
+            error("external_cache_get:: get failed: %s", memcached_strerror(t->object, r));
+        }
         return NULL;
     }
-    return value;
+
+    size_t length = strlen(value);
+    char *result = memory_cache_allocate(length + 1);
+    memcpy(result, value, length);
+    free(value);
+
+    return result;
 }
