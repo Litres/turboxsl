@@ -268,6 +268,7 @@ int xml_strcasecmp(char *l, char *r);
 char *xml_strdup(char *s);
 char *xml_unescape(char *s);
 char *node2string(XMLNODE *node);
+char *nodes2string(XMLNODE *node);
 
 XMLSTRING   xmls_new(unsigned bsize);             // allocates xmlstring
 void        xmls_add_char(XMLSTRING s, char c);   // appends a char to xmlstring

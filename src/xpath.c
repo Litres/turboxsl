@@ -94,6 +94,36 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
   }
 }
 
+char *nodes2string(XMLNODE *node)
+{
+  XMLNODE     *tmp_node;
+  char        *content = NULL;
+  char    *tmp_content = NULL;
+  size_t     content_len = 0;
+  size_t tmp_content_len = 0;
+
+  while (node) {
+    tmp_node    = node->next;
+    node->next  = NULL;
+    tmp_content = node2string(node);
+    node->next  = tmp_node;
+
+    if (tmp_content)
+    {
+      tmp_content_len = strlen(tmp_content) + 1;
+      char *old_content = content;
+      content = memory_cache_allocate(content_len + tmp_content_len);
+      if (old_content != NULL) memcpy(content, old_content, content_len);
+      memcpy(content + content_len, tmp_content, tmp_content_len);
+      content_len = strlen(content);
+    }
+
+    node = node->next;
+  }
+
+  return content;
+}
+
 char *node2string(XMLNODE *node) 
 {
   XMLSTRING str;

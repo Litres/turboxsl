@@ -852,7 +852,6 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   char       separ = '?';
   char      *value;
 
-  debug("xf_urlcode:: ");
   res->type = VAL_STRING;
   if(args==NULL) {
     res->v.string = xml_strdup("/");
@@ -865,7 +864,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     key = xmls_new(100);
     for(parg=args;parg;parg=parg->next) {
       xpath_execute_scalar(pctx, locals, parg, current, &rv);
-      str = rval2string(&rv);
+      str = rv.type == VAL_NODESET ? nodes2string(rv.v.nodeset->children) : rval2string(&rv);
       xmls_add_str(key,str);
       if(parg->next)
         xmls_add_char(key,',');
