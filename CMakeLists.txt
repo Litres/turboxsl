@@ -10,6 +10,8 @@ include_directories("src")
 include_directories("src/zlog/src")
 include_directories("test")
 
+include_directories("/opt/local/include")
+
 enable_testing()
 add_executable(NodeCacheTest test/node_cache_test.c)
 add_test(NAME MyTest COMMAND NodeCacheTest)
@@ -22,6 +24,7 @@ file(GLOB ZLOG_LIB_HEADERS src/zlog/src/*.h)
 file(GLOB TURBOXSL_LIB_SOURCES src/*.c)
 file(GLOB TURBOXSL_LIB_HEADERS src/*.h)
 add_library(turboxsl ${TURBOXSL_LIB_SOURCES} ${TURBOXSL_LIB_HEADERS} ${ZLOG_LIB_SOURCES} ${ZLOG_LIB_HEADERS})
+target_link_libraries(turboxsl memcached)
 
 target_link_libraries(xsltproc turboxsl)
 target_link_libraries(NodeCacheTest turboxsl)

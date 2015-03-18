@@ -11,6 +11,7 @@ struct _context;
 typedef struct _context TRANSFORM_CONTEXT;
 
 XSLTGLOBALDATA *XSLTInit(void *interpreter);
+void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list);
 void XSLTEnd(XSLTGLOBALDATA *data);
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *data, char *stylesheet);

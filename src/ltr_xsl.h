@@ -19,6 +19,7 @@
 #include "xmldict.h"
 #include "threadpool.h"
 #include "node_cache.h"
+#include "external_cache.h"
 #include "logger.h"
 
 static char *nodeTypeNames[] = {
@@ -106,6 +107,7 @@ struct _globaldata {
   char *(*perl_cb_dispatcher)(void *fun,char **args,void *interpreter);
   void (*perl_urlcode)();
   void *interpreter;
+  external_cache *cache;
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;

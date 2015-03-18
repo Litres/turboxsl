@@ -723,6 +723,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
   info("XSLTEnd");
   drop_hash();
   dict_free_data(data->urldict);
+  if (data->cache != NULL) external_cache_release(data->cache);
 
   free(data->perl_functions);
   free(data);
@@ -742,6 +743,11 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   ret->interpreter = interpreter;
 
   return ret;
+}
+
+void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)
+{
+  data->cache = external_cache_create(server_list);
 }
 
 void xml_free_document(XMLNODE *doc)
@@ -816,6 +822,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   memory_cache_set_current(ret->cache);
 
   ret->pool = threadpool_init(4);
+  if (gctx->cache != NULL) threadpool_set_external_cache(gctx->cache, ret->pool);
 
   ret->gctx = gctx;
   ret->stylesheet = XMLParseFile(gctx, stylesheet);

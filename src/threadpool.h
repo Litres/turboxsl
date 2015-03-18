@@ -7,6 +7,7 @@
 #define THREADPOOL_H_
 
 #include "node_cache.h"
+#include "external_cache.h"
 
 struct threadpool;
 
@@ -32,5 +33,6 @@ void threadpool_wait(struct threadpool *pool);
 void threadpool_free(struct threadpool *pool);
 
 void threadpool_set_cache(memory_cache *cache, struct threadpool *pool);
+void threadpool_set_external_cache(external_cache *cache, struct threadpool *pool);
 
 #endif /* THREADPOOL_H_ */

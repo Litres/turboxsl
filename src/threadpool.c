@@ -312,3 +312,14 @@ void threadpool_set_cache(memory_cache *cache, struct threadpool *pool)
         memory_cache_add_entry(cache, pool->thr_arr[i], 10000000);
     }
 }
+
+void threadpool_set_external_cache(external_cache *cache, struct threadpool *pool)
+{
+    if (!pool) return;
+
+    debug("threadpool_set_cache:: setup");
+    for (size_t i = 0; i < pool->num_of_threads; i++)
+    {
+        external_cache_add_client(cache, pool->thr_arr[i]);
+    }
+}

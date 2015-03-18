@@ -17,6 +17,7 @@
 
 #include "ltr_xsl.h"
 #include "md5.h"
+#include "external_cache.h"
 
 char *call_perl_function(TRANSFORM_CONTEXT *pctx, void *function, char **args)
 {
@@ -873,10 +874,14 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     str = hash(p,-1,0);
     p = dict_find(pctx->gctx->urldict,str);
     if(!p) {
-      p_args[0] = str;
-      p_args[1] = NULL;
-      p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
-      dict_add(pctx->gctx->urldict,str,p);
+      p = external_cache_get(pctx->gctx->cache, str);
+      if(!p) {
+        p_args[0] = str;
+        p_args[1] = NULL;
+        p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
+        external_cache_set(pctx->gctx->cache, str, p);
+        dict_add(pctx->gctx->urldict,str,p);
+      }
     }
     res->v.string = xml_strdup(p);
     return;
