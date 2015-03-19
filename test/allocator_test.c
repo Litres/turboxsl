@@ -1,24 +1,24 @@
-#include "node_cache.h"
+#include "allocator.h"
 
 #include <stdio.h>
 
 int main(int argc, char *argv[])
 {
-    memory_cache *cache = memory_cache_create();
-    if (cache == NULL)
+    memory_allocator *allocator = memory_allocator_create();
+    if (allocator == NULL)
     {
-        printf("ERROR: cache not created");
+        printf("ERROR: allocator not created");
         return 0;
     }
 
     size_t size = 256;
     size_t object_size = 16;
-    memory_cache_add_entry(cache, pthread_self(), size);
-    memory_cache_set_current(cache);
+    memory_allocator_add_entry(allocator, pthread_self(), size);
+    memory_allocator_set_current(allocator);
 
     for (size_t i = 0; i < size / object_size; i++)
     {
-        void *r = memory_cache_allocate(object_size);
+        void *r = memory_allocator_new(object_size);
         if (r == NULL)
         {
             printf("ERROR: no free memory");
@@ -26,14 +26,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    void *r = memory_cache_allocate(object_size);
+    void *r = memory_allocator_new(object_size);
     if (r != NULL)
     {
         printf("ERROR: extra free memory");
         return 0;
     }
 
-    memory_cache_release(cache);
+    memory_allocator_release(allocator);
 
     return 0;
 }

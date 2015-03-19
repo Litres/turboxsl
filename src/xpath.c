@@ -112,7 +112,7 @@ char *nodes2string(XMLNODE *node)
     {
       tmp_content_len = strlen(tmp_content) + 1;
       char *old_content = content;
-      content = memory_cache_allocate(content_len + tmp_content_len);
+      content = memory_allocator_new(content_len + tmp_content_len);
       if (old_content != NULL) memcpy(content, old_content, content_len);
       memcpy(content + content_len, tmp_content, tmp_content_len);
       content_len = strlen(content);
@@ -1326,7 +1326,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
     node1 = xml_new_node(pctx,NULL,TEXT_NODE);
     for(e=p;*e && *e != '\'';++e)
         ;
-    node1->content = memory_cache_allocate((e-p)+2);
+    node1->content = memory_allocator_new((e - p) + 2);
     memcpy(node1->content,p,e-p);
     node1->content[e-p]=0;
     if(*e)++e;
@@ -1363,14 +1363,14 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, char **eptr)
         ;
     if(f_fl) 
     {
-      node1->content = memory_cache_allocate(e-p+2);
+      node1->content = memory_allocator_new(e - p + 2);
       memcpy(node1->content,p,e-p);
       node1->content[e-p]=0;
     } 
     else 
     {
       size_t number_size = e - p + 2;
-      char *number = memory_cache_allocate(number_size);
+      char *number = memory_allocator_new(number_size);
       memcpy(number, p, e - p);
 
       node1->type = XPATH_NODE_INT;

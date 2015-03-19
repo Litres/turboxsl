@@ -13,8 +13,8 @@ include_directories("test")
 include_directories("/opt/local/include")
 
 enable_testing()
-add_executable(NodeCacheTest test/node_cache_test.c)
-add_test(NAME MyTest COMMAND NodeCacheTest)
+add_executable(AllocatorTest test/allocator_test.c)
+add_test(NAME MyTest COMMAND AllocatorTest)
 
 add_executable(xsltproc xsltproc/turboxsltproc.c)
 
@@ -27,4 +27,4 @@ add_library(turboxsl ${TURBOXSL_LIB_SOURCES} ${TURBOXSL_LIB_HEADERS} ${ZLOG_LIB_
 target_link_libraries(turboxsl memcached)
 
 target_link_libraries(xsltproc turboxsl)
-target_link_libraries(NodeCacheTest turboxsl)
+target_link_libraries(AllocatorTest turboxsl)

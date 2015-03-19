@@ -43,7 +43,7 @@ char *xml_strdup(char *s)
     return NULL;
 
   size_t length = strlen(s);
-  char *result = memory_cache_allocate(length + 1);
+  char *result = memory_allocator_new(length + 1);
   memcpy(result, s, length);
   return result;
 }
@@ -136,10 +136,10 @@ char *xml_unescape(char *s)
 XMLSTRING xmls_new(unsigned bsize)
 {
   XMLSTRING ret;
-  ret = memory_cache_allocate(sizeof(struct _xmls));
+  ret = memory_allocator_new(sizeof(struct _xmls));
   ret->allocated = bsize;
   ret->len = 0;
-  ret->s = memory_cache_allocate(bsize+1);
+  ret->s = memory_allocator_new(bsize + 1);
   ret->s[0] = 0;
   return ret;
 }
@@ -150,7 +150,7 @@ void xmls_add_char(XMLSTRING s, char c)
     char *data = s->s;
     unsigned int data_size = s->allocated;
     s->allocated = s->allocated*2 + 1;
-    s->s = memory_cache_allocate(s->allocated);
+    s->s = memory_allocator_new(s->allocated);
     memcpy(s->s, data, data_size);
   }
   s->s[s->len++] = c;
@@ -192,7 +192,7 @@ void xmls_add_str(XMLSTRING s, char *d)
     char *data = s->s;
     unsigned int data_size = s->allocated;
     s->allocated = s->allocated*2 + l;
-    s->s = memory_cache_allocate(s->allocated);
+    s->s = memory_allocator_new(s->allocated);
     memcpy(s->s, data, data_size);
   }
   memcpy(s->s+s->len,d,l); // end null included!
@@ -217,7 +217,7 @@ int i,j;
 
   if(!s)
     return NULL;
-  ws = memory_cache_allocate((strlen(s)+1)*sizeof(short));
+  ws = memory_allocator_new((strlen(s) + 1) * sizeof(short));
   for(i=j=0;s[i];++i) {
     u = 0;
     if(s[i]&0x80) {

@@ -4,7 +4,7 @@
 #include <libmemcached/memcached.h>
 
 #include "logger.h"
-#include "node_cache.h"
+#include "allocator.h"
 
 typedef struct external_cache_entry {
     pthread_t thread;
@@ -127,7 +127,7 @@ char *external_cache_get(external_cache *cache, char *key)
     }
 
     size_t length = strlen(value);
-    char *result = memory_cache_allocate(length + 1);
+    char *result = memory_allocator_new(length + 1);
     memcpy(result, value, length);
     free(value);
 

@@ -18,7 +18,7 @@
 #include "turboxsl.h"
 #include "xmldict.h"
 #include "threadpool.h"
-#include "node_cache.h"
+#include "allocator.h"
 #include "external_cache.h"
 #include "logger.h"
 
@@ -81,7 +81,7 @@ struct _xmlnode {
   char *name;
   char *content;
   NODETYPE type;
-  memory_cache *cache;
+  memory_allocator *allocator;
 };
 
 typedef struct _cbt {
@@ -132,7 +132,7 @@ typedef enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} OUTPUT_MODE;
 struct _context {
   XSLTGLOBALDATA *gctx;
   struct threadpool *pool;
-  memory_cache *cache;
+  memory_allocator *allocator;
   char *docname;
   char *fnbuf;
   char *local_part;

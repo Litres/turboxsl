@@ -143,7 +143,7 @@ void xf_concat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
       if(t) {
         char *data = s;
         size_t data_size = strlen(s);
-        s = memory_cache_allocate(data_size + strlen(t) + 3);
+        s = memory_allocator_new(data_size + strlen(t) + 3);
         memcpy(s, data, data_size);
         strcat(s,t);
       }
@@ -1125,7 +1125,7 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
   int size = snprintf(NULL, 0, format, key_value);
   if (size > 0) {
     int buffer_size = size + 1;
-    char *buffer = memory_cache_allocate(buffer_size);
+    char *buffer = memory_allocator_new(buffer_size);
     if (snprintf(buffer, buffer_size, format, key_value) == size) {
       debug("xf_key:: key predicate: %s", buffer);
       XPATH_EXPR *expression = xpath_find_expr(pctx, buffer);

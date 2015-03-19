@@ -679,7 +679,7 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       int size = snprintf(NULL, 0, format, match, use);
       if (size > 0) {
         int buffer_size = size + 1;
-        char *buffer = memory_cache_allocate(buffer_size);
+        char *buffer = memory_allocator_new(buffer_size);
         if (snprintf(buffer, buffer_size, format, match, use) == size) {
           debug("process_global_flags:: key predicate: %s", buffer);
           tmp->content = buffer;
@@ -757,7 +757,7 @@ void xml_free_document(XMLNODE *doc)
   XMLNODE *children = doc->children;
   if (children != NULL) xml_free_document(children);
 
-  if (doc->cache != NULL) memory_cache_release(doc->cache);
+  if (doc->allocator != NULL) memory_allocator_release(doc->allocator);
 }
 
 void XMLFreeDocument(XMLNODE *doc)
@@ -779,7 +779,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   free_variables(pctx);
   xml_free_document(pctx->stylesheet);
 
-  memory_cache_release(pctx->cache);
+  memory_allocator_release(pctx->allocator);
   threadpool_free(pctx->pool);
 
   free(pctx->templtab);
@@ -813,13 +813,13 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   }
   pthread_mutexattr_destroy(&attribute);
 
-  ret->cache = memory_cache_create();
-  if (ret->cache == NULL)
+  ret->allocator = memory_allocator_create();
+  if (ret->allocator == NULL)
   {
       return NULL;
   }
-  memory_cache_add_entry(ret->cache, pthread_self(), 10000000);
-  memory_cache_set_current(ret->cache);
+  memory_allocator_add_entry(ret->allocator, pthread_self(), 10000000);
+  memory_allocator_set_current(ret->allocator);
 
   ret->pool = threadpool_init(4);
   if (gctx->cache != NULL) threadpool_set_external_cache(gctx->cache, ret->pool);
@@ -873,9 +873,9 @@ XMLNODE *find_first_node(XMLNODE *n)
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 {
   // memory cache for output document
-  memory_cache *cache = memory_cache_create();
-  memory_cache_add_entry(cache, pthread_self(), 10000000);
-  memory_cache_set_current(cache);
+  memory_allocator *cache = memory_allocator_create();
+  memory_allocator_add_entry(cache, pthread_self(), 10000000);
+  memory_allocator_set_current(cache);
 
   XMLNODE *ret;
   XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
@@ -892,13 +892,13 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   }
 
   ret = xml_new_node(pctx, "out",EMPTY_NODE);
-  ret->cache = cache;
+  ret->allocator = cache;
 
   pctx->root_node = document;
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
 
-  threadpool_set_cache(cache, pctx->pool);
+  threadpool_set_allocator(cache, pctx->pool);
 
   info("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);

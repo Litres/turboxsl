@@ -71,7 +71,7 @@ static unsigned int nuid = 0;
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
-    XMLNODE *ret = memory_cache_allocate(sizeof(XMLNODE));
+    XMLNODE *ret = memory_allocator_new(sizeof(XMLNODE));
     if (ret == NULL)
     {
         error("xml_new_node:: malloc");

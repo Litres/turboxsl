@@ -302,14 +302,14 @@ void threadpool_free(struct threadpool *pool)
     free(pool);
 }
 
-void threadpool_set_cache(memory_cache *cache, struct threadpool *pool)
+void threadpool_set_allocator(memory_allocator *allocator, struct threadpool *pool)
 {
     if (!pool) return;
 
-    debug("threadpool_set_cache:: setup");
+    debug("threadpool_set_allocator:: setup");
     for (size_t i = 0; i < pool->num_of_threads; i++)
     {
-        memory_cache_add_entry(cache, pool->thr_arr[i], 10000000);
+        memory_allocator_add_entry(allocator, pool->thr_arr[i], 10000000);
     }
 }
 

@@ -34,7 +34,7 @@ char *skip_spaces(char *p, unsigned *ln)  // TODO add UTF8 spaces
 static
 char *make_string(char *p, char *s)
 {
-  char * buf = memory_cache_allocate(s-p+2);
+  char * buf = memory_allocator_new(s - p + 2);
   memcpy(buf,p,s-p);
   buf[s-p]=0;
   return buf;
@@ -332,14 +332,14 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
   XMLNODE *ret;
   char *fn = hash("(string)",-1,0);
 
-  memory_cache *cache = memory_cache_create();
-  memory_cache_add_entry(cache, pthread_self(), 1000000);
-  memory_cache_set_current(cache);
+  memory_allocator *cache = memory_allocator_create();
+  memory_allocator_add_entry(cache, pthread_self(), 1000000);
+  memory_allocator_set_current(cache);
 
   ret = do_parse(gctx, document, fn);
   renumber_children(ret);
 
-  ret->cache = cache;
+  ret->allocator = cache;
   return ret;
 }
 
@@ -388,23 +388,23 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)  {
 	}
 	buffer[length] = 0;
 
-    memory_cache *cache = NULL;
+    memory_allocator *cache = NULL;
     if (has_cache == 0)
     {
-        cache = memory_cache_create();
-        memory_cache_add_entry(cache, pthread_self(), 1000000);
-        memory_cache_set_current(cache);
+        cache = memory_allocator_create();
+      memory_allocator_add_entry(cache, pthread_self(), 1000000);
+      memory_allocator_set_current(cache);
     }
 
 	ret = do_parse(gctx, buffer, file);
     free(buffer);
 
     if (ret == NULL) {
-      memory_cache_release(cache);
+      memory_allocator_release(cache);
       return NULL;
     }
     renumber_children(ret);
-    ret->cache = cache;
+    ret->allocator = cache;
 
 	return ret;
 }
