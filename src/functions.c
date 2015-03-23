@@ -349,23 +349,19 @@ void xf_count(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *
   RVALUE rv;
   XMLNODE *selection, *t;
 
-  if(args->type == XPATH_NODE_ALL) {
-    for(;current;current=current->next)
-      ++n;
-  } else {
-    xpath_execute_scalar(pctx, locals, args, current, &rv);
-    if(rv.type == VAL_NODESET) {
-      for(selection=rv.v.nodeset;selection;selection=selection->next) {
-        if(selection->type==EMPTY_NODE) {
-          for(t=selection->children;t;t=t->next)
-            ++n;
-        } else {
+  xpath_execute_scalar(pctx, locals, args, current, &rv);
+  if(rv.type == VAL_NODESET) {
+    for(selection=rv.v.nodeset;selection;selection=selection->next) {
+      if(selection->type==EMPTY_NODE) {
+        for(t=selection->children;t;t=t->next)
           ++n;
-        }
+      } else {
+        ++n;
       }
     }
-    rval_free(&rv);
   }
+  rval_free(&rv);
+
   res->type = VAL_INT;
   res->v.integer = n;
 }
@@ -1068,7 +1064,9 @@ void xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   if(rv.type == VAL_NODESET) {
     res->v.nodeset = rv.v.nodeset;
     rv.v.nodeset = NULL;
-  } else {
+  } else if(rv.type == VAL_STRING) {
+    res->v.nodeset = xml_parse_string(pctx->gctx, rv.v.string, 1);
+  }else {
     res->v.nodeset = NULL;
   }
   rval_free(&rv);

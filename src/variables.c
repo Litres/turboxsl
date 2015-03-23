@@ -102,6 +102,7 @@ void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE 
     if(stylesheet->name==xsl_var) {
       vname = hash(xml_get_attr(stylesheet,xsl_a_name),-1,0);
       vsel = xml_get_attr(stylesheet,xsl_a_select);
+      trace("precompile_variables:: variable %s (%s)", vname, vsel);
       var = create_variable(pctx, vname);
       if(!vsel) {
         vsel = xml_eval_string(pctx, &dummy, doc, stylesheet->children);
@@ -162,6 +163,7 @@ void rval_copy(TRANSFORM_CONTEXT *pctx, RVALUE *dst, RVALUE *src)
 
 void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE *rv)
 {
+  trace("get_variable_rv:: name: %s", name);
   unsigned i;
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
@@ -190,11 +192,11 @@ void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE 
 void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE *var)
 {
   char *vname, *vsel;
-  unsigned i;
   XMLNODE *tmp;
 
   vname = hash(xml_get_attr(var,xsl_a_name),-1,0); 
   vsel = xml_get_attr(var,xsl_a_select);
+  trace("do_local_var:: add local var %s (%s)", vname, vsel);
 
   for(tmp=vars->attributes;tmp;tmp=tmp->next) {
     if(vname==tmp->name) {
@@ -215,15 +217,9 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
     int locked = threadpool_lock_on();
     apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
     if (locked) threadpool_lock_off();
-
-    // fprintf(stderr,"add local var %s = ", vname);
-    // print_rval(&(tmp->extra));
   } 
   else {
     xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
-
-    // fprintf(stderr,"add local var %s %s = ", vname, vsel);
-    // print_rval(&(tmp->extra));
   }
 }
 
