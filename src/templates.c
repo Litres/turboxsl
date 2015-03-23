@@ -104,11 +104,12 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
 }
 
 
-static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name, char *match, char *mode)
+static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, char *name, char *match, char *mode)
 {
   trace("add_template:: name: %s, match: %s", name, match);
   if(match) 
   {
+    XMLNODE *content = template->children;
     while(match) 
     {
       if(strchr(match,'[')) 
@@ -139,11 +140,11 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name,
     if (dict_find(pctx->named_templ, name) != NULL)
     {
       debug("add_template:: replace template: %s", name);
-      dict_replace(pctx->named_templ, name, content);
+      dict_replace(pctx->named_templ, name, template);
     }
     else
     {
-      dict_add(pctx->named_templ, name, content);
+      dict_add(pctx->named_templ, name, template);
     }
   }
 }
@@ -382,13 +383,11 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
 
 XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, char *name)
 {
-  int i;
-  XMLNODE *r;
-
   if(name==NULL)
     return NULL;
   name = hash(name,-1,0);
-  return dict_find(pctx->named_templ,name);
+  XMLNODE *template = dict_find(pctx->named_templ,name);
+  return template == NULL ? NULL : template->children;
 }
 
 
@@ -401,7 +400,7 @@ void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name  = hash(xml_get_attr(node,xsl_a_name),-1,0);
       char *match = xml_get_attr(node,xsl_a_match);
       char *mode  = xml_get_attr(node,xsl_a_mode);
-      add_template(pctx, node->children,name,match,mode);
+      add_template(pctx, node,name,match,mode);
     }
 
     if(node->children)
