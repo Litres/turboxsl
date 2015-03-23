@@ -6,11 +6,12 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
+LINK_DIRECTORIES(/opt/local/lib)
+include_directories("/opt/local/include")
+
 include_directories("src")
 include_directories("src/zlog/src")
 include_directories("test")
-
-include_directories("/opt/local/include")
 
 enable_testing()
 add_executable(AllocatorTest test/allocator_test.c)

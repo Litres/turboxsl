@@ -374,20 +374,7 @@ XMLNODE *xpath_get_descendant_or_self(XMLNODE *current, XMLNODE *kind)
 XMLNODE *xpath_get_all(XMLNODE *current, XMLNODE *kind)
 {
   trace("xpath_get_all:: current: %s", current->name);
-  XMLNODE *tmp = NULL;
-  XMLNODE *ret = NULL;
-  unsigned int pos;
-
-  for(XMLNODE *node=current;node;node=node->next) {
-    pos = 0; // restart numbering children for each node in source nodeset
-    for(XMLNODE *child=node->children; child; child = child->next) {
-      if(xpath_node_kind(child, kind)) {
-        tmp = add_to_selection(tmp, child, &pos);
-        if(!ret) ret = tmp;
-      }
-    }
-  }
-  return ret;
+  return xpath_get_child(current, kind);
 }
 
 XMLNODE *xpath_get_ancestor(XMLNODE *current, XMLNODE *kind)
@@ -501,7 +488,7 @@ XMLNODE *xpath_apply_selector(XMLNODE *set, XMLNODE *etree, XMLNODE * (*selector
   XMLNODE *head = NULL;
   XMLNODE *tail = NULL;
   for(XMLNODE *node=set;node;node=node->next) {
-    trace("xpath_select_common:: node: %s", node->name);
+    trace("xpath_apply_selector:: node: %s", node->name);
     XMLNODE *tmp = selector(node, etree->attributes);
     if (tmp == NULL) continue;
     if (head == NULL) {
