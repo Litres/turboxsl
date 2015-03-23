@@ -108,6 +108,7 @@ struct _globaldata {
   void (*perl_urlcode)();
   void *interpreter;
   external_cache *cache;
+  unsigned int thread_pool_size;
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;

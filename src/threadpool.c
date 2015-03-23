@@ -199,9 +199,9 @@ static void *worker_thr_routine(void *data)
 
 struct threadpool *threadpool_init(int num_of_threads)
 {
-    if (num_of_threads == 0) return NULL;
-
     debug("threadpool_init:: pool size %d", num_of_threads);
+
+    if (num_of_threads == 0) return NULL;
 
     /* Create the thread pool struct. */
     struct threadpool *pool;

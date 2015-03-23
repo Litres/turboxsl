@@ -741,6 +741,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   init_processor(ret);
   ret->urldict = dict_new(300);
   ret->interpreter = interpreter;
+  ret->thread_pool_size = 4;
 
   return ret;
 }
@@ -748,6 +749,11 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)
 {
   data->cache = external_cache_create(server_list);
+}
+
+void XSLTSetThreadPoolSize(XSLTGLOBALDATA *data, unsigned int size)
+{
+  data->thread_pool_size = size;
 }
 
 void xml_free_document(XMLNODE *doc)
@@ -820,9 +826,6 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   }
   memory_allocator_add_entry(ret->allocator, pthread_self(), 10000000);
   memory_allocator_set_current(ret->allocator);
-
-  ret->pool = threadpool_init(4);
-  if (gctx->cache != NULL) threadpool_set_external_cache(gctx->cache, ret->pool);
 
   ret->gctx = gctx;
   ret->stylesheet = XMLParseFile(gctx, stylesheet);
@@ -898,6 +901,11 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
 
+  if (pctx->pool == NULL)
+  {
+    pctx->pool = threadpool_init(pctx->gctx->thread_pool_size);
+    if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
+  }
   threadpool_set_allocator(cache, pctx->pool);
 
   info("XSLTProcess:: start process");
