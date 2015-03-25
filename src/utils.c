@@ -73,7 +73,15 @@ XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *pctx, XMLNODE *xml, char *expression)
 
   pctx->root_node = root_node;
 
-  return result.type == VAL_NODESET ? result.v.nodeset : NULL;
+  if (result.type == VAL_NODESET) return result.v.nodeset;
+  if (result.type == VAL_STRING)
+  {
+    XMLNODE *node = xml_new_node(pctx, NULL, TEXT_NODE);
+    node->content = result.v.string;
+    return node;
+  }
+
+  return NULL;
 }
 
 char *XMLStringValue(XMLNODE *xml)
