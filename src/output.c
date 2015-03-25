@@ -10,11 +10,8 @@
 **/
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "ltr_xsl.h"
-#include "xslglobs.h"
 
 
 void add_quoted_str(XMLSTRING rtext, char *s)
@@ -169,3 +166,4 @@ void XMLOutputFile(TRANSFORM_CONTEXT *ctx, XMLNODE *tree, char *filename)
   }
   fclose(f);
 }
+

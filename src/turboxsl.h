@@ -23,6 +23,9 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *data, char *text);
 XMLNODE *XMLParseFile(XSLTGLOBALDATA *data, char *filename);
 char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XMLOutputFile(TRANSFORM_CONTEXT *ctx, XMLNODE *xml, char *filename);
+XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *ctx, XMLNODE *xml, char *expression);
+char *XMLStringValue(XMLNODE *xml);
+char **XMLAttributes(XMLNODE *xml);
 void XMLFreeDocument(XMLNODE *node);
 
 void set_ctx_global_var(TRANSFORM_CONTEXT *pctx, char *name, char *content);

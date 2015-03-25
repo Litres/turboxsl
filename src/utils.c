@@ -11,8 +11,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "ltr_xsl.h"
 
@@ -64,3 +62,46 @@ char *xml_get_attr(XMLNODE *node, char *name)
   return NULL;
 }
 
+XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *pctx, XMLNODE *xml, char *expression)
+{
+  XMLNODE *root_node = pctx->root_node;
+
+  XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
+  pctx->root_node = xml;
+  RVALUE result;
+  xpath_eval_expression(pctx, locals, xml, expression, &result);
+
+  pctx->root_node = root_node;
+
+  return result.type == VAL_NODESET ? result.v.nodeset : NULL;
+}
+
+char *XMLStringValue(XMLNODE *xml)
+{
+  return node2string(xml);
+}
+
+char **XMLAttributes(XMLNODE *xml)
+{
+  unsigned int count = 0;
+  XMLNODE *attribute = xml->attributes;
+  while (attribute)
+  {
+    count++;
+    attribute = attribute->next;
+  }
+  if (count == 0) return NULL;
+
+  // last is terminator
+  char **result = memory_allocator_new(2 * count + 1);
+  unsigned int p = 0;
+  attribute = xml->attributes;
+  while (attribute)
+  {
+    result[p++] = attribute->name;
+    result[p++] = attribute->content;
+    attribute = attribute->next;
+  }
+
+  return result;
+}
