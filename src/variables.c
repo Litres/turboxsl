@@ -111,10 +111,6 @@ void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE 
       } else {
         xpath_eval_node(pctx, &dummy, doc, vsel, &(var->extra));
       }
-      xml_unlink_node(stylesheet);
-      stylesheet->children = NULL;
-      stylesheet->next = NULL;
-      
     } else if(stylesheet->children && stylesheet->name != xsl_template) {
       precompile_variables(pctx, stylesheet->children, doc);
     }
@@ -196,7 +192,7 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
 
   vname = hash(xml_get_attr(var,xsl_a_name),-1,0); 
   vsel = xml_get_attr(var,xsl_a_select);
-  trace("do_local_var:: add local var %s (%s)", vname, vsel);
+  trace("do_local_var:: name: %s (%s)", vname, vsel);
 
   for(tmp=vars->attributes;tmp;tmp=tmp->next) {
     if(vname==tmp->name) {
