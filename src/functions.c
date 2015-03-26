@@ -443,7 +443,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   char *pattern = rval2string(&rv);
   size_t pattern_length = strlen(pattern);
   if (pattern_length > 120) {
-    error("xf_format:: patten length error");
+    error("xf_format:: pattern length error");
     res->v.string = NULL;
     return;
   }
@@ -570,7 +570,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   // process integer part
   char integer_number_string[32];
   memset(integer_number_string, 0, sizeof(integer_number_string));
-  unsigned int precision = (unsigned int)ceil(log10(integer_number));
+  unsigned int precision = (unsigned int)floor(log10(integer_number)) + 1;
   if (precision > sizeof(integer_number_string)) {
     error("xf_format:: integer number error");
     res->v.string = NULL;
