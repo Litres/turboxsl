@@ -675,7 +675,7 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 
       char *match = xml_get_attr(node, xsl_a_match);
       char *use = xml_get_attr(node, xsl_a_use);
-      char *format = "descendant::%s[%s = '%%s']";
+      char *format = "%s[%s = '%%s']";
       int size = snprintf(NULL, 0, format, match, use);
       if (size > 0) {
         int buffer_size = size + 1;
