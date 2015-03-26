@@ -880,15 +880,6 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
 
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 {
-  // memory cache for output document
-  memory_allocator *cache = memory_allocator_create();
-  memory_allocator_add_entry(cache, pthread_self(), 10000000);
-  memory_allocator_set_current(cache);
-
-  XMLNODE *ret;
-  XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
-  XMLNODE *t;
-
   if(!pctx) {
     error("XSLTProcess:: pctx is NULL");
     return NULL;
@@ -899,14 +890,21 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
     return NULL;
   }
 
-  ret = xml_new_node(pctx, "out",EMPTY_NODE);
-  ret->allocator = cache;
+  // memory cache for output document
+  memory_allocator *allocator = memory_allocator_create();
+  memory_allocator_set_parent(allocator, pctx->allocator);
+  memory_allocator_add_entry(allocator, pthread_self(), 10000000);
+  memory_allocator_set_current(allocator);
+
+  XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
+  XMLNODE *ret = xml_new_node(pctx, "out",EMPTY_NODE);
+  ret->allocator = allocator;
 
   pctx->root_node = document;
   precompile_variables(pctx, pctx->stylesheet->children, document);
   preformat_document(pctx,document);
 
-  threadpool_set_allocator(cache, pctx->pool);
+  threadpool_set_allocator(allocator, pctx->pool);
 
   info("XSLTProcess:: start process");
   process_one_node(pctx, ret, document, NULL, locals, NULL);
@@ -914,7 +912,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   info("XSLTProcess:: end process");
 
 /****************** add dtd et al if required *******************/
-  t = find_first_node(ret);
+  XMLNODE *t = find_first_node(ret);
 
   if(pctx->outmode==MODE_XML && !(pctx->flags&XSL_FLAG_MODE_SET)) {
     pctx->outmode=MODE_XML;

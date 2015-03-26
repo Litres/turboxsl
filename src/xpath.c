@@ -1726,5 +1726,10 @@ XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr)
   XPATH_STRING string;
   string.value = expr;
   string.p = expr;
-  return do_or_expr(pctx, &string);
+
+  memory_allocator_activate_parent(1);
+  XMLNODE *result = do_or_expr(pctx, &string);
+  memory_allocator_activate_parent(0);
+
+  return result;
 }

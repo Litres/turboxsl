@@ -54,7 +54,7 @@ char *xml_get_attr(XMLNODE *node, char *name)
   while(node->type==EMPTY_NODE)
     node=node->children;
 
-  trace("xml_get_attr:: node %s, attribute %s ", node->name, name);
+  trace("xml_get_attr:: node %s, attribute %s", node->name, name);
   for(attr=node->attributes;attr;attr=attr->next)
     if(strcmp(attr->name, name) == 0)
       return attr->content;

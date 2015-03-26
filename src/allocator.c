@@ -14,12 +14,14 @@ typedef struct memory_allocator_data {
 
 typedef struct memory_allocator_entry {
     pthread_t thread;
+    int is_actual;
     memory_allocator_data *head;
     memory_allocator_data *tail;
     struct memory_allocator_entry *next_entry;
 } memory_allocator_entry;
 
 struct memory_allocator_ {
+    memory_allocator *parent_allocator;
     struct memory_allocator_entry *entry;
 };
 
@@ -124,6 +126,7 @@ void memory_allocator_add_entry(memory_allocator *allocator, pthread_t thread, s
 
     memset(e, 0, sizeof(memory_allocator_entry));
     e->thread = thread;
+    e->is_actual = 1;
     e->head = memory_allocator_create_data(size);
     if (e->head == NULL)
     {
@@ -149,6 +152,24 @@ void memory_allocator_set_current(memory_allocator *allocator)
     current_allocator = allocator;
 }
 
+void memory_allocator_set_parent(memory_allocator *allocator, memory_allocator *parent)
+{
+    allocator->parent_allocator = parent;
+}
+
+void memory_allocator_activate_parent(int activate)
+{
+    pthread_t self = pthread_self();
+    memory_allocator_entry *t = current_allocator->entry;
+    while (t != NULL && t->thread != self) t = t->next_entry;
+    if (t == NULL || t->thread != self)
+    {
+        error("memory_allocator_activate_parent:: unknown thread");
+        return;
+    }
+    t->is_actual = !activate;
+}
+
 void *memory_allocator_new(size_t size)
 {
     pthread_t self = pthread_self();
@@ -156,14 +177,20 @@ void *memory_allocator_new(size_t size)
     while (t != NULL && t->thread != self) t = t->next_entry;
     if (t == NULL || t->thread != self)
     {
-        error("memory_allocator_allocate:: unknown thread");
+        error("memory_allocator_new:: unknown thread");
         return NULL;
+    }
+
+    if (current_allocator->parent_allocator != NULL && !t->is_actual)
+    {
+        trace("memory_allocator_new:: using parent allocator");
+        t = current_allocator->parent_allocator->entry;
     }
 
     memory_allocator_data *data = t->tail;
     if (data->offset + size > data->data_size)
     {
-        trace("memory_allocator_allocate:: data entry full");
+        trace("memory_allocator_new:: data entry full");
         if (data->next_entry == NULL)
         {
             memory_allocator_data *new_data = memory_allocator_create_data(data->data_size);
