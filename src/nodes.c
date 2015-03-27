@@ -67,8 +67,6 @@ void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode)
   xml_free_node(pctx,node);
 }
 
-static unsigned int nuid = 0;
-
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
     XMLNODE *ret = memory_allocator_new(sizeof(XMLNODE));
@@ -80,7 +78,7 @@ XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 
     ret->type = type;
     ret->name = name;
-    ret->uid = nuid++;
+    ret->uid = ret;
     return ret;
 }
 

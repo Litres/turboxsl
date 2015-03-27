@@ -73,7 +73,7 @@ struct _xmlnode {
   XML_FLAG flags;
   unsigned position;
   unsigned order;
-  unsigned uid;
+  void *uid;
   XPATH_EXPR *compiled;
   RVALUE extra;
   unsigned line;
