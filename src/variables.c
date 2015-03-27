@@ -215,11 +215,12 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
     apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
     if (locked) threadpool_lock_off();
 
-    // merge all text nodes into one
-    XMLNODE *text = xml_new_node(pctx, NULL, TEXT_NODE);
-    text->content = nodes2string(tmp->extra.v.nodeset->children);
-    tmp->extra.v.nodeset->children = text;
-  } 
+    if(tmp->extra.v.nodeset->children->type == TEXT_NODE) {
+      XMLNODE *node = xml_new_node(pctx, NULL, ELEMENT_NODE);
+      node->children = tmp->extra.v.nodeset->children;
+      tmp->extra.v.nodeset->children = node;
+    }
+  }
   else {
     xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
   }
