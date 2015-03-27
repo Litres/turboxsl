@@ -200,6 +200,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         XMLNODE *vars = xml_new_node(pctx, NULL, EMPTY_NODE);
         XMLNODE *param = NULL;
 
+        // process template parameters
         for (iter = instr->children; iter; iter=iter->next) 
         {
           if (iter->name == xsl_withparam) 
@@ -252,6 +253,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         iter = source->children;
       }
 
+      // process template parameters
       for (child = instr->children; child; child = child->next) 
       {
         if (child->type == EMPTY_NODE)
@@ -518,7 +520,9 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
 
   if(templ) {
     trace("process_one_node:: found template: %s", templ->name);
-    apply_xslt_template(pctx, ret, source, templ, params, locals);
+    // user scope locals for each template
+    XMLNODE *scope = xml_new_node(pctx,NULL,EMPTY_NODE);
+    apply_xslt_template(pctx, ret, source, templ, params, scope);
   } else {
     apply_default_process(pctx, ret, source, params, locals, mode);
   }
