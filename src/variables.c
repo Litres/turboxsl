@@ -102,7 +102,7 @@ void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE 
     if(stylesheet->name==xsl_var) {
       vname = hash(xml_get_attr(stylesheet,xsl_a_name),-1,0);
       vsel = xml_get_attr(stylesheet,xsl_a_select);
-      trace("precompile_variables:: variable %s (%s)", vname, vsel);
+      trace("precompile_variables:: variable: %s (%s)", vname, vsel);
       var = create_variable(pctx, vname);
       if(!vsel) {
         vsel = xml_eval_string(pctx, &dummy, doc, stylesheet->children);
@@ -210,9 +210,15 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
   if(!vsel) {
     tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
     tmp->extra.type = VAL_NODESET;
+
     int locked = threadpool_lock_on();
     apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
     if (locked) threadpool_lock_off();
+
+    // merge all text nodes into one
+    XMLNODE *text = xml_new_node(pctx, NULL, TEXT_NODE);
+    text->content = nodes2string(tmp->extra.v.nodeset->children);
+    tmp->extra.v.nodeset->children = text;
   } 
   else {
     xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
