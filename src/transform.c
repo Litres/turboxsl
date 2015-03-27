@@ -780,7 +780,6 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   if(pctx->formats)
     xml_free_node(NULL,pctx->formats);
   xpath_free_compiled(pctx);
-  free_variables(pctx);
   xml_free_document(pctx->stylesheet);
 
   memory_allocator_release(pctx->allocator);
@@ -943,6 +942,9 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
       xpath_free_selection(pctx,sel);
     }
   }
+
   xml_free_node(pctx,locals);
+  free_variables(pctx);
+
   return ret;
 }

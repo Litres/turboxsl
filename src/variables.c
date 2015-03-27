@@ -22,6 +22,8 @@ void  free_variables(TRANSFORM_CONTEXT *pctx)
   for(i=0;i<pctx->var_pos;++i) {
     rval_free(&(pctx->vars[i].extra));
   }
+  pctx->var_max = 0;
+  pctx->var_pos = 0;
   free(pctx->vars);
 }
 
