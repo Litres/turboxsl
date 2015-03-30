@@ -77,6 +77,7 @@ void external_cache_release(external_cache *cache)
 
 int external_cache_set(external_cache *cache, char *key, char *value)
 {
+    debug("external_cache_set:: key: %s", key);
     if (cache == NULL) return 0;
 
     pthread_t self = pthread_self();
@@ -101,6 +102,7 @@ int external_cache_set(external_cache *cache, char *key, char *value)
 
 char *external_cache_get(external_cache *cache, char *key)
 {
+    debug("external_cache_get:: key: %s", key);
     if (cache == NULL) return NULL;
 
     pthread_t self = pthread_self();
