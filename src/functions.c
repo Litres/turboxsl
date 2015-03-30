@@ -851,6 +851,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
 
   res->type = VAL_STRING;
   if(args==NULL) {
+    debug("xf_urlcode:: no arguments, return default value");
     res->v.string = xml_strdup("/");
     return;
   }
@@ -866,6 +867,12 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       if(parg->next)
         xmls_add_char(key,',');
     }
+    if(key->len == 0) {
+      debug("xf_urlcode:: key is empty, return default value");
+      res->v.string = xml_strdup("/");
+      return;
+    }
+
     p = xmls_detach(key);
     str = hash(p,-1,0);
     p = dict_find(pctx->gctx->urldict,str);
