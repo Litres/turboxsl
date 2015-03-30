@@ -726,7 +726,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 {
   info("XSLTEnd");
   drop_hash();
-  dict_free_data(data->urldict);
+  dict_free(data->urldict);
   if (data->cache != NULL) external_cache_release(data->cache);
 
   free(data->perl_functions);
