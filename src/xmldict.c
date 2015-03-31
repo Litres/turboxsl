@@ -9,13 +9,45 @@
  *
 **/
 
+#include "xmldict.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmldict.h"
-#include "ltr_xsl.h"
+#include "logger.h"
+
+typedef struct _dict_entry {
+  const char *name;
+  const void *data;
+  unsigned next;
+} XMLDICTENTRY;
+
+struct _dict {
+  XMLDICTENTRY *entries;
+  unsigned allocated;
+  unsigned used;
+  unsigned hash[128];
+};
+
+/*
+ * sdbm hash function
+ */
+unsigned long hash_function(unsigned char *str)
+{
+  unsigned long hash = 0;
+  int c;
+
+  while ((c = *str++))
+    hash = c + (hash << 6) + (hash << 16) - hash;
+
+  return hash;
+}
+
+unsigned int bucket_number(char *str)
+{
+  return hash_function(str) % 127;
+}
 
 XMLDICT *dict_new(unsigned size)
 {
@@ -47,25 +79,22 @@ void dict_free(XMLDICT *dict)
   }
 }
 
-void *dict_find(XMLDICT *dict, char *name)
+const void *dict_find(XMLDICT *dict, const char *name)
 {
-  unsigned h;
-
   if(!dict || !name)
     return NULL;
 
-  h = (unsigned)(long)name;
-  h = 127 & (h>>5 ^ h>>11 ^ h);
+  unsigned h = bucket_number(name);
   for(h=dict->hash[h];h;) {
     --h;
-    if(dict->entries[h].name == name)
+    if(strcmp(dict->entries[h].name, name) == 0)
       return dict->entries[h].data;
     h = dict->entries[h].next;
   }
   return NULL;
 }
 
-int dict_add(XMLDICT *dict, char *name, void *data)
+int dict_add(XMLDICT *dict, const char *name, const void *data)
 {
   unsigned h,d;
 
@@ -75,11 +104,11 @@ int dict_add(XMLDICT *dict, char *name, void *data)
     dict->allocated += 100;
     dict->entries = realloc(dict->entries,dict->allocated * sizeof(XMLDICTENTRY));
   }
-  h = (unsigned)(long)name;
-  d = h = 127 & (h>>5 ^ h>>11 ^ h);
+
+  d = h = bucket_number(name);
   for(h=dict->hash[h];h;) {
     --h;
-    if(dict->entries[h].name == name)
+    if(strcmp(dict->entries[h].name, name) == 0)
       return 0; // already have this
     h = dict->entries[h].next;
   }
@@ -90,20 +119,19 @@ int dict_add(XMLDICT *dict, char *name, void *data)
   return 1;
 }
 
-void dict_replace(XMLDICT *dict, char *name, void *data)
+void dict_replace(XMLDICT *dict, const char *name, const void *data)
 {
-  unsigned h;
-
   if(!dict || !name)
     return;
+
   if(dict->used >= dict->allocated) {
     dict->allocated += 100;
     dict->entries = realloc(dict->entries,dict->allocated * sizeof(XMLDICTENTRY));
   }
   dict->entries[dict->used].name = name;
   dict->entries[dict->used].data = data;
-  h = (unsigned)(long)name;
-  h = 127 & (h>>5 ^ h>>11 ^ h);
+
+  unsigned h = bucket_number(name);
   dict->entries[dict->used].next = dict->hash[h];
   dict->hash[h] = ++dict->used;
 }

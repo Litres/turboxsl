@@ -15,6 +15,7 @@ include_directories("test")
 
 enable_testing()
 add_executable(AllocatorTest test/allocator_test.c)
+add_executable(DictionaryTest test/dictionary_test.c)
 add_test(NAME MyTest COMMAND AllocatorTest)
 
 add_executable(xsltproc xsltproc/turboxsltproc.c)
@@ -29,3 +30,4 @@ target_link_libraries(turboxsl memcached)
 
 target_link_libraries(xsltproc turboxsl)
 target_link_libraries(AllocatorTest turboxsl)
+target_link_libraries(DictionaryTest turboxsl)
