@@ -39,12 +39,13 @@ XSL_VARIABLE *create_variable(TRANSFORM_CONTEXT *pctx, char *name)
     pctx->var_max += 100;
     pctx->vars=realloc(pctx->vars, pctx->var_max*sizeof(XSL_VARIABLE));
   }
-  name = hash(name,-1,0);
+
   for(i=0;i<pctx->var_pos;++i) {
-    if(pctx->vars[i].name == name) {
+    if(xml_strcmp(pctx->vars[i].name, name) == 0) {
       return &(pctx->vars[i]);
     }
   }
+
   pctx->vars[pctx->var_pos].name = name;
   pctx->vars[pctx->var_pos].extra.type = VAL_NULL;
   ++pctx->var_pos;
@@ -53,20 +54,15 @@ XSL_VARIABLE *create_variable(TRANSFORM_CONTEXT *pctx, char *name)
 
 void set_ctx_global_var(TRANSFORM_CONTEXT *pctx, char *name, char *content)
 {
-  XSL_VARIABLE *var;
-  name = hash(name,-1,0);
-  content = xml_strdup(content);
-  var = create_variable(pctx, name);
+  XSL_VARIABLE *var = create_variable(pctx, xml_strdup(name));
   var->extra.type = VAL_STRING;
-  var->extra.v.string = content;
+  var->extra.v.string = xml_strdup(content);
 }
 
 void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content)
 {
   unsigned i;
 
-  name = hash(name,-1,0);
-  content = strdup(content);
   if(pctx->var_max==0) {
     pctx->var_max = 200;
     pctx->var_pos = 0;
@@ -75,17 +71,17 @@ void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content)
     pctx->var_max += 100;
     pctx->vars=realloc(pctx->vars, pctx->var_max*sizeof(XSL_VARIABLE));
   }
-  name = hash(name,-1,0);
+
   for(i=0;i<pctx->var_pos;++i) {
-    if(pctx->vars[i].name == name) {
+    if(xml_strcmp(pctx->vars[i].name, name) == 0) {
       rval_free(&(pctx->vars[i].extra));
-      pctx->vars[i].extra.v.string = content;
+      pctx->vars[i].extra.v.string = xml_strdup(content);
       pctx->vars[i].extra.type = VAL_STRING;
       return;
     }
   }
-  pctx->vars[pctx->var_pos].name = name;
-  pctx->vars[pctx->var_pos].extra.v.string = content;
+  pctx->vars[pctx->var_pos].name = xml_strdup(name);
+  pctx->vars[pctx->var_pos].extra.v.string = xml_strdup(content);
   pctx->vars[i].extra.type = VAL_STRING;
   ++pctx->var_pos;
 }
@@ -101,8 +97,8 @@ void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE 
 
   for(;stylesheet;stylesheet=n) {
     n = stylesheet->next;
-    if(stylesheet->name==xsl_var) {
-      vname = hash(xml_get_attr(stylesheet,xsl_a_name),-1,0);
+    if(xml_strcmp(stylesheet->name, xsl_var) == 0) {
+      vname = xml_get_attr(stylesheet,xsl_a_name);
       vsel = xml_get_attr(stylesheet,xsl_a_select);
       trace("precompile_variables:: variable: %s (%s)", vname, vsel);
       var = create_variable(pctx, vname);
@@ -113,7 +109,7 @@ void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE 
       } else {
         xpath_eval_node(pctx, &dummy, doc, vsel, &(var->extra));
       }
-    } else if(stylesheet->children && stylesheet->name != xsl_template) {
+    } else if(stylesheet->children && xml_strcmp(stylesheet->name, xsl_template) != 0) {
       precompile_variables(pctx, stylesheet->children, doc);
     }
   }
@@ -124,13 +120,13 @@ char *get_variable_str(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name)
   unsigned i;
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
-      if(name==vars->name) {
+      if(xml_strcmp(name, vars->name) == 0) {
         return vars->extra.v.string;
       }
     }
   }
   for(i=0;i<pctx->var_pos;++i) { // then globals
-    if(name==pctx->vars[i].name) {
+    if(xml_strcmp(name, pctx->vars[i].name) == 0) {
       return pctx->vars[i].extra.v.string;
     }
   }
@@ -165,14 +161,14 @@ void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE 
   unsigned i;
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
-      if(name==vars->name) {
+      if(xml_strcmp(name, vars->name) == 0) {
         rval_copy(pctx,rv,&vars->extra);
         return;
       }
     }
   }
   for(i=0;i<pctx->var_pos;++i) { // then globals
-    if(name==pctx->vars[i].name) {
+    if(xml_strcmp(name, pctx->vars[i].name) == 0) {
       rval_copy(pctx,rv,&pctx->vars[i].extra);
       return;
     }
@@ -192,12 +188,12 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
   char *vname, *vsel;
   XMLNODE *tmp;
 
-  vname = hash(xml_get_attr(var,xsl_a_name),-1,0); 
+  vname = xml_get_attr(var,xsl_a_name);
   vsel = xml_get_attr(var,xsl_a_select);
   trace("do_local_var:: name: %s (%s)", vname, vsel);
 
   for(tmp=vars->attributes;tmp;tmp=tmp->next) {
-    if(vname==tmp->name) {
+    if(xml_strcmp(vname, tmp->name) == 0) {
       free(tmp->content);
       tmp->content = NULL;
       break;
@@ -238,7 +234,7 @@ void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, XMLNODE *
   XMLNODE *tmp;
 
   for (; params; params = params->next) {
-    if (name == params->name) 
+    if (xml_strcmp(name, params->name) == 0)
     {
       tmp              = xml_new_node(pctx, name, ATTRIBUTE_NODE);
       tmp->next        = vars->attributes;
@@ -264,12 +260,12 @@ char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second)
   }
 
   for(i=0;i<pctx->var_pos;++i) {
-    if(0==strcmp(fullname,pctx->vars[i].name)) {
+    if(0==xml_strcmp(fullname,pctx->vars[i].name)) {
       return xml_strdup(pctx->vars[i].extra.v.string);
     }
   }
   for(i=0;i<pctx->gctx->var_pos;++i) {
-    if(0==strcmp(fullname,pctx->gctx->vars[i].name)) {
+    if(0==xml_strcmp(fullname,pctx->gctx->vars[i].name)) {
       return xml_strdup(pctx->gctx->vars[i].extra.v.string);
     }
   }

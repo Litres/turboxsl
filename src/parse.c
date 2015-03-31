@@ -120,11 +120,10 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
   char *buffer;
   unsigned comment_depth = 0;
   unsigned ln = 0;
-  init_hash();
 
   state = INIT;
   ret = xml_new_node(NULL,"root",EMPTY_NODE);
-  ret->file = uri;
+  ret->file = xml_strdup(uri);
 
   while(*p) {
     if(state==ERROR)
@@ -180,7 +179,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           p = skip_spaces(p,&ln);
           for(c=p; can_name(*c);++c)
             ;
-          current = xml_new_node(NULL,hash(p,c-p,0), ELEMENT_NODE);
+          current = xml_new_node(NULL, xml_new_string(p, c - p), ELEMENT_NODE);
           current->prev = previous;
           current->file = uri;
           current->line = ln;
@@ -229,7 +228,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           p = skip_spaces(p,&ln);
           for(c=p; can_name(*c);++c)
             ;
-          attr = xml_new_node(NULL,hash(p,c-p,0), ATTRIBUTE_NODE);
+          attr = xml_new_node(NULL, xml_new_string(p, c - p), ATTRIBUTE_NODE);
           attr->file = uri;
           attr->line = ln;
           attr->next = current->attributes;
@@ -350,7 +349,6 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
 	if (file == NULL)
 		return NULL;
 
-	file = hash(file,-1,0);
 	if ((pFile = fopen(file, "r")) == NULL) {
 		error("xml_parse_file:: can't open %s: %s", file, strerror(errno));
 		return NULL;
@@ -400,7 +398,6 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
 XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache)
 {
   XMLNODE *ret;
-  char *fn = hash("(string)",-1,0);
 
   memory_allocator *cache = NULL;
   if (has_cache == 0)
@@ -410,7 +407,7 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache)
     memory_allocator_set_current(cache);
   }
 
-  ret = do_parse(gctx, string, fn);
+  ret = do_parse(gctx, string, "(string)");
   if (ret == NULL) {
     memory_allocator_release(cache);
     return NULL;

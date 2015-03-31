@@ -736,13 +736,13 @@ void xf_document(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
 
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   docname = rval2string(&rv);
-  debug("xf_document:: docname %s", docname);
+  debug("xf_document:: document name: %s", docname);
   if (docname[0] == 0) {
     doc = add_to_selection(NULL, pctx->stylesheet, &p);
   } 
   else {
     abs = get_abs_name(pctx, docname);
-    debug("xf_document:: abs %s", abs);
+    debug("xf_document:: absolute name: %s", abs);
     if(abs) {
       doc = xml_parse_file(pctx->gctx, abs, 1);
       doc = add_to_selection(NULL, doc, &p);
@@ -873,8 +873,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       return;
     }
 
-    p = xmls_detach(key);
-    str = hash(p,-1,0);
+    str = xmls_detach(key);
     p = dict_find(pctx->gctx->urldict,str);
     if(!p) {
       p = external_cache_get(pctx->gctx->cache, str);
@@ -1164,7 +1163,7 @@ void add_function(TRANSFORM_CONTEXT *pctx, char *fname, void (*fun)(TRANSFORM_CO
     pctx->cb_max += 20;
     pctx->functions = realloc(pctx->functions, sizeof(CB_TABLE)*pctx->cb_max);
   }
-  pctx->functions[pctx->cb_ptr].name = hash(fname,-1,0);
+  pctx->functions[pctx->cb_ptr].name = fname;
   pctx->functions[pctx->cb_ptr].func = fun;
   ++pctx->cb_ptr;
 }
@@ -1253,7 +1252,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
 
   if(pctx->gctx->perl_cb_dispatcher) { // first try perl overrides if any
     for(i=0;i<pctx->gctx->perl_cb_ptr;++i) {
-      if(pctx->gctx->perl_functions[i].name == fname) {
+      if(strcmp(pctx->gctx->perl_functions[i].name, fname) == 0) {
         debug("xpath_call_dispatcher:: Perl callback function: %s", fname);
         do_callback(pctx, locals, args, current, res, pctx->gctx->perl_functions[i].func);
         return;
@@ -1262,7 +1261,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
   }
 
   for(i=0;i<pctx->cb_ptr;++i) {
-    if(pctx->functions[i].name == fname) {
+    if(strcmp(pctx->functions[i].name, fname) == 0) {
       debug("xpath_call_dispatcher:: internal function: %s", fname);
       (pctx->functions[i].func)(pctx, locals, args, current, res);
       return;
@@ -1287,7 +1286,7 @@ void register_function(XSLTGLOBALDATA *pctx, char *fname, char *(*callback)(void
   if(0 == xml_strcmp(fname,"ltr:url_code")) {
     pctx->perl_urlcode = fun;
   } else {
-    pctx->perl_functions[pctx->perl_cb_ptr].name = hash(fname,-1,0);
+    pctx->perl_functions[pctx->perl_cb_ptr].name = xml_strdup(fname);
     pctx->perl_functions[pctx->perl_cb_ptr].func = fun;
     ++pctx->perl_cb_ptr;
   }

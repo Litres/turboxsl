@@ -171,14 +171,6 @@ struct _context {
 XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache);
 XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache);
 
-/********************** cache.c -- global hash **********************/
-void init_hash();
-void drop_hash();
-void hash_memory_usage();
-char *hash(char *name, int len, int lock);
-char *add_hash(char *name, int len, int lock);
-char *find_hash(char *name, int len, int lock);
-
 /********************** nodes.c -- nodes operations *****************/
 void xml_unlink_node(XMLNODE *node);
 void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
@@ -267,6 +259,7 @@ int x_is_selchar(char c);
 int xml_strcmp(char *l, char *r);
 int xml_strcasecmp(char *l, char *r);
 char *xml_strdup(char *s);
+char *xml_new_string(char *s, size_t length);
 char *xml_unescape(char *s);
 char *node2string(XMLNODE *node);
 char *nodes2string(XMLNODE *node);

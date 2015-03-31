@@ -10,39 +10,36 @@
 **/
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "ltr_xsl.h"
 
 int xml_strcmp(char *l, char *r)
 {
-    if(l==r)
-	return 0;   //fast path for hashed strings and case of both NULLs
-    if(l==NULL)
-	return -1;
-    if(r==NULL)
-	return 1;
-    return strcmp(l,r);
+  if(l==r) return 0;
+  if(l==NULL) return -1;
+  if(r==NULL) return 1;
+  return strcmp(l,r);
 }
 
 int xml_strcasecmp(char *l, char *r)
 {
-    if(l==r)
-	return 0;   //fast path for hashed strings and case of both NULLs
-    if(l==NULL)
-	return -1;
-    if(r==NULL)
-	return 1;
-    return strcasecmp(l,r);
+  if(l==r) return 0;
+  if(l==NULL) return -1;
+  if(r==NULL) return 1;
+  return strcasecmp(l,r);
 }
 
 char *xml_strdup(char *s)
 {
-  if(s==NULL)
-    return NULL;
+  if(s==NULL) return NULL;
+  return xml_new_string(s, strlen(s));
+}
 
-  size_t length = strlen(s);
+char *xml_new_string(char *s, size_t length)
+{
+  if(s==NULL) return NULL;
+
   char *result = memory_allocator_new(length + 1);
   memcpy(result, s, length);
   return result;

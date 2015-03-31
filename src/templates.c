@@ -30,8 +30,8 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
     if(fn_text==NULL) 
     {
       xml_clear_node(pctx,&enode);
-      fn_text = hash("text",-1,0);
-      fn_node = hash("node",-1,0);
+      fn_text = "text";
+      fn_node = "node";
     }
 
     pctx->templno += 100;
@@ -39,7 +39,7 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
   }
 
   unsigned r = pctx->templcnt++;
-  pctx->templtab[r].name = hash(name,-1,0);
+  pctx->templtab[r].name = xml_strdup(name);
   pctx->templtab[r].content = content;
   pctx->templtab[r].match = NULL;
   pctx->templtab[r].mode = NULL;
@@ -51,7 +51,7 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 
 static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *match, char *mode)
 {
-  trace("add_templ_match:: match: %s", match);
+  trace("add_templ_match:: match: %s, mode: %s", match, mode);
 
   while(x_is_ws(*match))  // skip leading whitespace;
     ++match;
@@ -68,11 +68,9 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   if(!content)  // if template match is empty, return empty node on match, not NULL
     content = &enode;
 
-  mode = hash(mode,-1,0);
-  char *m1 = hash(match,-1,0);
-
   for (unsigned i = 0; i < pctx->templcnt; i++) {
-    if (pctx->templtab[i].match == m1 && pctx->templtab[i].mode == mode) {
+    if (xml_strcmp(pctx->templtab[i].match, match) == 0
+        && xml_strcmp(pctx->templtab[i].mode, mode) == 0) {
       debug("add_templ_match:: found existing template: %d", i);
       pctx->templtab[i].content = content;
       return i;
@@ -80,7 +78,7 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   }
 
   unsigned r = templtab_add(pctx, content, NULL);
-  pctx->templtab[r].match = m1;
+  pctx->templtab[r].match = match;
   pctx->templtab[r].mode = mode;
   if(match[0]=='*' && match[1]==0) 
   {
@@ -89,10 +87,10 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   else if (strchr(match,'/')||strchr(match,'[')||strstr(match,"::")) { // looks like select match
     if(strchr(match+1,'/')||strchr(match+1,'[')||strstr(match,"::")) { // XXX not checking if first char is [ -- but this will probably never happen
       pctx->templtab[r].matchtype = TMATCH_SELECT;
-      pctx->templtab[r].expr = xpath_find_expr(pctx,m1);
+      pctx->templtab[r].expr = xpath_find_expr(pctx,match);
     } 
     else {
-      pctx->templtab[r].match = hash(match+1,-1,0);
+      pctx->templtab[r].match = xml_strdup(match + 1);
       pctx->templtab[r].matchtype = TMATCH_ROOT;
     }
   } 
@@ -106,7 +104,7 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
 
 static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, char *name, char *match, char *mode)
 {
-  trace("add_template:: name: %s, match: %s", name, match);
+  trace("add_template:: name: %s, match: %s, mode: %s", name, match, mode);
   if(match) 
   {
     XMLNODE *content = template->children;
@@ -122,10 +120,9 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, char *name,
         char *pp = strchr(match,'|');
         if(pp) 
         {
-          *pp = 0;
-          add_templ_match(pctx,content, match, mode);
-          *pp = '|';
-          match=pp+1;
+          char *part_match = xml_new_string(match, pp - match);
+          add_templ_match(pctx, content, part_match, mode);
+          match = pp + 1;
         }
         else 
         {
@@ -170,7 +167,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
 
     case XPATH_NODE_SELECT:
-      if(node->name != templ->name)
+      if(xml_strcmp(node->name, templ->name) != 0)
         return 0;
 
       return select_match(pctx, node->parent, templ->children);
@@ -209,9 +206,9 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
 
     case XPATH_NODE_CALL:
-      if(templ->name==fn_text)
+      if(xml_strcmp(templ->name, fn_text) == 0)
         return node->type==TEXT_NODE;
-      else if(templ->name==fn_node)
+      else if(xml_strcmp(templ->name, fn_node) == 0)
         return 1;
 
       return 0;
@@ -329,14 +326,14 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
 XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // name here is node name, so is already hashed
 {
-  trace("find_template:: name: %s", node->name);
+  trace("find_template:: node name: %s, mode: %s", node->name, mode);
 
   char *name = node->name;
   int i;
 
   for(i=0;i<pctx->templcnt;++i) 
   {
-    if(pctx->templtab[i].mode!=mode)
+    if(xml_strcmp(pctx->templtab[i].mode, mode) != 0)
       continue;
     switch (pctx->templtab[i].matchtype) 
     {
@@ -354,7 +351,7 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
 
     /*** or if it is a child of root, fall thru to exact name match ***/
       case TMATCH_EXACT:
-        if(name == pctx->templtab[i].match) {
+        if(xml_strcmp(name, pctx->templtab[i].match) == 0) {
           return pctx->templtab[i].content;
         }
         break;
@@ -370,7 +367,7 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
 
   if(node!=pctx->root_node) {
     for(i=0;i<pctx->templcnt;++i) {
-      if(pctx->templtab[i].mode==mode && pctx->templtab[i].matchtype==TMATCH_ALWAYS) {
+      if(xml_strcmp(pctx->templtab[i].mode, mode) == 0 && pctx->templtab[i].matchtype==TMATCH_ALWAYS) {
         trace("find_template:: always match");
         return pctx->templtab[i].content;
       }
@@ -385,7 +382,7 @@ XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, char *name)
 {
   if(name==NULL)
     return NULL;
-  name = hash(name,-1,0);
+
   XMLNODE *template = dict_find(pctx->named_templ,name);
   return template == NULL ? NULL : template->children;
 }
@@ -395,12 +392,12 @@ void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
   for(;node;node=node->next) 
   {
-    if(node->type==ELEMENT_NODE && node->name==xsl_template) 
+    if(node->type==ELEMENT_NODE && xml_strcmp(node->name, xsl_template) == 0)
     {
-      char *name  = hash(xml_get_attr(node,xsl_a_name),-1,0);
+      char *name  = xml_get_attr(node,xsl_a_name);
       char *match = xml_get_attr(node,xsl_a_match);
       char *mode  = xml_get_attr(node,xsl_a_mode);
-      add_template(pctx, node,name,match,mode);
+      add_template(pctx, node, name, match, mode);
     }
 
     if(node->children)

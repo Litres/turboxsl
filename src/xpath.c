@@ -28,7 +28,7 @@ static XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string);
 XMLNODE *xpath_in_selection(XMLNODE *sel, char *name)
 {
   for(;sel;sel=sel->next) {
-    if(sel->name == name) {
+    if(strcmp(sel->name, name) == 0) {
       return sel;
     }
   }
@@ -47,8 +47,7 @@ void xpath_free_compiled(TRANSFORM_CONTEXT *pctx)
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 {
   trace("xpath_find_expr:: expression: %s", expr);
-  char *e = hash(expr,-1,0);
-  if(e==NULL) return NULL;
+  if (expr == NULL) return NULL;
 
   if (pthread_mutex_lock(&(pctx->lock))) {
     error("xpath_find_expr:: lock");
@@ -58,20 +57,20 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
   XMLNODE *etree = NULL;
   unsigned i;
   for(i=0;i<pctx->n_exprs;++i) {
-    if(pctx->compiled[i].expr==e) {
+    if(strcmp(pctx->compiled[i].expr,expr) == 0) {
       etree = pctx->compiled[i].comp;
       break;
     }
   }
 
   if(etree==NULL) {
-    etree = xpath_compile(pctx, e);
+    etree = xpath_compile(pctx, expr);
     if(pctx->n_exprs>=pctx->m_exprs) {
       pctx->m_exprs += 100;
       pctx->compiled = realloc(pctx->compiled, pctx->m_exprs*sizeof(EXPTAB));
     }
     if(etree) {
-      pctx->compiled[pctx->n_exprs].expr = e;
+      pctx->compiled[pctx->n_exprs].expr = expr;
       pctx->compiled[pctx->n_exprs].comp = etree;
       ++ pctx->n_exprs;
     }
@@ -1144,7 +1143,7 @@ XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string, NODETYPE t)
   for (e = p+1; *e && x_is_namechar(*e); ++e)
     ;
   ret = xml_new_node(pctx, NULL, t);
-  ret->name=hash(p,e-p,0);
+  ret->name=xml_new_string(p, e - p);
   trace("do_var_expr:: variable name: %s", ret->name);
   string->p=e;
   skip_ws(string);
@@ -1263,7 +1262,7 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
       for (e = p+1; *e && x_is_namechar(*e); ++e)
         ;
 
-      char *name = hash(p,e-p,0);
+      char *name = xml_new_string(p, e - p);
       string->p=e;
 
       if(*string->p=='(')
@@ -1288,7 +1287,7 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
   for (e = p+1; *e && x_is_namechar(*e); ++e)
       ;
 
-  char *name = hash(p,e-p,0);
+  char *name = xml_new_string(p, e - p);
   string->p=e;
 
   skip_ws(string);
