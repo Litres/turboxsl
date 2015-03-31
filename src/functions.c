@@ -842,7 +842,7 @@ static char *url_get_specials(TRANSFORM_CONTEXT *pctx, char *name)
 void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
   RVALUE     rv;
-  XMLSTRING  url, key;
+  XMLSTRING  url;
   char      *str;
   char      *p;
   char      *arg;
@@ -857,19 +857,18 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   }
 
   if(pctx->gctx->perl_urlcode) {
-    XMLNODE *parg;
-    char *p_args[2];
-    key = xmls_new(100);
-    for(parg=args;parg;parg=parg->next) {
+    memory_allocator_activate_parent(1);
+    XMLSTRING key = xmls_new(100);
+    for(XMLNODE *parg=args;parg;parg=parg->next) {
       xpath_execute_scalar(pctx, locals, parg, current, &rv);
       str = rv.type == VAL_NODESET ? nodes2string(rv.v.nodeset->children) : rval2string(&rv);
       xmls_add_str(key,str);
-      if(parg->next)
-        xmls_add_char(key,',');
+      if(parg->next) xmls_add_char(key,',');
     }
     if(key->len == 0) {
       debug("xf_urlcode:: key is empty, return default value");
       res->v.string = xml_strdup("/");
+      memory_allocator_activate_parent(0);
       return;
     }
 
@@ -878,6 +877,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     if(!p) {
       p = external_cache_get(pctx->gctx->cache, str);
       if(!p) {
+        char *p_args[2];
         p_args[0] = str;
         p_args[1] = NULL;
         p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
@@ -886,6 +886,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       }
     }
     res->v.string = xml_strdup(p);
+    memory_allocator_activate_parent(0);
     return;
   }
   url = xmls_new(100);
