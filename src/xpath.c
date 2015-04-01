@@ -106,9 +106,6 @@ char *nodes2string(XMLNODE *node)
   size_t     content_len = 0;
   size_t tmp_content_len = 0;
 
-  if (node == NULL)
-    return NULL;
-
   while (node) {
     tmp_node    = node->next;
     node->next  = NULL;

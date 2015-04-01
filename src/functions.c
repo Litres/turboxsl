@@ -861,7 +861,8 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     XMLSTRING key = xmls_new(100);
     for(XMLNODE *parg=args;parg;parg=parg->next) {
       xpath_execute_scalar(pctx, locals, parg, current, &rv);
-      str = rv.type == VAL_NODESET ? nodes2string(rv.v.nodeset->children) : rval2string(&rv);
+      if (rv.type == VAL_NODESET && rv.v.nodeset != NULL) str = nodes2string(rv.v.nodeset->children);
+      else str = rval2string(&rv);
       xmls_add_str(key,str);
       if(parg->next) xmls_add_char(key,',');
     }
