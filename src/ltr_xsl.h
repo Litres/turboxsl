@@ -100,6 +100,7 @@ typedef struct _var {
 } XSL_VARIABLE;
 
 struct _globaldata {
+  memory_allocator *allocator;
   XMLDICT *urldict;
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;

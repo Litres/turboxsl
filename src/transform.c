@@ -726,6 +726,8 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 void XSLTEnd(XSLTGLOBALDATA *data)
 {
   info("XSLTEnd");
+
+  memory_allocator_release(data->allocator);
   dict_free(data->urldict);
   if (data->cache != NULL) external_cache_release(data->cache);
 
@@ -740,9 +742,15 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   logger_create();
 
   info("XSLTInit");
+
   XSLTGLOBALDATA *ret = malloc(sizeof(XSLTGLOBALDATA));
   memset(ret,0,sizeof(XSLTGLOBALDATA));
   init_processor(ret);
+
+  ret->allocator = memory_allocator_create(NULL);
+  memory_allocator_add_entry(ret->allocator, pthread_self(), 100000);
+  memory_allocator_set_current(ret->allocator);
+
   ret->urldict = dict_new(300);
   ret->interpreter = interpreter;
 

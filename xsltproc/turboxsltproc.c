@@ -15,6 +15,8 @@ int main(int n, char *args[]) {
         exit(1);
     }
 
+    register_function(gctx, "test", NULL, NULL);
+
     TRANSFORM_CONTEXT *pctx = XSLTNewProcessor(gctx, args[1]);
     if (!pctx) {
         fprintf(stderr, "error in style processing\n");
