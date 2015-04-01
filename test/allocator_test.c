@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    memory_allocator *allocator = memory_allocator_create();
+    memory_allocator *allocator = memory_allocator_create(NULL);
     if (allocator == NULL)
     {
         printf("ERROR: allocator not created");

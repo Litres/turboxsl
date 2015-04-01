@@ -57,6 +57,8 @@ libturboxsl_la_SOURCES = \
   zlog/src/zlog.h \
   logger.c \
   logger.h \
+  thread_lock.c \
+  thread_lock.h \
   debug.c \
   parse.c \
   output.c \

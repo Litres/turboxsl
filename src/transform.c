@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "ltr_xsl.h"
+#include "thread_lock.h"
 
 #define XSL_MAIN
 #include "xslglobs.h"
@@ -802,19 +803,12 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   }
   memset(ret,0,sizeof(TRANSFORM_CONTEXT));
 
-  pthread_mutexattr_t attribute;
-  if (pthread_mutexattr_init(&attribute)) {
-    error("XSLTNewProcessor:: create lock");
+  if (!thread_lock_create_recursive(&(ret->lock)))
+  {
     return NULL;
   }
-  pthread_mutexattr_settype(&attribute, PTHREAD_MUTEX_RECURSIVE);
-  if(pthread_mutex_init(&(ret->lock), &attribute)) {
-    error("XSLTNewProcessor:: create lock");
-    return NULL;
-  }
-  pthread_mutexattr_destroy(&attribute);
 
-  ret->allocator = memory_allocator_create();
+  ret->allocator = memory_allocator_create(NULL);
   if (ret->allocator == NULL)
   {
       return NULL;
@@ -892,8 +886,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   }
 
   // memory cache for output document
-  memory_allocator *allocator = memory_allocator_create();
-  memory_allocator_set_parent(allocator, pctx->allocator);
+  memory_allocator *allocator = memory_allocator_create(pctx->allocator);
   memory_allocator_add_entry(allocator, pthread_self(), 10000000);
   memory_allocator_set_current(allocator);
 

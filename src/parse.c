@@ -377,7 +377,7 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
     memory_allocator *cache = NULL;
     if (has_cache == 0)
     {
-      cache = memory_allocator_create();
+      cache = memory_allocator_create(NULL);
       memory_allocator_add_entry(cache, pthread_self(), 1000000);
       memory_allocator_set_current(cache);
     }
@@ -402,7 +402,7 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache)
   memory_allocator *cache = NULL;
   if (has_cache == 0)
   {
-    cache = memory_allocator_create();
+    cache = memory_allocator_create(NULL);
     memory_allocator_add_entry(cache, pthread_self(), 1000000);
     memory_allocator_set_current(cache);
   }
