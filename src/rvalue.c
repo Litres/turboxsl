@@ -102,10 +102,10 @@ char *rval2string(RVALUE *rv) {
 
     case VAL_NODESET:
       res = NULL;
-      if (rv->v.nodeset) {
-          // TODO take first in document order
-          XMLNODE *node = rv->v.nodeset;
-          res = node2string(node->type != EMPTY_NODE ? node : node->children);
+      if(rv->v.nodeset) {
+        // TODO take first in document order
+        XMLNODE *node = rv->v.nodeset;
+        res = node->type == EMPTY_NODE ? nodes2string(node) : node2string(node);
       }
       rval_free(rv);
       return res;

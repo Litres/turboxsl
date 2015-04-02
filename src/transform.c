@@ -220,13 +220,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
               int locked = threadpool_lock_on();
               apply_xslt_template(pctx, tmp->extra.v.nodeset, source, iter->children, NULL, locals);
               if (locked) threadpool_lock_off();
-
-              // TODO fix me
-              if(tmp->extra.v.nodeset->children != NULL && tmp->extra.v.nodeset->children->type == TEXT_NODE) {
-                XMLNODE *node = xml_new_node(pctx, NULL, ELEMENT_NODE);
-                node->children = tmp->extra.v.nodeset->children;
-                tmp->extra.v.nodeset->children = node;
-              }
             }
             else {
               xpath_eval_node(pctx, locals, source, expr, &(tmp->extra));
