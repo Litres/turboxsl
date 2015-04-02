@@ -866,6 +866,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       xmls_add_str(key,str);
       if(parg->next) xmls_add_char(key,',');
     }
+
     if(key->len == 0) {
       debug("xf_urlcode:: key is empty, return default value");
       res->v.string = xml_strdup("/");
@@ -874,6 +875,15 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     }
 
     str = xmls_detach(key);
+    if(pctx->cache_key_prefix != NULL) {
+      size_t prefix_length = strlen(pctx->cache_key_prefix);
+      size_t key_length = strlen(str);
+      char *t = memory_allocator_new(prefix_length + key_length + 1);
+      memcpy(t, pctx->cache_key_prefix, prefix_length);
+      memcpy(t + prefix_length, key, key_length);
+      str = t;
+    }
+
     p = dict_find(pctx->gctx->urldict,str);
     if(!p) {
       p = external_cache_get(pctx->gctx->cache, str);
@@ -890,6 +900,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     memory_allocator_activate_parent(0);
     return;
   }
+
   url = xmls_new(100);
   xmls_add_char(url,'/');
   xpath_execute_scalar(pctx, locals, args, current, &rv);

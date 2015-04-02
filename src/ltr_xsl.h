@@ -134,6 +134,7 @@ struct _context {
   XSLTGLOBALDATA *gctx;
   struct threadpool *pool;
   memory_allocator *allocator;
+  char *cache_key_prefix;
   char *docname;
   char *fnbuf;
   char *local_part;

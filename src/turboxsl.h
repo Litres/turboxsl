@@ -16,6 +16,7 @@ void XSLTEnd(XSLTGLOBALDATA *data);
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *data, char *stylesheet);
 void XSLTCreateThreadPool(TRANSFORM_CONTEXT *ctx, unsigned int size);
+void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *ctx);
 

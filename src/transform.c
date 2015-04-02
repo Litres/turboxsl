@@ -881,6 +881,11 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
 }
 
+void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
+{
+  ctx->cache_key_prefix = xml_strdup(prefix);
+}
+
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 {
   if(!pctx) {
