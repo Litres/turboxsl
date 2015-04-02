@@ -213,6 +213,7 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
     apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
     if (locked) threadpool_lock_off();
 
+    // TODO fix me
     if(tmp->extra.v.nodeset->children != NULL && tmp->extra.v.nodeset->children->type == TEXT_NODE) {
       XMLNODE *node = xml_new_node(pctx, NULL, ELEMENT_NODE);
       node->children = tmp->extra.v.nodeset->children;
