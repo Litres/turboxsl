@@ -185,10 +185,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
       if(!select_match(pctx, node, templ->children))
         return 0;
 
-      if(templ->children->type==XPATH_NODE_UNION || templ->children->type==XPATH_NODE_SELECT)
-        return select_match(pctx, node, templ->children->next);
-
-      return 1;
+      return xpath_filter(pctx, NULL, node, templ->children->next) != NULL;
 
 
     case XPATH_NODE_UNION:

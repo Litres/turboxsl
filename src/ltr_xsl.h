@@ -227,6 +227,7 @@ XMLNODE *xpath_in_selection(XMLNODE *sel, char *name);
 void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel);
 XMLNODE *xpath_copy_nodeset(XMLNODE *set);
 XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr);
+XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset, XMLNODE *expr);
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position);
 XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src);
 void xpath_free_compiled(TRANSFORM_CONTEXT *pctx);
