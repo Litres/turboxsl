@@ -3,11 +3,13 @@
 
 	<xsl:template match="/"> 
 		 <xsl:apply-templates select="/xportal[ajax-only]"/> 
+		 <xsl:apply-templates select="/xportal[not(ajax-only)]"/> 
+		 
 	</xsl:template>
 	
 	<xsl:template match="/xportal[ajax-only]">111</xsl:template>
-	
-	<xsl:template match="xportal-page">222</xsl:template>
+	<xsl:template match="/xportal[not(ajax-only)]">222</xsl:template>
+	<xsl:template match="xportal-page">333</xsl:template>
 
 
 </xsl:stylesheet>
