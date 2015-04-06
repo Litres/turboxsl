@@ -728,6 +728,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
   info("XSLTEnd");
 
   memory_allocator_release(data->allocator);
+  dict_free(data->revisions);
   dict_free(data->urldict);
   if (data->cache != NULL) external_cache_release(data->cache);
 
@@ -752,14 +753,20 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   memory_allocator_set_current(ret->allocator);
 
   ret->urldict = dict_new(300);
+  ret->revisions = dict_new(300);
   ret->interpreter = interpreter;
 
   return ret;
 }
 
+void XSLTAddURLRevision(XSLTGLOBALDATA *data, const char *url, const char *revision)
+{
+  dict_add(data->revisions, xml_strdup(url), xml_strdup(revision));
+}
+
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)
 {
-  data->cache = external_cache_create(server_list);
+  data->cache = external_cache_create(xml_strdup(server_list));
 }
 
 void xml_free_document(XMLNODE *doc)
@@ -884,6 +891,11 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
 void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
 {
   ctx->cache_key_prefix = xml_strdup(prefix);
+}
+
+void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
+{
+  ctx->url_local_prefix = xml_strdup(prefix);
 }
 
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)

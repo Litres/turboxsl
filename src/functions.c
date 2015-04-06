@@ -966,35 +966,70 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   res->v.string = xmls_detach(url);
 }
 
+char *create_veristat_url(TRANSFORM_CONTEXT *pctx, const char *url)
+{
+  size_t url_length = strlen(url);
+
+  const char *revision = dict_find(pctx->gctx->revisions, url);
+  size_t revision_length = revision == NULL ? 0 : strlen(revision);
+
+  const char *static_prefix = "/static/";
+  size_t static_prefix_length = strlen(static_prefix);
+
+  XMLSTRING result = xmls_new(static_prefix_length + url_length + revision_length);
+  xmls_add_str(result, static_prefix);
+  xmls_add_str(result, url);
+  xmls_add_str(result, revision);
+
+  return xmls_detach(result);
+}
 
 void xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
-  XMLSTRING url;
-  char *str;
-  char separ='?';
-
   res->type = VAL_STRING;
   if(args==NULL) {
     res->v.string = NULL;
     return;
   }
-  url = xmls_new(100);
-  xmls_add_str(url,"/static/");
 
-  xf_concat(pctx,locals,args,current,&rv);
-  str = rval2string(&rv);
-  if(str) {
-    char *rev;
-    xmls_add_str(url,str);
-    rev = xsl_get_global_key(pctx, "staticFileRevisions",str);
-    if(rev) {
-      xmls_add_char(url,'?');
-      xmls_add_str(url,rev);
-    }
+  RVALUE rv;
+  xpath_execute_scalar(pctx, locals, args, current, &rv);
+  if(rv.type != VAL_STRING || rv.v.string == NULL) {
+    error("xf_veristat:: wrong argument");
+    res->v.string = NULL;
+    return;
   }
 
-  res->v.string = xmls_detach(url);
+  res->v.string = create_veristat_url(pctx, rv.v.string);
+}
+
+void xf_veristat_local(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+{
+  res->type = VAL_STRING;
+  if(args==NULL) {
+    res->v.string = NULL;
+    return;
+  }
+
+  RVALUE rv;
+  xpath_execute_scalar(pctx, locals, args, current, &rv);
+  if(rv.type != VAL_STRING || rv.v.string == NULL) {
+    error("xf_veristat_local:: wrong argument");
+    res->v.string = NULL;
+    return;
+  }
+
+  const char *url = rv.v.string;
+  if(pctx->url_local_prefix != NULL) {
+    size_t prefix_length = strlen(pctx->url_local_prefix);
+    size_t url_length = strlen(url);
+    char *t = memory_allocator_new(prefix_length + url_length + 1);
+    memcpy(t, pctx->url_local_prefix, prefix_length);
+    memcpy(t + prefix_length, url, url_length);
+    url = t;
+  }
+
+  res->v.string = create_veristat_url(pctx, url);
 }
 
 void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -1029,41 +1064,6 @@ void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
       else {
         xmls_add_char(url,c);
       }
-    }
-  }
-
-  res->v.string = xmls_detach(url);
-}
-
-void xf_veristatl(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
-{
-  RVALUE rv;
-  XMLSTRING url;
-  char *str;
-  char separ='?';
-  char *rev;
-
-  res->type = VAL_STRING;
-  if(args==NULL) {
-    res->v.string = NULL;
-    return;
-  }
-  url = xmls_new(100);
-  xmls_add_str(url,"/static/");
-
-  xf_concat(pctx,locals,args,current,&rv);
-  str = rval2string(&rv);
-  if(str) {
-    rev = xsl_get_global_key(pctx, "prefix",NULL);
-    if(rev) {
-      xmls_add_str(url,rev);
-      xmls_add_char(url,'/');
-    }
-    xmls_add_str(url,str);
-    rev = xsl_get_global_key(pctx, "staticFileRevisions",str);
-    if(rev) {
-      xmls_add_char(url,'?');
-      xmls_add_str(url,rev);
     }
   }
 
@@ -1218,7 +1218,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
 
   if(!pctx->functions) {  // Linear search is used for functions, sort adding by usage - more frequent first
     add_function(pctx,"ltr:url_code",xf_urlcode); // 2132!!!
-    add_function(pctx,"ltr:veristat_local",xf_veristatl); // 642
+    add_function(pctx, "ltr:veristat_local", xf_veristat_local); // 642
     add_function(pctx,"position",xf_position); // 356
     add_function(pctx,"count",xf_count); // 288
     add_function(pctx,"chk:check_rights",xf_check); // 202

@@ -30,13 +30,13 @@ int xml_strcasecmp(char *l, char *r)
   return strcasecmp(l,r);
 }
 
-char *xml_strdup(char *s)
+char *xml_strdup(const char *s)
 {
   if(s==NULL) return NULL;
   return xml_new_string(s, strlen(s));
 }
 
-char *xml_new_string(char *s, size_t length)
+char *xml_new_string(const char *s, size_t length)
 {
   if(s==NULL) return NULL;
 
@@ -175,7 +175,7 @@ void xmls_add_utf(XMLSTRING s, unsigned u)
   }
 }
 
-void xmls_add_str(XMLSTRING s, char *d)
+void xmls_add_str(XMLSTRING s, const char *d)
 {
   unsigned l;
 

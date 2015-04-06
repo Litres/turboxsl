@@ -102,6 +102,7 @@ typedef struct _var {
 struct _globaldata {
   memory_allocator *allocator;
   XMLDICT *urldict;
+  XMLDICT *revisions;
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;
   unsigned perl_cb_ptr;
@@ -135,6 +136,7 @@ struct _context {
   struct threadpool *pool;
   memory_allocator *allocator;
   char *cache_key_prefix;
+  char *url_local_prefix;
   char *docname;
   char *fnbuf;
   char *local_part;
@@ -261,8 +263,8 @@ int x_is_namechar(char c);
 int x_is_selchar(char c);
 int xml_strcmp(char *l, char *r);
 int xml_strcasecmp(char *l, char *r);
-char *xml_strdup(char *s);
-char *xml_new_string(char *s, size_t length);
+char *xml_strdup(const char *s);
+char *xml_new_string(const char *s, size_t length);
 char *xml_unescape(char *s);
 char *node2string(XMLNODE *node);
 char *nodes2string(XMLNODE *node);
@@ -270,7 +272,7 @@ char *nodes2string(XMLNODE *node);
 XMLSTRING   xmls_new(unsigned bsize);             // allocates xmlstring
 void        xmls_add_char(XMLSTRING s, char c);   // appends a char to xmlstring
 void        xmls_add_utf(XMLSTRING s, unsigned u);// appends unicode value to xmlstring
-void        xmls_add_str(XMLSTRING s, char *d);   // appends a string to xmlstring
+void        xmls_add_str(XMLSTRING s, const char *d);   // appends a string to xmlstring
 char       *xmls_detach(XMLSTRING s);             // frees xmlstring, returns content to be freed later
 
 short   *utf2ws(char *s);
