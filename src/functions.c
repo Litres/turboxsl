@@ -858,42 +858,43 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
 
   if(pctx->gctx->perl_urlcode) {
     memory_allocator_activate_parent(1);
-    XMLSTRING key = xmls_new(100);
+    XMLSTRING buffer = xmls_new(100);
     for(XMLNODE *parg=args;parg;parg=parg->next) {
       xpath_execute_scalar(pctx, locals, parg, current, &rv);
-      if (rv.type == VAL_NODESET && rv.v.nodeset != NULL) str = nodes2string(rv.v.nodeset->children);
+      if(rv.type == VAL_NODESET && rv.v.nodeset != NULL) str = nodes2string(rv.v.nodeset->children);
       else str = rval2string(&rv);
-      xmls_add_str(key,str);
-      if(parg->next) xmls_add_char(key,',');
+      xmls_add_str(buffer, str);
+      if(parg->next) xmls_add_char(buffer,',');
     }
 
-    if(key->len == 0) {
+    if(buffer->len == 0) {
       debug("xf_urlcode:: key is empty, return default value");
       res->v.string = xml_strdup("/");
       memory_allocator_activate_parent(0);
       return;
     }
 
-    str = xmls_detach(key);
+    char *key = xmls_detach(buffer);
+    char *cache_key = key;
     if(pctx->cache_key_prefix != NULL) {
       size_t prefix_length = strlen(pctx->cache_key_prefix);
-      size_t key_length = strlen(str);
+      size_t key_length = strlen(key);
       char *t = memory_allocator_new(prefix_length + key_length + 1);
       memcpy(t, pctx->cache_key_prefix, prefix_length);
       memcpy(t + prefix_length, key, key_length);
-      str = t;
+      cache_key = t;
     }
 
-    p = dict_find(pctx->gctx->urldict,str);
+    p = dict_find(pctx->gctx->urldict, key);
     if(!p) {
-      p = external_cache_get(pctx->gctx->cache, str);
+      p = external_cache_get(pctx->gctx->cache, cache_key);
       if(!p) {
         char *p_args[2];
-        p_args[0] = str;
+        p_args[0] = key;
         p_args[1] = NULL;
         p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
-        external_cache_set(pctx->gctx->cache, str, p);
-        dict_add(pctx->gctx->urldict,str,p);
+        external_cache_set(pctx->gctx->cache, cache_key, p);
+        dict_add(pctx->gctx->urldict, key, p);
       }
     }
     res->v.string = xml_strdup(p);
