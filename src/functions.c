@@ -971,7 +971,8 @@ char *create_veristat_url(TRANSFORM_CONTEXT *pctx, const char *url)
   size_t url_length = strlen(url);
 
   const char *revision = dict_find(pctx->gctx->revisions, url);
-  size_t revision_length = revision == NULL ? 0 : strlen(revision);
+  //
+  size_t revision_length = revision == NULL ? 0 : strlen(revision) + 1;
 
   const char *static_prefix = "/static/";
   size_t static_prefix_length = strlen(static_prefix);
@@ -979,7 +980,10 @@ char *create_veristat_url(TRANSFORM_CONTEXT *pctx, const char *url)
   XMLSTRING result = xmls_new(static_prefix_length + url_length + revision_length);
   xmls_add_str(result, static_prefix);
   xmls_add_str(result, url);
-  xmls_add_str(result, revision);
+  if(revision_length > 0) {
+    xmls_add_str(result, "?");
+    xmls_add_str(result, revision);
+  }
 
   return xmls_detach(result);
 }
