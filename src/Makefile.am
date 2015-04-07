@@ -59,7 +59,6 @@ libturboxsl_la_SOURCES = \
   logger.h \
   thread_lock.c \
   thread_lock.h \
-  debug.c \
   parse.c \
   output.c \
   templates.c \

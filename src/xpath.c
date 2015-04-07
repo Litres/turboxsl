@@ -37,10 +37,6 @@ XMLNODE *xpath_in_selection(XMLNODE *sel, char *name)
 
 void xpath_free_compiled(TRANSFORM_CONTEXT *pctx)
 {
-  unsigned i;
-  for(i=0;i<pctx->n_exprs;++i) {
-    xml_free_node(pctx,pctx->compiled[i].comp);
-  }
   free(pctx->compiled);
 }
 

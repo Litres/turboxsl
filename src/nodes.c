@@ -27,22 +27,7 @@ void xml_unlink_node(XMLNODE *node)
   }
 }
 
-static void free_attributes(XMLNODE *attributes)
-{
-    // TODO
-}
-
-void xml_free_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
-{
-    // TODO
-}
-
 /*********** for static-allocated nodes *******************/
-
-void xml_cleanup_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
-{
-
-}
 
 void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
@@ -64,7 +49,6 @@ void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode)
   node->next = NULL;
   if(newnode->next)
     newnode->next->prev = newnode;
-  xml_free_node(pctx,node);
 }
 
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
@@ -82,18 +66,11 @@ XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
     return ret;
 }
 
-
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type)
 {
   XMLNODE *ret = xml_new_node(pctx, NULL, type);
   xml_add_child(pctx, node, ret);
   return ret;
-}
-
-
-void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
-{
-    // TODO
 }
 
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *child)

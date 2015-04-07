@@ -177,15 +177,12 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache);
 
 /********************** nodes.c -- nodes operations *****************/
 void xml_unlink_node(XMLNODE *node);
-void nfree(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
-void xml_cleanup_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type);
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type);
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
 void xml_add_sibling(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
 void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode);
-void xml_free_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 
 /********************** transform.c -- XSLT mainloop ****************/
 void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *templ, XMLNODE *params, XMLNODE *locals);
@@ -246,9 +243,6 @@ double rval2number(RVALUE *rv);
 int rval_equal(RVALUE *left, RVALUE *right, unsigned eq);
 int rval_compare(RVALUE *left, RVALUE *right);
 
-TRANSFORM_CONTEXT *xslt_new_context();
-void xslt_free_context(TRANSFORM_CONTEXT *pctx);
-
 typedef struct _xmls {
   char *s;
   unsigned len;
@@ -281,9 +275,6 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx);
 
 
 void    xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res);
-
-/*************************** debug.c -- various debug and display ************************/
-void print_rval(RVALUE *rv);
 
 void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
 

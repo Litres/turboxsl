@@ -137,7 +137,6 @@ char *xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source,
   apply_xslt_template(pctx, tmp, source, foreval, NULL, locals);
   if (locked) threadpool_lock_off();
   output_node_rec(tmp, res, pctx);
-  xml_free_node(pctx,tmp);
   return xmls_detach(res);
 }
 
@@ -597,7 +596,6 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       if(*p==0) {
         node->content = NULL;
         xml_unlink_node(node);
-        nfree(pctx,node);
         if(node==ret)
           ret = node_next;
         node = node_next;
@@ -789,10 +787,6 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
   dict_free(pctx->named_templ);
-  if(pctx->keys)
-    xml_free_node(NULL,pctx->keys);
-  if(pctx->formats)
-    xml_free_node(NULL,pctx->formats);
   xpath_free_compiled(pctx);
   xml_free_document(pctx->stylesheet);
 
@@ -959,7 +953,6 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
     }
   }
 
-  xml_free_node(pctx,locals);
   free_variables(pctx);
 
   return ret;
