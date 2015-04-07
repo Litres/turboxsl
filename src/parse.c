@@ -266,7 +266,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           previous = current;
           p = c + 3;
         }
-        state = INIT;
+        state = TEXT;
         break;
       case DOCTYPE:
         while(!(p[0]==']' && p[1]=='>')) p++;
