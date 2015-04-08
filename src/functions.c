@@ -568,6 +568,10 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   }
   if (minimum_integer_part_size == 0) minimum_integer_part_size = 1;
 
+  char number_string[32];
+  memset(number_string, 0, sizeof(number_string));
+  unsigned int number_string_position = 0;
+
   // process integer part
   char integer_number_string[32];
   memset(integer_number_string, 0, sizeof(integer_number_string));
@@ -593,13 +597,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   }
 
   for (int i = 0; i < precision; i++) {
-    // grouping
-    if (integer_part_grouping_position > 0 && integer_part_grouping_position < precision) {
-      if ((precision - i) % integer_part_grouping_position == 0) {
-        output[output_position++] = grouping_sign[0];
-      }
-    }
-    output[output_position++] = integer_number_string[precision - i - 1];
+    number_string[number_string_position++] = integer_number_string[precision - i - 1];
   }
 
   if (fractional_part_size > 0) {
@@ -620,16 +618,61 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
     }
 
     // process fractional part
-    output[output_position++] = decimal_separator_sign[0];
+    number_string[number_string_position++] = decimal_separator_sign[0];
 
-    for (unsigned int i = 0; i < maximum_fractional_part_size; i++) {
+    for (unsigned int i = 0; i < maximum_fractional_part_size + 1; i++) {
       int digit = (int)floor(pow(10, i + 1) * fractional_number) % 10;
       if (digit != 0) {
-        output[output_position++] = (char)(digit + 0x30);
+        number_string[number_string_position++] = (char)(digit + 0x30);
       } else {
-        if (i < minimum_fractional_part_size) output[output_position++] = '0';
+        if (i < minimum_fractional_part_size) number_string[number_string_position++] = '0';
       }
     }
+
+    // rounding
+    if (number_string[number_string_position - 1] >= '5')
+    {
+      number_string[number_string_position - 1] = 0;
+      for (int i = number_string_position - 2; i >= 0; i--)
+      {
+        char digit = number_string[i];
+        if (digit == decimal_separator_sign[0]) continue;
+        if (digit == '9')
+        {
+          number_string[i] = '0';
+        }
+        else
+        {
+          number_string[i] = (char)(digit + 1);
+          break;
+        }
+      }
+
+      // top digit correction
+      if (number_string[0] == '0')
+      {
+        for (int i = number_string_position; i > 0; i--)
+        {
+          number_string[i] = number_string[i - 1];
+        }
+        number_string[0] = '1';
+        precision = precision + 1;
+      }
+    }
+    else
+    {
+      number_string[number_string_position - 1] = 0;
+    }
+  }
+
+  for (unsigned int i = 0; i < number_string_position; i++) {
+    // grouping
+    if (i < precision && integer_part_grouping_position > 0 && integer_part_grouping_position < precision) {
+      if ((precision - i) % integer_part_grouping_position == 0) {
+        output[output_position++] = grouping_sign[0];
+      }
+    }
+    output[output_position++] = number_string[i];
   }
 
   res->type = VAL_STRING;

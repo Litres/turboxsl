@@ -8,7 +8,8 @@
 	<body>
 		format-number: <xsl:value-of select="format-number(@min,' 00', 'filesize')"/><br/>
 		format-number: <xsl:value-of select="format-number(@sec,' 00', 'filesize')"/><br/>
-		format-number: <xsl:value-of select="format-number(@cash,' # ##0,00', 'filesize')"/><br/>
+		format-number: <xsl:value-of select="format-number(@cash_1,' # ##0,00', 'filesize')"/><br/>
+		format-number: <xsl:value-of select="format-number(@cash_2,' # ##0,00', 'filesize')"/><br/>
 		translate: <xsl:value-of select="translate(@chars, ':', '')"/><br/>
 		substring: <xsl:value-of select="substring(@chars1, string-length(@chars1) - 5, 2)"/><br/>
 		substring: <xsl:value-of select="substring(@chars1, string-length(@chars1) - 3, 2)"/><br/>
