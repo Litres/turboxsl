@@ -719,11 +719,19 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         selection = xpath_filter(pctx,locals,rv.v.nodeset,etree->children->next);
         res->v.nodeset = selection;
       }
-      else if(rv.type == VAL_STRING) // special case for @attr[1]
+      else if(rv.type == VAL_STRING)
       {
-        res->type = VAL_STRING;
-        res->v.string = rv.v.string;
-        rv.type = VAL_NULL;
+        // create element node with attribute string value
+        XMLNODE *attribute = xml_new_node(pctx, NULL, ELEMENT_NODE);
+        attribute->children = xml_new_node(pctx, NULL, TEXT_NODE);
+        attribute->children->content = rv.v.string;
+        if(xpath_filter(pctx,locals,attribute,etree->children->next) != NULL)
+        {
+          res->type = VAL_STRING;
+          res->v.string = rv.v.string;
+        } else {
+          res->v.nodeset = NULL;
+        }
       }
       else {  // can not select from non-nodeset
         res->v.nodeset = NULL;

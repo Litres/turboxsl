@@ -53,8 +53,6 @@ int rval2bool(RVALUE *rv)
       else {
         if(rv->v.string[0]==0)
           res = 0;
-        else if(rv->v.string[0]=='0' && 0.0==strtod(rv->v.string,NULL))
-          res = 0;
         else
           res = 1;
         rval_free(rv);
