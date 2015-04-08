@@ -9,7 +9,13 @@
 	<xsl:value-of select="$has-texts"/><br/>
 	
 	<xsl:if test="$has-texts">
-		123
+		123<br/>
+	</xsl:if>
+	
+	<xsl:variable name="has-audios" select="$atypes[. = 1]"/>
+		
+	<xsl:if test="$has-audios">
+		456
 	</xsl:if>
 </xsl:template>
 </xsl:stylesheet>
