@@ -195,6 +195,32 @@ int rval_compare(RVALUE *left, RVALUE *right)
   else return 0;
 }
 
+int nodeset_equal_common(RVALUE *value, RVALUE *nodeset, unsigned eq)
+{
+  RVALUE t;
+  for(XMLNODE *p = nodeset->v.nodeset; p; p = p->next) {
+    t.type = VAL_NODESET;
+    t.v.nodeset = p;
+
+    if(value->type == VAL_NUMBER) {
+      double number = rval2number(&t);
+      if (eq ? value->v.integer == number : value->v.number != number) return 1;
+    }
+
+    if(value->type == VAL_INT) {
+      long number = (long)floor(rval2number(&t));
+      if (eq ? value->v.integer == number : value->v.integer != number) return 1;
+    }
+
+    if(value->type == VAL_STRING) {
+      char *string = rval2string(&t);
+      if (eq ? xml_strcmp(value->v.string, string) == 0 : xml_strcmp(value->v.string, string) != 0) return 1;
+    }
+  }
+
+  return 0;
+}
+
 /**************************** == and != ***************************/
 
 int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
@@ -234,32 +260,9 @@ int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
   }
 
   if(left->type == VAL_NODESET) {
-    XMLNODE *p;
-    char *l, *r;
-    r = rval2string(right);
-    for(p=left->v.nodeset;p;p=p->next) {
-      l = node2string(p);
-      // depends on eq search for non equal or equal pair
-      if(eq == 0 ? xml_strcmp(l,r) != 0 : xml_strcmp(l,r) == 0) {
-        rval_free(left);
-        return 1;
-      }
-    }
-    rval_free(left);
-    return 0;
+    return nodeset_equal_common(right, left, eq);
   } else if(right->type == VAL_NODESET) {
-    XMLNODE *p;
-    char *l, *r;
-    l = rval2string(left);
-    for(p=right->v.nodeset;p;p=p->next) {
-      r = node2string(p);
-      if(0==xml_strcmp(l,r)) {
-        rval_free(right);
-        return eq;
-      }
-    }
-    rval_free(right);
-    return !eq;
+    return nodeset_equal_common(left, right, eq);
   }
 
   if(left->type == VAL_STRING && right->type == VAL_STRING) {
