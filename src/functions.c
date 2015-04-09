@@ -1142,10 +1142,16 @@ void xf_exnodeset(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 
 void xf_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  unsigned int p = 0;
+  XMLNODE *tmp = NULL;
+  XMLNODE *ret = NULL;
+  unsigned pos = 0;
+  for(XMLNODE *node=current->children;node;node=node->next) {
+    tmp = add_to_selection(tmp,node,&pos);
+    if(!ret) ret = tmp;
+  }
 
   res->type = VAL_NODESET;
-  res->v.nodeset = add_to_selection(NULL,current, &p);
+  res->v.nodeset = ret;
 }
 
 void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)

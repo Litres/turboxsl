@@ -131,7 +131,7 @@ char *node2string(XMLNODE *node)
   if (node == NULL)
     return NULL;
 
-  if (node->type == TEXT_NODE)
+  if (node->type == TEXT_NODE || node->type == ATTRIBUTE_NODE)
     return xml_strdup(node->content);
   str = xmls_new(100);
   add_node_str(str, node);
@@ -266,7 +266,7 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
 int xpath_node_kind(XMLNODE *node, XMLNODE *kind)
 {
   trace("xpath_node_kind:: node: %s (%s), kind: %s", node->name, nodeTypeNames[node->type], kind == NULL ? NULL : kind->name);
-  if(kind == NULL) return node->type == ELEMENT_NODE;
+  if(kind == NULL) return node->type == ELEMENT_NODE || node->type == ATTRIBUTE_NODE;
 
   if(kind->type == XPATH_NODE_CALL)
   {
@@ -718,22 +718,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       {
         selection = xpath_filter(pctx,locals,rv.v.nodeset,etree->children->next);
         res->v.nodeset = selection;
-      }
-      else if(rv.type == VAL_STRING)
-      {
-        // create element node with attribute string value
-        XMLNODE *attribute = xml_new_node(pctx, NULL, ELEMENT_NODE);
-        attribute->children = xml_new_node(pctx, NULL, TEXT_NODE);
-        attribute->children->content = rv.v.string;
-        if(xpath_filter(pctx,locals,attribute,etree->children->next) != NULL)
-        {
-          res->type = VAL_STRING;
-          res->v.string = rv.v.string;
-        } else {
-          res->v.nodeset = NULL;
-        }
-      }
-      else {  // can not select from non-nodeset
+      } else {  // can not select from non-nodeset
         res->v.nodeset = NULL;
       }
       rval_free(&rv);
@@ -968,21 +953,10 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         {
           XMLNODE *r = NULL;
           XMLNODE *t = NULL;
-          if(rv.v.nodeset && !rv.v.nodeset->next) {
-            name = xml_get_attr(rv.v.nodeset,etree->name);
-            if(name) {
-              res->type = VAL_STRING;
-              res->v.string = xml_strdup(name);
-            } else {
-              res->type = VAL_NULL;
-            }
-            rval_free(&rv);
-            return;
-          }
           for(current = rv.v.nodeset;current;current=current->next) {
             name = xml_get_attr(current,etree->name);
             if(name) {
-              expr = xml_new_node(pctx, NULL,TEXT_NODE);
+              expr = xml_new_node(pctx, NULL, ATTRIBUTE_NODE);
               expr->content = name;
               t = add_to_selection(t, expr, &pos);
               if (!r) 
@@ -999,8 +973,10 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       else {
         name=current?xml_get_attr(current,etree->name):NULL;
         if(name) {
-          res->type = VAL_STRING;
-          res->v.string = xml_strdup(name);
+          XMLNODE *attribute = xml_new_node(pctx, NULL, ATTRIBUTE_NODE);
+          attribute->content = name;
+          res->type = VAL_NODESET;
+          res->v.nodeset = attribute;
         } else {
           res->type = VAL_NULL;
         }
