@@ -80,22 +80,15 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   unsigned r = templtab_add(pctx, content, NULL);
   pctx->templtab[r].match = match;
   pctx->templtab[r].mode = mode;
-  if(match[0]=='*' && match[1]==0) 
-  {
+  if(match[0]=='/' && match[1]==0) {
+    pctx->templtab[r].matchtype = TMATCH_ROOT;
+  }
+  if(match[0]=='*' && match[1]==0) {
     pctx->templtab[r].matchtype = TMATCH_ALWAYS;
-  } 
-  else if (strchr(match,'/')||strchr(match,'[')||strstr(match,"::")) { // looks like select match
-    if(strchr(match+1,'/')||strchr(match+1,'[')||strstr(match,"::")) { // XXX not checking if first char is [ -- but this will probably never happen
-      pctx->templtab[r].matchtype = TMATCH_SELECT;
-      pctx->templtab[r].expr = xpath_find_expr(pctx,match);
-    } 
-    else {
-      pctx->templtab[r].match = xml_strdup(match + 1);
-      pctx->templtab[r].matchtype = TMATCH_ROOT;
-    }
-  } 
+  }
   else {
-    pctx->templtab[r].matchtype = TMATCH_EXACT;
+    pctx->templtab[r].matchtype = TMATCH_SELECT;
+    pctx->templtab[r].expr = xpath_find_expr(pctx,match);
   }
   
   return r;
@@ -323,49 +316,36 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
 XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // name here is node name, so is already hashed
 {
-  trace("find_template:: node name: %s, mode: %s", node->name, mode);
+  XMLNODE *template = NULL;
+  unsigned int expression_length = 0;
+  for(int i=0;i<pctx->templcnt;++i) {
+    if(xml_strcmp(pctx->templtab[i].mode, mode) != 0) continue;
 
-  char *name = node->name;
-  int i;
+    if(pctx->templtab[i].matchtype == TMATCH_ROOT) {
+      if(pctx->templtab[i].match[0] == 0 && node == pctx->root_node) return pctx->templtab[i].content;
+    }
 
-  for(i=0;i<pctx->templcnt;++i) 
-  {
-    if(xml_strcmp(pctx->templtab[i].mode, mode) != 0)
-      continue;
-    switch (pctx->templtab[i].matchtype) 
-    {
-      case TMATCH_ROOT:
-        if(pctx->templtab[i].match[0]==0 && node==pctx->root_node) {  // matches "/"
-          return pctx->templtab[i].content;
+    if(pctx->templtab[i].matchtype == TMATCH_SELECT) {
+      if(select_match(pctx, node, pctx->templtab[i].expr)) {
+        XMLNODE *command = pctx->templtab[i].expr;
+        unsigned int length = 0;
+        while(command != NULL) {
+          length = length + 1;
+          command = command->children;
         }
-
-        if(node->parent!=pctx->root_node)
-          continue;
-
-        if(pctx->templtab[i].match[0]=='*') { // matches "/*"
-          return pctx->templtab[i].content;
+        if(length > expression_length) {
+          expression_length = length;
+          template = pctx->templtab[i].content;
         }
-
-    /*** or if it is a child of root, fall thru to exact name match ***/
-      case TMATCH_EXACT:
-        if(xml_strcmp(name, pctx->templtab[i].match) == 0) {
-          return pctx->templtab[i].content;
-        }
-        break;
-
-
-      case TMATCH_SELECT:
-        if(select_match(pctx, node, pctx->templtab[i].expr))
-          return pctx->templtab[i].content;
-
-        break;
+      }
     }
   }
 
+  if (template != NULL) return template;
+
   if(node!=pctx->root_node) {
-    for(i=0;i<pctx->templcnt;++i) {
-      if(xml_strcmp(pctx->templtab[i].mode, mode) == 0 && pctx->templtab[i].matchtype==TMATCH_ALWAYS) {
-        trace("find_template:: always match");
+    for(int i=0;i<pctx->templcnt;++i) {
+      if(xml_strcmp(pctx->templtab[i].mode, mode) == 0 && pctx->templtab[i].matchtype == TMATCH_ALWAYS) {
         return pctx->templtab[i].content;
       }
     }

@@ -116,7 +116,7 @@ struct _globaldata {
   unsigned initialized:1;
 };
 
-typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_EXACT, TMATCH_START, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
+typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
 
 typedef struct {
   char *name;
