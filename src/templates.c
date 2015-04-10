@@ -82,11 +82,9 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   pctx->templtab[r].mode = mode;
   if(match[0]=='/' && match[1]==0) {
     pctx->templtab[r].matchtype = TMATCH_ROOT;
-  }
-  if(match[0]=='*' && match[1]==0) {
+  } else if(match[0]=='*' && match[1]==0) {
     pctx->templtab[r].matchtype = TMATCH_ALWAYS;
-  }
-  else {
+  } else {
     pctx->templtab[r].matchtype = TMATCH_SELECT;
     pctx->templtab[r].expr = xpath_find_expr(pctx,match);
   }
@@ -322,7 +320,7 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, char *mode) // na
     if(xml_strcmp(pctx->templtab[i].mode, mode) != 0) continue;
 
     if(pctx->templtab[i].matchtype == TMATCH_ROOT) {
-      if(pctx->templtab[i].match[0] == 0 && node == pctx->root_node) return pctx->templtab[i].content;
+      if(node == pctx->root_node) return pctx->templtab[i].content;
     }
 
     if(pctx->templtab[i].matchtype == TMATCH_SELECT) {
