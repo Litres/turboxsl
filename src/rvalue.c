@@ -152,10 +152,14 @@ char *p,*n;
       rv->type=VAL_NULL;
       if(rv->v.nodeset) {
         p = node2string(rv->v.nodeset->children?rv->v.nodeset->children:rv->v.nodeset);
-        if(p)
-          r = strtod(p,NULL);
-        else
+        if(p) {
+          RVALUE t;
+          t.type = VAL_STRING;
+          t.v.string = p;
+          r = rval2number(&t);
+        } else {
           r = nan("");
+        }
       } else {
         r = nan("");
       }
@@ -195,19 +199,18 @@ int rval_compare(RVALUE *left, RVALUE *right)
 
 int nodeset_equal_common(RVALUE *value, RVALUE *nodeset, unsigned eq)
 {
+  XMLNODE *node = nodeset->v.nodeset;
+  if (node->type == EMPTY_NODE) node = node->children;
+
   RVALUE t;
-  for(XMLNODE *p = nodeset->v.nodeset; p; p = p->next) {
+  for(XMLNODE *p = node; p; p = p->next) {
     t.type = VAL_NODESET;
     t.v.nodeset = p;
 
-    if(value->type == VAL_NUMBER) {
-      double number = rval2number(&t);
-      if (eq ? value->v.integer == number : value->v.number != number) return 1;
-    }
-
-    if(value->type == VAL_INT) {
-      long number = (long)floor(rval2number(&t));
-      if (eq ? value->v.integer == number : value->v.integer != number) return 1;
+    if(value->type == VAL_NUMBER || value->type == VAL_INT) {
+      double a = value->type == VAL_NUMBER ? value->v.number : value->v.integer;
+      double b = rval2number(&t);
+      if (eq ? a == b : a != b) return 1;
     }
 
     if(value->type == VAL_STRING) {
