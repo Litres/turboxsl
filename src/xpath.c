@@ -35,48 +35,17 @@ XMLNODE *xpath_in_selection(XMLNODE *sel, char *name)
   return NULL;
 }
 
-void xpath_free_compiled(TRANSFORM_CONTEXT *pctx)
-{
-  free(pctx->compiled);
-}
-
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 {
-  trace("xpath_find_expr:: expression: %s", expr);
-  if (expr == NULL) return NULL;
+  if(expr == NULL) return NULL;
 
-  if (pthread_mutex_lock(&(pctx->lock))) {
-    error("xpath_find_expr:: lock");
-    return NULL;
+  XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr);
+  if(compiled == NULL) {
+    compiled = xpath_compile(pctx, expr);
+    concurrent_dictionary_add(pctx->expressions, expr, compiled);
   }
 
-  XMLNODE *etree = NULL;
-  unsigned i;
-  for(i=0;i<pctx->n_exprs;++i) {
-    if(strcmp(pctx->compiled[i].expr,expr) == 0) {
-      etree = pctx->compiled[i].comp;
-      break;
-    }
-  }
-
-  if(etree==NULL) {
-    etree = xpath_compile(pctx, expr);
-    if(pctx->n_exprs>=pctx->m_exprs) {
-      pctx->m_exprs += 100;
-      pctx->compiled = realloc(pctx->compiled, pctx->m_exprs*sizeof(EXPTAB));
-    }
-    if(etree) {
-      pctx->compiled[pctx->n_exprs].expr = expr;
-      pctx->compiled[pctx->n_exprs].comp = etree;
-      ++ pctx->n_exprs;
-    }
-  }
-
-  if (pthread_mutex_unlock(&(pctx->lock))) {
-    error("xpath_find_expr:: unlock");
-  }
-
-  return etree;
+  return compiled;
 }
 
 /*

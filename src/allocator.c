@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "thread_lock.h"
 #include "logger.h"
 
 typedef struct memory_allocator_data {
@@ -23,7 +22,6 @@ typedef struct memory_allocator_entry {
 
 struct memory_allocator_ {
     memory_allocator *parent_allocator;
-    pthread_mutex_t lock;
     struct memory_allocator_entry *entry;
 };
 
@@ -90,6 +88,20 @@ size_t memory_allocator_size(memory_allocator *allocator)
     return result;
 }
 
+memory_allocator_entry *memory_allocator_find_entry(memory_allocator *allocator)
+{
+    pthread_t self = pthread_self();
+    memory_allocator_entry *t = allocator->entry;
+    while (t != NULL && t->thread != self) t = t->next_entry;
+    if (t == NULL || t->thread != self)
+    {
+        error("memory_allocator_new:: unknown thread");
+        return NULL;
+    }
+    return t;
+}
+
+
 memory_allocator *memory_allocator_create(memory_allocator *parent)
 {
     memory_allocator *allocator = malloc(sizeof(memory_allocator));
@@ -101,14 +113,6 @@ memory_allocator *memory_allocator_create(memory_allocator *parent)
 
     memset(allocator, 0, sizeof(memory_allocator));
     allocator->parent_allocator = parent;
-    if (parent == NULL)
-    {
-        if (!thread_lock_create_recursive(&(allocator->lock)))
-        {
-            free(allocator);
-            return NULL;
-        }
-    }
 
     return allocator;
 }
@@ -125,10 +129,6 @@ void memory_allocator_release(memory_allocator *allocator)
         current = next;
     }
 
-    if (allocator->parent_allocator == NULL)
-    {
-        pthread_mutex_destroy(&(allocator->lock));
-    }
     free(allocator);
 }
 
@@ -184,27 +184,15 @@ void memory_allocator_activate_parent(int activate)
 
 void *memory_allocator_new(size_t size)
 {
-    pthread_t self = pthread_self();
-    memory_allocator_entry *t = current_allocator->entry;
-    while (t != NULL && t->thread != self) t = t->next_entry;
-    if (t == NULL || t->thread != self)
-    {
-        error("memory_allocator_new:: unknown thread");
-        return NULL;
-    }
+    memory_allocator_entry *t = memory_allocator_find_entry(current_allocator);
+    if (t == NULL) return NULL;
 
-    int locked = 0;
     memory_allocator *parent_allocator = current_allocator->parent_allocator;
     if (parent_allocator != NULL && !t->is_actual)
     {
         trace("memory_allocator_new:: using parent allocator");
-        if (pthread_mutex_lock(&(parent_allocator->lock)))
-        {
-            error("memory_allocator_new:: lock");
-            return NULL;
-        }
-        locked = 1;
-        t = parent_allocator->entry;
+        t = memory_allocator_find_entry(parent_allocator);
+        if (t == NULL) return NULL;
     }
 
     memory_allocator_data *data = t->tail;
@@ -216,13 +204,6 @@ void *memory_allocator_new(size_t size)
             memory_allocator_data *new_data = memory_allocator_create_data(data->data_size);
             if (new_data == NULL)
             {
-                if (locked)
-                {
-                    if (pthread_mutex_unlock(&(parent_allocator->lock)))
-                    {
-                        error("memory_allocator_new:: unlock");
-                    }
-                }
                 return NULL;
             }
 
@@ -239,14 +220,6 @@ void *memory_allocator_new(size_t size)
 
     void *result = data->area + data->offset;
     data->offset = data->offset + size;
-    
-    if (locked)
-    {
-        if (pthread_mutex_unlock(&(parent_allocator->lock)))
-        {
-            error("memory_allocator_new:: unlock");
-        }
-    }
 
     return result;
 }

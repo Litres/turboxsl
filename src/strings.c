@@ -14,7 +14,7 @@
 
 #include "ltr_xsl.h"
 
-int xml_strcmp(char *l, char *r)
+int xml_strcmp(const char *l, const char *r)
 {
   if(l==r) return 0;
   if(l==NULL) return -1;

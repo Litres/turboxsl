@@ -20,6 +20,7 @@
 #include "threadpool.h"
 #include "allocator.h"
 #include "external_cache.h"
+#include "concurrent_dictionary.h"
 #include "logger.h"
 
 static char *nodeTypeNames[] = {
@@ -89,11 +90,6 @@ typedef struct _cbt {
     void (*func)();
 }CB_TABLE;
 
-typedef struct _ex {
-    char *expr;
-    XMLNODE *comp;
-}EXPTAB;
-
 typedef struct _var {
   char *name;
   RVALUE extra;
@@ -101,7 +97,7 @@ typedef struct _var {
 
 struct _globaldata {
   memory_allocator *allocator;
-  XMLDICT *urldict;
+  concurrent_dictionary *urldict;
   XMLDICT *revisions;
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;
@@ -154,9 +150,7 @@ struct _context {
   XSL_VARIABLE *vars;   // Global (per conversion context) variables
   unsigned var_max;     // +
   unsigned var_pos;     // +
-  EXPTAB *compiled;     // Compiled XPaths storage
-  unsigned n_exprs;     // +
-  unsigned m_exprs;     // +
+  concurrent_dictionary *expressions;
   char **sort_keys;     // sort tables for reuse. XXX must be rewritten to avoid conflicts (currently works because of rare use)
   XMLNODE **sort_nodes; // +
   unsigned sort_size;   // +
@@ -229,7 +223,6 @@ XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr);
 XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset, XMLNODE *expr);
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position);
 XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src);
-void xpath_free_compiled(TRANSFORM_CONTEXT *pctx);
 
 char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *src, char *s);
 
@@ -255,7 +248,7 @@ int x_is_ws(char c);
 int x_is_empty(char *s);
 int x_is_namechar(char c);
 int x_is_selchar(char c);
-int xml_strcmp(char *l, char *r);
+int xml_strcmp(const char *l, const char *r);
 int xml_strcasecmp(char *l, char *r);
 char *xml_strdup(const char *s);
 char *xml_new_string(const char *s, size_t length);

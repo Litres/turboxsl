@@ -727,7 +727,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 
   memory_allocator_release(data->allocator);
   dict_free(data->revisions);
-  dict_free(data->urldict);
+  concurrent_dictionary_release(data->urldict);
   if (data->cache != NULL) external_cache_release(data->cache);
 
   free(data->perl_functions);
@@ -750,7 +750,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   memory_allocator_add_entry(ret->allocator, pthread_self(), 100000);
   memory_allocator_set_current(ret->allocator);
 
-  ret->urldict = dict_new(300);
+  ret->urldict = concurrent_dictionary_create();
   ret->revisions = dict_new(300);
   ret->interpreter = interpreter;
 
@@ -786,8 +786,8 @@ void XMLFreeDocument(XMLNODE *doc)
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
+  concurrent_dictionary_release(pctx->expressions);
   dict_free(pctx->named_templ);
-  xpath_free_compiled(pctx);
   xml_free_document(pctx->stylesheet);
 
   memory_allocator_release(pctx->allocator);
@@ -845,10 +845,8 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   ret->sort_keys = (char **)malloc(ret->sort_size*sizeof(char *));
   ret->sort_nodes = (XMLNODE **)malloc(ret->sort_size*sizeof(XMLNODE *));
 
-  ret->m_exprs = 200;
-  ret->compiled = malloc(ret->m_exprs*sizeof(EXPTAB));
-
   ret->named_templ = dict_new(300);
+  ret->expressions = concurrent_dictionary_create();
 
   ret->stylesheet = xsl_preprocess(ret, ret->stylesheet);  //root node is always empty
   process_imports(ret, ret->stylesheet->children);
@@ -878,7 +876,14 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
     return;
   }
 
+  if (size > 10)
+  {
+    error("XSLTCreateThreadPool:: maximum size is 10");
+    return;
+  }
+
   pctx->pool = threadpool_init(size);
+  threadpool_set_allocator(pctx->allocator, pctx->pool);
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
 }
 
@@ -904,7 +909,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
     return NULL;
   }
 
-  // memory cache for output document
+  // memory allocator for output document
   memory_allocator *allocator = memory_allocator_create(pctx->allocator);
   memory_allocator_add_entry(allocator, pthread_self(), 10000000);
   memory_allocator_set_current(allocator);

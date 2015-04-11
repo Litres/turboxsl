@@ -928,7 +928,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       cache_key = t;
     }
 
-    p = dict_find(pctx->gctx->urldict, key);
+    p = concurrent_dictionary_find(pctx->gctx->urldict, key);
     if(!p) {
       p = external_cache_get(pctx->gctx->cache, cache_key);
       if(!p) {
@@ -937,7 +937,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
         p_args[1] = NULL;
         p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
         external_cache_set(pctx->gctx->cache, cache_key, p);
-        dict_add(pctx->gctx->urldict, key, p);
+        concurrent_dictionary_add(pctx->gctx->urldict, key, p);
       }
     }
     res->v.string = xml_strdup(p);

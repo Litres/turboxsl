@@ -5,7 +5,7 @@
 
 int main(int n, char *args[]) {
     if (n < 4) {
-        fprintf(stderr, "Usage: xsltproc <stylesheet.xsl> <input.xml> <output.html>\n");
+        fprintf(stderr, "Usage: xsltproc <stylesheet.xsl> <input.xml> <output.html> <optional pool size>\n");
         exit(1);
     }
 
@@ -19,6 +19,15 @@ int main(int n, char *args[]) {
     if (!pctx) {
         fprintf(stderr, "error in style processing\n");
         exit(1);
+    }
+    
+    if (n == 5) {
+        unsigned int size = (unsigned int)atoi(args[4]);
+        if (size > 10) {
+            fprintf(stderr, "pool size must be less then 10\n");
+            exit(1);
+        }
+        XSLTCreateThreadPool(pctx, size);
     }
 
     XMLNODE *document = XMLParseFile(gctx, args[2]);

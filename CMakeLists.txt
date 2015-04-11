@@ -9,6 +9,9 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 LINK_DIRECTORIES(/opt/local/lib)
 include_directories("/opt/local/include")
 
+LINK_DIRECTORIES(/usr/local/lib)
+include_directories("/usr/local/include")
+
 include_directories("src")
 include_directories("src/zlog/src")
 include_directories("test")
@@ -26,7 +29,7 @@ file(GLOB ZLOG_LIB_HEADERS src/zlog/src/*.h)
 file(GLOB TURBOXSL_LIB_SOURCES src/*.c)
 file(GLOB TURBOXSL_LIB_HEADERS src/*.h)
 add_library(turboxsl ${TURBOXSL_LIB_SOURCES} ${TURBOXSL_LIB_HEADERS} ${ZLOG_LIB_SOURCES} ${ZLOG_LIB_HEADERS})
-target_link_libraries(turboxsl memcached)
+target_link_libraries(turboxsl memcached ck)
 
 target_link_libraries(xsltproc turboxsl)
 target_link_libraries(AllocatorTest turboxsl)

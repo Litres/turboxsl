@@ -59,6 +59,8 @@ libturboxsl_la_SOURCES = \
   logger.h \
   thread_lock.c \
   thread_lock.h \
+  concurrent_dictionary.c \
+  concurrent_dictionary.h \
   parse.c \
   output.c \
   templates.c \
@@ -85,7 +87,7 @@ libturboxsl_la_SOURCES = \
   turboxsl.h \
   ltr_xsl.h
 
-libturboxsl_la_LIBADD = -lpthread -lm -lmemcached
+libturboxsl_la_LIBADD = -lpthread -lm -lmemcached -lck
 
 libturboxslincdir=$(includedir)/turboxsl
 libturboxslinc_HEADERS = turboxsl.h
