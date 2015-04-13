@@ -36,15 +36,21 @@ int main(int n, char *args[]) {
         exit(1);
     }
 
-    XMLNODE *result = XSLTProcess(pctx, document);
-    if (!result) {
-        fprintf(stderr, "error in transformation\n");
-        exit(1);
+    for (int i = 0; i < 10; i++)
+    {
+        XMLNODE *result = XSLTProcess(pctx, document);
+        if (!result) {
+            fprintf(stderr, "error in transformation\n");
+            exit(1);
+        }
+
+        char buffer[256];
+        sprintf(buffer, "%s_%i", args[3], i);
+
+        XMLOutputFile(pctx, result, buffer);
+        XMLFreeDocument(result);
     }
 
-    XMLOutputFile(pctx, result, args[3]);
-
-    XMLFreeDocument(result);
     XMLFreeDocument(document);
     XSLTFreeProcessor(pctx);
     XSLTEnd(gctx);

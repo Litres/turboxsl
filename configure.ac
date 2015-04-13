@@ -12,7 +12,7 @@ AC_PROG_CC_C99
 AC_HEADER_STDC
 LT_INIT
 
-M_LIBS='-lpthread -lm -lmemcached'
+M_LIBS='-lpthread -lm -lmemcached -lck'
 XSLT_LIBDIR='-L${libdir}'
 XSLT_INCLUDEDIR='-I${includedir}'
 XSLT_LIBS="-lturboxsl $LIBXML_LIBS $M_LIBS"

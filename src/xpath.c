@@ -42,7 +42,9 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
   XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr);
   if(compiled == NULL) {
     compiled = xpath_compile(pctx, expr);
+    memory_allocator_activate_parent(1);
     concurrent_dictionary_add(pctx->expressions, expr, compiled);
+    memory_allocator_activate_parent(0);
   }
 
   return compiled;
@@ -1675,9 +1677,5 @@ XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr)
   string.value = expr;
   string.p = expr;
 
-  memory_allocator_activate_parent(1);
-  XMLNODE *result = do_or_expr(pctx, &string);
-  memory_allocator_activate_parent(0);
-
-  return result;
+  return do_or_expr(pctx, &string);
 }
