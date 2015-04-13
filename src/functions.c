@@ -723,36 +723,41 @@ void xf_translate(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
 
 void xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  char *s;
-  RVALUE rv;
-  rv.type = VAL_NULL;
-
+  XMLNODE *node = current;
   if(args) {
+    RVALUE rv;
+    rv.type = VAL_NULL;
     xpath_execute_scalar(pctx, locals, args, current, &rv);
-    current = NULL;
-    if(rv.type == VAL_NODESET) {
-      current = rv.v.nodeset;
-    }
+    node = rv.type == VAL_NODESET ? rv.v.nodeset : NULL;
   }
-  if(current && current->name)
-    s = xml_strdup(current->name);
+
+  char *s;
+  if(node && node->name)
+    s = xml_strdup(node->name);
   else
     s = xml_strdup("");
 
   res->type = VAL_STRING;
   res->v.string = s;
-  rval_free(&rv);
 }
 
-void xf_lname(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+void xf_local_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
+  XMLNODE *node = current;
+  if(args) {
+    RVALUE rv;
+    rv.type = VAL_NULL;
+    xpath_execute_scalar(pctx, locals, args, current, &rv);
+    node = rv.type == VAL_NODESET ? rv.v.nodeset : NULL;
+  }
+
   char *s;
-  if(current && current->name) {
-    s = strchr(current->name,':');
+  if(node && node->name) {
+    s = strchr(node->name,':');
     if(s) {
       s = xml_strdup(s+1);
     } else {
-      s = xml_strdup(current->name);
+      s = xml_strdup(node->name);
     }
   }
   else
@@ -1310,7 +1315,7 @@ void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname
     add_function(pctx,"ltr:encode_base64",xf_base64); // 2
     add_function(pctx,"exsl:node-set",xf_exnodeset); // 2
     add_function(pctx,"starts-with",xf_starts); // 0
-    add_function(pctx,"local-name",xf_lname); // 2
+    add_function(pctx, "local-name", xf_local_name); // 2
     add_function(pctx,"node",xf_node); // 0
     add_function(pctx,"string",xf_tostr); // 0 ?
     add_function(pctx,"system-property",xf_stub); // 0
