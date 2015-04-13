@@ -41,8 +41,8 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
 
   XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr);
   if(compiled == NULL) {
-    compiled = xpath_compile(pctx, expr);
     memory_allocator_activate_parent(1);
+    compiled = xpath_compile(pctx, expr);
     concurrent_dictionary_add(pctx->expressions, expr, compiled);
     memory_allocator_activate_parent(0);
   }
