@@ -49,7 +49,6 @@ concurrent_dictionary *concurrent_dictionary_create()
 
 void concurrent_dictionary_release(concurrent_dictionary *dictionary)
 {
-    ck_ht_destroy(&(dictionary->table));
     free(dictionary);
 }
 
