@@ -625,7 +625,8 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
       if (digit != 0) {
         number_string[number_string_position++] = (char)(digit + 0x30);
       } else {
-        if (i < minimum_fractional_part_size) number_string[number_string_position++] = '0';
+        number_string[number_string_position++] = '0';
+        if (i == minimum_fractional_part_size) break;
       }
     }
 
