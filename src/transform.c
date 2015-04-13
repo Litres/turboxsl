@@ -173,7 +173,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
 
   for (instr = templ; instr; instr = instr->next) 
   {
-    debug("apply_xslt_template:: template %s", instr->name);
     if (instr->type == EMPTY_NODE) {
       if (instr->children)
         apply_xslt_template( pctx, tmp, source, instr->children, params, locals );
