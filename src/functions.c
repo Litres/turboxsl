@@ -889,129 +889,62 @@ static char *url_get_specials(TRANSFORM_CONTEXT *pctx, char *name)
 
 void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE     rv;
-  XMLSTRING  url;
-  char      *str;
-  char      *p;
-  char      *arg;
-  char       separ = '?';
-  char      *value;
-
   res->type = VAL_STRING;
-  if(args==NULL) {
-    debug("xf_urlcode:: no arguments, return default value");
+  if(args == NULL) {
+    debug("xf_urlcode:: no arguments");
     res->v.string = xml_strdup("/");
     return;
   }
 
-  if(pctx->gctx->perl_urlcode) {
-    memory_allocator_activate_parent(1);
-    XMLSTRING buffer = xmls_new(100);
-    for(XMLNODE *parg=args;parg;parg=parg->next) {
-      xpath_execute_scalar(pctx, locals, parg, current, &rv);
-      if(rv.type == VAL_NODESET && rv.v.nodeset != NULL) str = nodes2string(rv.v.nodeset->children);
-      else str = rval2string(&rv);
-      xmls_add_str(buffer, str);
-      if(parg->next) xmls_add_char(buffer,',');
-    }
+  if(pctx->gctx->perl_urlcode == NULL) {
+    error("xf_urlcode:: no Perl callback");
+    res->v.string = xml_strdup("/");
+    return;
+  }
 
-    if(buffer->len == 0) {
-      debug("xf_urlcode:: key is empty, return default value");
-      res->v.string = xml_strdup("/");
-      memory_allocator_activate_parent(0);
-      return;
-    }
+  memory_allocator_activate_parent(1);
+  XMLSTRING buffer = xmls_new(100);
+  for(XMLNODE *parg=args;parg;parg=parg->next) {
+    RVALUE rv;
+    xpath_execute_scalar(pctx, locals, parg, current, &rv);
+    char *str = rval2string(&rv);
+    xmls_add_str(buffer, str);
+    if(parg->next) xmls_add_char(buffer,',');
+  }
 
-    char *key = xmls_detach(buffer);
-    char *cache_key = key;
-    if(pctx->cache_key_prefix != NULL) {
-      size_t prefix_length = strlen(pctx->cache_key_prefix);
-      size_t key_length = strlen(key);
-      char *t = memory_allocator_new(prefix_length + key_length + 1);
-      memcpy(t, pctx->cache_key_prefix, prefix_length);
-      memcpy(t + prefix_length, key, key_length);
-      cache_key = t;
-    }
-
-    p = concurrent_dictionary_find(pctx->gctx->urldict, key);
-    if(!p) {
-      p = external_cache_get(pctx->gctx->cache, cache_key);
-      if(!p) {
-        char *p_args[2];
-        p_args[0] = key;
-        p_args[1] = NULL;
-        p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
-        external_cache_set(pctx->gctx->cache, cache_key, p);
-        concurrent_dictionary_add(pctx->gctx->urldict, key, p);
-      }
-    }
-    res->v.string = xml_strdup(p);
+  if(buffer->len == 0) {
+    debug("xf_urlcode:: key is empty, return default value");
+    res->v.string = xml_strdup("/");
     memory_allocator_activate_parent(0);
     return;
   }
 
-  url = xmls_new(100);
-  xmls_add_char(url,'/');
-  xpath_execute_scalar(pctx, locals, args, current, &rv);
-  str = rval2string(&rv);
-  if(str && str[0]) {
-    xmls_add_str(url,"pages/");
-    if(p = strchr(str,',')) {
-      *p++ = 0;
-      xmls_add_str(url,str);
-      while(p && *p) {
-        value = NULL;
-        arg = p;
-        p = strchr(arg,',');
-        if(p)
-          *p++=0;
-        if(arg[0]=='-') {
-          value = url_get_specials(pctx,arg+1);
-        } else if(p) {
-          value = p;
-          p = strchr(value,',');
-          if(p)
-            *p++ = 0;
-        }
-        if(value) {
-          xmls_add_char(url,separ);
-          xmls_add_str(url,arg);
-          xmls_add_char(url,'=');
-          xmls_add_str(url,value);
-          separ = '&';
-        }
-      }
-    } else {
-      xmls_add_str(url,str);
-      for(args=args->next;args;args=args->next) { // start from second arg
-        xpath_execute_scalar(pctx, locals, args, current, &rv);
-         str = rval2string(&rv);
-         if(str) {
-          char *ps = str;
-          value = NULL;
-          if(str[0] == '-') {
-            value = url_get_specials(pctx,ps=str+1);
-          } else if(args->next) {
-            args = args->next;
-            xpath_execute_scalar(pctx, locals, args, current, &rv);
-            value = rval2string(&rv);
-          }
-          if(value) {
-            xmls_add_char(url,separ);
-            xmls_add_str(url,ps);
-            xmls_add_char(url,'=');
-            xmls_add_str(url,value);
-            separ = '&';
-          }
-        }
-      }
+  char *key = xmls_detach(buffer);
+  char *cache_key = key;
+  if(pctx->cache_key_prefix != NULL) {
+    size_t prefix_length = strlen(pctx->cache_key_prefix);
+    size_t key_length = strlen(key);
+    char *t = memory_allocator_new(prefix_length + key_length + 1);
+    memcpy(t, pctx->cache_key_prefix, prefix_length);
+    memcpy(t + prefix_length, key, key_length);
+    cache_key = t;
+  }
+
+  char *p = concurrent_dictionary_find(pctx->gctx->urldict, key);
+  if(!p) {
+    p = external_cache_get(pctx->gctx->cache, cache_key);
+    if(!p) {
+      char *p_args[2];
+      p_args[0] = key;
+      p_args[1] = NULL;
+      p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
+      external_cache_set(pctx->gctx->cache, cache_key, p);
+      concurrent_dictionary_add(pctx->gctx->urldict, key, p);
     }
   }
 
-  if(separ=='?') // add trailer / for urls with no args XXX - not necessary! just for ltr:url_code compatability
-    xmls_add_char(url,'/');
-
-  res->v.string = xmls_detach(url);
+  res->v.string = xml_strdup(p);
+  memory_allocator_activate_parent(0);
 }
 
 char *create_veristat_url(TRANSFORM_CONTEXT *pctx, const char *url)
