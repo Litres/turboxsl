@@ -17,10 +17,4 @@ void logger_release();
 #define error(M, ...) zlog_error(logger_category, M, ##__VA_ARGS__)
 #define debug(M, ...) zlog_debug(logger_category, M, ##__VA_ARGS__)
 
-#ifndef TRACE
-#define trace(M, ...)
-#else
-#define trace(M, ...) zlog_debug(logger_category, M, ##__VA_ARGS__)
-#endif
-
 #endif

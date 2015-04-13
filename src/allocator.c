@@ -190,7 +190,6 @@ void *memory_allocator_new(size_t size)
     memory_allocator *parent_allocator = current_allocator->parent_allocator;
     if (parent_allocator != NULL && !t->is_actual)
     {
-        trace("memory_allocator_new:: using parent allocator");
         t = memory_allocator_find_entry(parent_allocator);
         if (t == NULL) return NULL;
     }
@@ -198,7 +197,6 @@ void *memory_allocator_new(size_t size)
     memory_allocator_data *data = t->tail;
     if (data->offset + size > data->data_size)
     {
-        trace("memory_allocator_new:: data entry full");
         if (data->next_entry == NULL)
         {
             memory_allocator_data *new_data = memory_allocator_create_data(data->data_size);

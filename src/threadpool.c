@@ -57,7 +57,6 @@ int threadpool_lock_on()
         {
             if (locks[i].is_locked) return 0;
 
-            trace("threadpool_lock_on:: locked");
             locks[i].is_locked = 1;
             return 1;
         }
@@ -75,7 +74,6 @@ void threadpool_lock_off()
     {
         if (locks[i].thread == self)
         {
-            trace("threadpool_lock_off:: unlocked");
             locks[i].is_locked = 0;
             break;
         }

@@ -100,7 +100,6 @@ void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE 
     if(xml_strcmp(stylesheet->name, xsl_var) == 0) {
       vname = xml_get_attr(stylesheet,xsl_a_name);
       vsel = xml_get_attr(stylesheet,xsl_a_select);
-      trace("precompile_variables:: variable: %s (%s)", vname, vsel);
       var = create_variable(pctx, vname);
       if(!vsel) {
         vsel = xml_eval_string(pctx, &dummy, doc, stylesheet->children);
@@ -157,7 +156,6 @@ void rval_copy(TRANSFORM_CONTEXT *pctx, RVALUE *dst, RVALUE *src)
 
 void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE *rv)
 {
-  trace("get_variable_rv:: name: %s", name);
   unsigned i;
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
@@ -190,7 +188,6 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
 
   vname = xml_get_attr(var,xsl_a_name);
   vsel = xml_get_attr(var,xsl_a_select);
-  trace("do_local_var:: name: %s (%s)", vname, vsel);
 
   for(tmp=vars->attributes;tmp;tmp=tmp->next) {
     if(xml_strcmp(vname, tmp->name) == 0) {

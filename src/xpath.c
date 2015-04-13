@@ -113,7 +113,6 @@ char *node2string(XMLNODE *node)
 
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position)
 {
-  trace("add_to_selection:: previous: %s, source: %s", prev == NULL ? NULL : prev->name, src == NULL ? NULL : src->name);
   if(src==NULL)
     return prev;
 
@@ -204,7 +203,6 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
   }
   else { // execute check expr for each node in nodeset, if true - add to new set
     for(;nodeset;nodeset=nodeset->next) {
-      trace("xpath_filter:: node: %s", nodeset->name);
       xpath_execute_scalar(pctx, locals, expr, nodeset, &rv);
 
       if (rv.type == VAL_INT) 
@@ -236,7 +234,6 @@ XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset
 
 int xpath_node_kind(XMLNODE *node, XMLNODE *kind)
 {
-  trace("xpath_node_kind:: node: %s (%s), kind: %s", node->name, nodeTypeNames[node->type], kind == NULL ? NULL : kind->name);
   if(kind == NULL) return node->type == ELEMENT_NODE || node->type == ATTRIBUTE_NODE;
 
   if(kind->type == XPATH_NODE_CALL)
@@ -265,7 +262,6 @@ int xpath_node_kind(XMLNODE *node, XMLNODE *kind)
 XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, unsigned int *pos, XMLNODE **head, XMLNODE *kind)
 {
   for(;node;node=node->next) {
-    trace("add_all_children:: child: %s (%s)", node->name, nodeTypeNames[node->type]);
     if(node->type == EMPTY_NODE) {
       tmp = add_all_children(tmp,node->children,pos,head,kind);
       continue;
@@ -284,14 +280,12 @@ XMLNODE *add_all_children(XMLNODE *tmp, XMLNODE *node, unsigned int *pos, XMLNOD
 
 XMLNODE *xpath_get_self(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_self:: current: %s", current->name);
   unsigned pos = 0;
   return xpath_node_kind(current, kind) ? add_to_selection(NULL, current, &pos) : NULL;
 }
 
 XMLNODE *xpath_get_parent(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_parent:: current: %s", current->name);
   XMLNODE *parent = current->parent;
   if (parent == NULL || strcmp(parent->name, "root") == 0) return NULL;
 
@@ -301,7 +295,6 @@ XMLNODE *xpath_get_parent(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_child(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_child:: current: %s", current->name);
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
@@ -316,7 +309,6 @@ XMLNODE *xpath_get_child(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_descendant(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_descendant:: current: %s", current->name);
   XMLNODE *ret = NULL;
   unsigned pos = 0;
   add_all_children(NULL, current->children, &pos, &ret, kind);
@@ -325,7 +317,6 @@ XMLNODE *xpath_get_descendant(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_descendant_or_self(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_descendant_or_self:: current: %s", current->name);
   XMLNODE *result = xpath_get_self(current, kind);
 
   XMLNODE *descendant = xpath_get_descendant(current, kind);
@@ -344,13 +335,11 @@ XMLNODE *xpath_get_descendant_or_self(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_all(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_all:: current: %s", current->name);
   return xpath_get_child(current, kind);
 }
 
 XMLNODE *xpath_get_ancestor(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_ancestor:: current: %s", current->name);
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
@@ -366,7 +355,6 @@ XMLNODE *xpath_get_ancestor(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_ancestor_or_self(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_ancestor_or_self:: current: %s", current->name);
   XMLNODE *result = xpath_get_self(current, kind);
 
   XMLNODE *ancestor = xpath_get_ancestor(current, kind);
@@ -385,7 +373,6 @@ XMLNODE *xpath_get_ancestor_or_self(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_preceding_sibling(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_preceding_sibling:: current: %s", current->name);
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
@@ -400,7 +387,6 @@ XMLNODE *xpath_get_preceding_sibling(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_preceding(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_preceding:: current: %s", current->name);
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
@@ -420,7 +406,6 @@ XMLNODE *xpath_get_preceding(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_following_sibling(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_following_sibling:: current: %s", current->name);
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
@@ -435,7 +420,6 @@ XMLNODE *xpath_get_following_sibling(XMLNODE *current, XMLNODE *kind)
 
 XMLNODE *xpath_get_following(XMLNODE *current, XMLNODE *kind)
 {
-  trace("xpath_get_following:: current: %s", current->name);
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
@@ -459,7 +443,6 @@ XMLNODE *xpath_apply_selector(XMLNODE *set, XMLNODE *etree, XMLNODE * (*selector
   XMLNODE *head = NULL;
   XMLNODE *tail = NULL;
   for(XMLNODE *node=set;node;node=node->next) {
-    trace("xpath_apply_selector:: node: %s", node->name);
     XMLNODE *tmp = selector(node, etree->attributes);
     if (tmp == NULL) continue;
     if (head == NULL) {
@@ -475,10 +458,8 @@ XMLNODE *xpath_apply_selector(XMLNODE *set, XMLNODE *etree, XMLNODE * (*selector
 
 void xpath_select_common(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etree, XMLNODE *current, RVALUE *res, XMLNODE * (*selector)(XMLNODE *, XMLNODE *))
 {
-  trace("xpath_select_common:: current: %s", current->name);
   res->type = VAL_NODESET;
   if(etree->children) {
-    trace("xpath_select_common:: has child XPath expression");
     RVALUE rv;
     xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
     if(rv.type == VAL_NODESET) {
@@ -502,9 +483,7 @@ XMLNODE *xpath_get_attrs(XMLNODE *nodeset)
   unsigned pos = 0;
 
   for(;nodeset;nodeset=nodeset->next) {
-    trace("xpath_get_attrs:: node: %s", nodeset->name);
     for(attr=nodeset->attributes;attr;attr=attr->next) {
-      trace("xpath_get_attrs:: attribute: %s", attr->name);
       tmp = add_to_selection(tmp,attr,&pos);
       if(!head)
         head = tmp;
@@ -623,8 +602,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     res->type = VAL_NULL;
     return;
   }
-
-  trace("xpath_execute_scalar:: type: %s", nodeTypeNames[etree->type]);
 
   switch(etree->type) {
     case XPATH_NODE_INT:
@@ -1095,7 +1072,6 @@ XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string, NODETYPE t)
     ;
   ret = xml_new_node(pctx, NULL, t);
   ret->name=xml_new_string(p, e - p);
-  trace("do_var_expr:: variable name: %s", ret->name);
   string->p=e;
   skip_ws(string);
   return ret;
@@ -1105,7 +1081,6 @@ XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string, NODETYPE t)
 static
 XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_select_expr:: expression: %s", string->p);
   XMLNODE *result = NULL;
 
   skip_ws(string);
@@ -1201,7 +1176,6 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
     {
       if(*string->p=='*')
       {
-        trace("do_select_expr:: wildcard");
         ++(string->p);
         result->name = NULL;
         return result;
@@ -1218,14 +1192,12 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 
       if(*string->p=='(')
       {
-        trace("do_select_expr:: kind test: %s", name);
         while (*string->p!=')') ++(string->p);
 
         result->attributes = xml_new_node(pctx,name,XPATH_NODE_CALL);
       }
       else
       {
-        trace("do_select_expr:: name: %s", name);
         result->name = name;
         result->attributes = xml_new_node(pctx,name,EMPTY_NODE);
       }
@@ -1257,13 +1229,11 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
       if(*string->p==',')
         ++(string->p);
     }
-    trace("do_select_expr:: call: %s", name);
     return node;
   }
 
   if (result == NULL)
   {
-    trace("do_select_expr:: select");
     result = xml_new_node(pctx,name,XPATH_NODE_SELECT);
     result->attributes = xml_new_node(pctx,name,EMPTY_NODE);
   }
@@ -1279,7 +1249,6 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_node2_expr:: expression: %s", string->p);
   XMLNODE *node1;
   skip_ws(string);
   if(*string->p=='\'')
@@ -1386,7 +1355,6 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_node_expr:: expression: %s", string->p);
   XMLNODE *node1, *node2, *node3;
   
   node1 = do_node2_expr(pctx,string);
@@ -1425,7 +1393,6 @@ XMLNODE *do_node_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_union_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_union_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
 
@@ -1456,7 +1423,6 @@ XMLNODE *do_union_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_not_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_not_expr:: expression: %s", string->p);
   XMLNODE *ornode;
   char    *old;
 
@@ -1483,7 +1449,6 @@ XMLNODE *do_not_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_mul_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_mul_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
   node1 = do_not_expr(pctx,string);
@@ -1512,7 +1477,6 @@ XMLNODE *do_mul_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_add_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_add_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
   node1 = do_mul_expr(pctx,string);
@@ -1538,7 +1502,6 @@ XMLNODE *do_add_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_rel_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_rel_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
   node1 = do_add_expr(pctx,string);
@@ -1579,7 +1542,6 @@ XMLNODE *do_rel_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_eq_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_eq_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
 
@@ -1615,7 +1577,6 @@ XMLNODE *do_eq_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_and_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_and_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
 
@@ -1644,7 +1605,6 @@ XMLNODE *do_and_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 static
 XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 {
-  trace("do_or_expr:: expression: %s", string->p);
   XMLNODE *node1;
   XMLNODE *ornode;
 

@@ -89,7 +89,6 @@ void xf_getid(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *
   }
   if(current) {
     sprintf(buf,"id_%x",current->uid);
-    trace("xf_getid:: id: %s", buf);
     res->type = VAL_STRING;
     res->v.string = xml_strdup(buf);
   } else {

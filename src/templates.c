@@ -23,8 +23,6 @@ char *fn_node = NULL;
 
 static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 {
-  trace("templtab_add:: name: %s", name);
-
   if(pctx->templcnt>=pctx->templno) 
   {
     if(fn_text==NULL) 
@@ -51,8 +49,6 @@ static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
 
 static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *match, char *mode)
 {
-  trace("add_templ_match:: match: %s, mode: %s", match, mode);
-
   while(x_is_ws(*match))  // skip leading whitespace;
     ++match;
 
@@ -95,7 +91,6 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
 
 static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, char *name, char *match, char *mode)
 {
-  trace("add_template:: name: %s, match: %s, mode: %s", name, match, mode);
   if(match) 
   {
     XMLNODE *content = template->children;
@@ -148,8 +143,6 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
   if (node == NULL)
     return 0;
-
-  trace("select_match:: template type: %s", nodeTypeNames[templ->type]);
 
   switch(templ->type) 
   {
@@ -377,7 +370,6 @@ void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 
     if(node->children)
     {
-      trace("precompile_templates:: children");
       precompile_templates(pctx, node->children);
     }
   }

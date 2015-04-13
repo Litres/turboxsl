@@ -228,7 +228,6 @@ int nodeset_equal_common(RVALUE *value, RVALUE *nodeset, unsigned eq)
 
 int rval_equal(RVALUE *left, RVALUE *right, unsigned eq)
 {
-  trace("rval_equal:: a (%d) %s b (%d)", left->type, eq == 0 ? "!=" : "=", right->type);
   int rc;
   double ld,rd;
 

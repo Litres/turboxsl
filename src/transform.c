@@ -185,7 +185,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       tmp = copy_node_to_result(pctx, locals, source, ret, instr);
 
       if (instr->children) {
-        trace("apply_xslt_template:: starting in thread");
         threadpool_start_full(apply_xslt_template, pctx, tmp, source, instr->children, params, locals);
       }
 
@@ -317,7 +316,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
         iter->content = name;
         tmp->attributes = iter;
       }
-      trace("apply_xslt_template:: starting in thread");
       threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
     }
 /************************** <xsl:if> *****************************/
@@ -383,7 +381,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       tmp = iter;
       for(;iter;iter=iter->next) {
         newtempl = xml_append_child(pctx,ret,EMPTY_NODE);
-        trace("apply_xslt_template:: starting in thread");
         threadpool_start_full(apply_xslt_template,pctx,newtempl,iter,child,params,locals);
       }
       xpath_free_selection(pctx,tmp);
@@ -476,7 +473,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
     else {
       tmp = copy_node_to_result(pctx,locals,source,ret,instr);
       if(instr->children) {
-        trace("apply_xslt_template:: starting in thread");
         threadpool_start_full(apply_xslt_template,pctx,tmp,source,instr->children,params,locals);
       }
     }
@@ -502,7 +498,6 @@ void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *sourc
         break;
       default:
         tmp = xml_append_child(pctx,ret,EMPTY_NODE);
-        trace("apply_default_process:: starting in thread");
         threadpool_start_full(process_one_node,pctx,tmp,child,params,locals,mode);
     }
   }
@@ -517,7 +512,6 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
   templ = find_template(pctx, source, mode);
 
   if(templ) {
-    trace("process_one_node:: found template: %s", templ->name);
     // user scope locals for each template
     XMLNODE *scope = xml_new_node(pctx,NULL,EMPTY_NODE);
     apply_xslt_template(pctx, ret, source, templ, params, scope);
@@ -575,7 +569,6 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
       XMLNODE *included;
       if(name) {
-        trace("xsl_preprocess:: include file: %s", name);
         included = xml_parse_file(pctx->gctx, name, 1);
         if(included) {
           included->parent = node;
@@ -647,7 +640,6 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       }
     }
     else if(node->children) {
-      trace("process_imports:: process children");
       process_imports(pctx,node->children); //process imports if any
     }
   }
