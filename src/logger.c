@@ -7,7 +7,6 @@ void logger_create()
     int rc = zlog_init("/etc/apache2/turboxsl.conf");
     if (rc)
     {
-        std_error("logger_setup:: init failed");
         return;
     }
 
