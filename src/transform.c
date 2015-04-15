@@ -512,16 +512,28 @@ void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XM
   }
 }
 
-
-char *get_abs_name(TRANSFORM_CONTEXT *pctx, char *fname)
+char *get_absolute_path(XMLNODE *node, char *name)
 {
-  if (!fname) 
-    return NULL;
-  strcpy(pctx->local_part, fname);
-  // TODO use local variable
-  return xml_strdup(pctx->fnbuf);
+  char *file = node->file;
+  char *p = strrchr(file, '/');
+  if(p != NULL) {
+    size_t path_length = p - file + 1;
+    char *result = memory_allocator_new(path_length + strlen(name));
+    memcpy(result, file, path_length);
+    memcpy(result + path_length, name, strlen(name));
+    return result;
+  }
+
+  return name;
 }
 
+char *get_reference_path(XMLNODE *node)
+{
+  char *reference = xml_get_attr(node, xsl_a_href);
+  if(reference == NULL) return NULL;
+
+  return get_absolute_path(node, reference);
+}
 
 XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
@@ -558,16 +570,15 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
         pctx->flags |= XSL_FLAG_STANDALONE;
 
     } else if(xml_strcmp(node->name, xsl_include) == 0) {
-      char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
-      XMLNODE *included;
+      char *name = get_reference_path(node);
       if(name) {
-        included = xml_parse_file(pctx->gctx, name, 1);
+        XMLNODE *included = xml_parse_file(pctx->gctx, name, 1);
         if(included) {
           included->parent = node;
           node->type=EMPTY_NODE;
           node->children=included;
         } else {
-          error("xsl_preprocess:: failed to include %s",pctx->fnbuf);
+          error("xsl_preprocess:: failed to include %s", name);
         }
       }
     }
@@ -589,12 +600,7 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     }
 
     if(node->children) {
-      char *save_local = pctx->local_part;
-      char *s = strrchr(pctx->local_part,'/');
-      if(s)
-        pctx->local_part = s+1;
       node->children = xsl_preprocess(pctx, node->children);
-      pctx->local_part = save_local;
     }
     node = node_next;
   }
@@ -608,13 +614,9 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
   {
     if(xml_strcmp(node->name, xsl_import) == 0)
     {
-      char *name = get_abs_name(pctx, xml_get_attr(node,xsl_a_href));
+      char *name = get_reference_path(node);
       if(name) 
       {
-        char *save_local = pctx->local_part;
-        char *s = strrchr(pctx->local_part, '/');
-        if (s) pctx->local_part = s + 1;
-
        	debug("process_imports:: import %s", name);
         XMLNODE *included = xml_parse_file(pctx->gctx, name, 1);
         if(included != NULL) 
@@ -625,9 +627,8 @@ void process_imports(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
           node->children = included;
         }
         else {
-          debug("process_imports:: failed to import %s", pctx->fnbuf);
+          error("process_imports:: failed to import %s", name);
         }
-        pctx->local_part = save_local;
       }
     }
     else if(node->children) {
@@ -780,7 +781,6 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   free(pctx->sort_keys);
   free(pctx->sort_nodes);
   free(pctx->functions);
-  free(pctx->fnbuf);
   free(pctx);
 }
 
@@ -816,14 +816,6 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   }
 
   ret->outmode = MODE_XML;
-  ret->fnbuf = malloc(1024); // XXX may be not enough for pathname but passable
-  strcpy(ret->fnbuf, stylesheet);
-  ret->local_part = strrchr(ret->fnbuf,'/');
-  if(ret->local_part)
-    ++ret->local_part; //after last /
-  else
-    ret->local_part = ret->fnbuf; // no path in filename
-
   ret->sort_size = 100;
   ret->sort_keys = (char **)malloc(ret->sort_size*sizeof(char *));
   ret->sort_nodes = (XMLNODE **)malloc(ret->sort_size*sizeof(XMLNODE *));

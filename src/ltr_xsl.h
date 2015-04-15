@@ -116,9 +116,6 @@ struct _context {
   memory_allocator *allocator;
   char *cache_key_prefix;
   char *url_local_prefix;
-  char *docname;
-  char *fnbuf;
-  char *local_part;
   TEMPLATE *templtab;   // templates used in matching
   unsigned templno;
   unsigned templcnt;
@@ -167,7 +164,7 @@ XMLNODE *find_first_node(XMLNODE *n);
 char *xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source, XMLNODE *foreval);
 
 char *xml_get_attr(XMLNODE *node, char *name);
-char *get_abs_name(TRANSFORM_CONTEXT *pctx, char *fname);
+char *get_absolute_path(XMLNODE *node, char *name);
 
 XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *source, char *mode);
 XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, char *name);

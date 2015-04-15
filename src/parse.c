@@ -123,7 +123,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
 
   state = INIT;
   ret = xml_new_node(NULL,"root",EMPTY_NODE);
-  ret->file = xml_strdup(uri);
+  ret->file = uri;
 
   while(*p) {
     if(state==ERROR)
@@ -334,7 +334,7 @@ XMLNODE *XMLParse(XSLTGLOBALDATA *gctx, char *document)
 XMLNODE *XMLParseFile(XSLTGLOBALDATA *gctx, char *file)
 {
   info("XMLParseFile:: file %s", file);
-  return xml_parse_file(gctx, file, 0);
+  return xml_parse_file(gctx, xml_strdup(file), 0);
 }
 
 XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
