@@ -90,9 +90,7 @@ XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
   newnode->name  = src->name;
   newnode->flags = src->flags;
 
-  //fprintf(stderr, "src->type = %i\n", src->type);
-
-// copy attributes
+  // copy attributes
   switch(src->type) {
     case ELEMENT_NODE:
       for(a=src->attributes;a;a=a->next) {
@@ -105,7 +103,6 @@ XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
       break;
     case TEXT_NODE:
       newnode->content = xml_strdup(src->content);
-      //fprintf(stderr, "src->content = %s\n", src->content);
       break;
   }
   return newnode;
@@ -203,8 +200,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
           {
             char *pname = xml_get_attr(iter,xsl_a_name);
             char *expr  = xml_get_attr( iter, xsl_a_select );
-
-            // fprintf(stderr, "--------------- %s\npname = %s\nexpr = %s\n", iter->name, pname, expr);
 
             tmp       = xml_new_node(pctx, pname, ATTRIBUTE_NODE);
             tmp->next = param;
@@ -412,8 +407,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       if (!instr->compiled)
         instr->compiled = xpath_find_expr(pctx, xml_get_attr(instr, xsl_a_select));
 
-      // fprintf(stderr, "xml_get_attr(instr, xsl_a_select) = %s\n", xml_get_attr(instr, xsl_a_select));
-
       char *cont = xpath_eval_string(pctx, locals, source, instr->compiled);
       if (cont) 
       {
@@ -596,7 +589,6 @@ XMLNODE *xsl_preprocess(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
     }
 
     if(node->children) {
-    	// fprintf(stderr, "xsl_preprocess: node->children exists\n");
       char *save_local = pctx->local_part;
       char *s = strrchr(pctx->local_part,'/');
       if(s)

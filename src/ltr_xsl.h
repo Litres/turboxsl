@@ -158,8 +158,6 @@ void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type);
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type);
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
-void xml_add_sibling(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
-void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode);
 
 /********************** transform.c -- XSLT mainloop ****************/
 void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *templ, XMLNODE *params, XMLNODE *locals);
@@ -168,12 +166,7 @@ void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *sourc
 XMLNODE *find_first_node(XMLNODE *n);
 char *xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source, XMLNODE *foreval);
 
-
-
 char *xml_get_attr(XMLNODE *node, char *name);
-
-
-
 char *get_abs_name(TRANSFORM_CONTEXT *pctx, char *fname);
 
 XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *source, char *mode);

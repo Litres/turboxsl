@@ -26,7 +26,7 @@ int x_can_number(char *p)
 
 int x_is_ws(char c)
 {
-  if(c == ' ' || c == 0x20 || c == '\t' || c == '\n' || c == '\r')
+  if(c == ' ' || c == '\t' || c == '\n' || c == '\r')
     return 1;
   return 0;
 }

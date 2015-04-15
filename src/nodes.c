@@ -35,22 +35,6 @@ void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
   memset(node,0,sizeof(XMLNODE));
 }
 
-void xml_replace_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *newnode)
-{
-  newnode->parent = node->parent;
-  if(node->prev) {
-    node->prev->next = newnode;
-    newnode->prev = node->prev;
-  } else {
-    node->parent->children = newnode;
-    newnode->prev = NULL;
-  }
-  newnode->next = node->next;
-  node->next = NULL;
-  if(newnode->next)
-    newnode->next->prev = newnode;
-}
-
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
 {
     XMLNODE *ret = memory_allocator_new(sizeof(XMLNODE));
@@ -93,16 +77,6 @@ void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *child)
         node->children = child;
     }
     child->parent = node;
-}
-
-void xml_add_sibling(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *sibling)
-{
-  if(!node || !sibling)
-    return;
-  for(;node->next;node=node->next)
-    ;
-  sibling->prev = node;
-  node->next = sibling;
 }
 
 XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src)

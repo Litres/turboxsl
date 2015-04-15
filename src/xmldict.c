@@ -44,7 +44,7 @@ unsigned long hash_function(unsigned char *str)
   return hash;
 }
 
-unsigned int bucket_number(char *str)
+unsigned int bucket_number(const char *str)
 {
   return hash_function(str) % 127;
 }
