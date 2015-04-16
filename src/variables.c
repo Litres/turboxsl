@@ -14,9 +14,9 @@
 #include <stdlib.h>
 
 #include "ltr_xsl.h"
-#include "xslglobs.h"
+#include "xsl_elements.h"
 
-void  free_variables(TRANSFORM_CONTEXT *pctx)
+void free_variables(TRANSFORM_CONTEXT *pctx)
 {
   unsigned i;
   for(i=0;i<pctx->var_pos;++i) {
@@ -89,48 +89,27 @@ void set_global_var(XSLTGLOBALDATA *pctx, char *name, char *content)
 void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE *doc)
 {
   XMLNODE *n;
-  char *vname;
-  char *vsel;
   XMLNODE dummy;
   XSL_VARIABLE *var;
   dummy.attributes = NULL;
 
   for(;stylesheet;stylesheet=n) {
     n = stylesheet->next;
-    if(xml_strcmp(stylesheet->name, xsl_var) == 0) {
-      vname = xml_get_attr(stylesheet,xsl_a_name);
-      vsel = xml_get_attr(stylesheet,xsl_a_select);
-      var = create_variable(pctx, vname);
+    if(xmls_equals(stylesheet->name, xsl_var)) {
+      XMLSTRING vname = xml_get_attr(stylesheet,xsl_a_name);
+      XMLSTRING vsel = xml_get_attr(stylesheet,xsl_a_select);
+      var = create_variable(pctx, vname->s);
       if(!vsel) {
         vsel = xml_eval_string(pctx, &dummy, doc, stylesheet->children);
         var->extra.type = VAL_STRING;
-        var->extra.v.string = vsel;
+        var->extra.v.string = vsel->s;
       } else {
         xpath_eval_node(pctx, &dummy, doc, vsel, &(var->extra));
       }
-    } else if(stylesheet->children && xml_strcmp(stylesheet->name, xsl_template) != 0) {
+    } else if(stylesheet->children && !xmls_equals(stylesheet->name, xsl_template)) {
       precompile_variables(pctx, stylesheet->children, doc);
     }
   }
-}
-
-char *get_variable_str(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name)
-{
-  unsigned i;
-  if(vars && vars->attributes) {  //first try locals
-    for(vars=vars->attributes;vars;vars=vars->next) {
-      if(xml_strcmp(name, vars->name) == 0) {
-        return vars->extra.v.string;
-      }
-    }
-  }
-  for(i=0;i<pctx->var_pos;++i) { // then globals
-    if(xml_strcmp(name, pctx->vars[i].name) == 0) {
-      return pctx->vars[i].extra.v.string;
-    }
-  }
-
-  return NULL;
 }
 
 void rval_copy(TRANSFORM_CONTEXT *pctx, RVALUE *dst, RVALUE *src)
@@ -159,7 +138,7 @@ void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE 
   unsigned i;
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
-      if(xml_strcmp(name, vars->name) == 0) {
+      if(xml_strcmp(name, vars->name->s) == 0) {
         rval_copy(pctx,rv,&vars->extra);
         return;
       }
@@ -183,14 +162,13 @@ void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE 
 
 void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE *var)
 {
-  char *vname, *vsel;
   XMLNODE *tmp;
 
-  vname = xml_get_attr(var,xsl_a_name);
-  vsel = xml_get_attr(var,xsl_a_select);
+  XMLSTRING vname = xml_get_attr(var,xsl_a_name);
+  XMLSTRING vsel = xml_get_attr(var,xsl_a_select);
 
   for(tmp=vars->attributes;tmp;tmp=tmp->next) {
-    if(xml_strcmp(vname, tmp->name) == 0) {
+    if(xmls_equals(vname, tmp->name)) {
       free(tmp->content);
       tmp->content = NULL;
       break;
@@ -220,12 +198,12 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
  * called at <xsl:param>
  */
 
-void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, XMLNODE *params) 
+void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLSTRING name, XMLNODE *params)
 {
   XMLNODE *tmp;
 
   for (; params; params = params->next) {
-    if (xml_strcmp(name, params->name) == 0)
+    if (xmls_equals(name, params->name))
     {
       tmp              = xml_new_node(pctx, name, ATTRIBUTE_NODE);
       tmp->next        = vars->attributes;

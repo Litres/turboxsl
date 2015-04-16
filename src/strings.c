@@ -45,16 +45,17 @@ char *xml_new_string(const char *s, size_t length)
   return result;
 }
 
-char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, char *s)
+XMLSTRING xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, XMLSTRING string)
 {
   char *s_str, *p, *r;
   XMLSTRING res;
 
-  if(!s)
+  if(!string)
     return NULL;
 
+  char *s = string->s;
   if(!strchr(s,'{') && !strchr(s,'}')) {
-    return xml_strdup(s);
+    return xmls_new_string_literal(s);
   }
 
   res = xmls_new(100);
@@ -69,7 +70,7 @@ char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *cont
       p=strchr(s,'}');
       if(p)
         *p=0;
-      r = xpath_eval_string(pctx, locals, context, xpath_find_expr(pctx,s));
+      r = xpath_eval_string(pctx, locals, context, xpath_find_expr(pctx,xmls_new_string_literal(s)));
       if(r) {
         xmls_add_str(res, r);
       }
@@ -85,67 +86,43 @@ char *xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *cont
     }
   }
 
-  return xmls_detach(res);
-}
-
-int x_is_empty(char *s)
-{
-  if(s) {
-    while(*s)
-      if(!x_is_ws(*s++))
-        return 0;
-  }
-  return 1;
-}
-
-char *xml_unescape(char *s)
-{
-  XMLSTRING d;
-  if(s==NULL)
-    return NULL;
-  d = xmls_new(strlen(s));
-  while(*s) {
-    if(*s=='&') {
-      if(0==memcmp(s,"&amp;",5)) {
-        s += 5;
-        xmls_add_char(d,'&');
-        continue;
-      } else if(0==memcmp(s,"&quot;",6)) {
-        s += 6;
-        xmls_add_char(d,'"');
-        continue;
-      } else if(0==memcmp(s,"&lt;",4)) {
-        s += 4;
-        xmls_add_char(d,'<');
-        continue;
-      } else if(0==memcmp(s,"&gt;",4)) {
-        s += 4;
-        xmls_add_char(d,'>');
-        continue;
-      }
-    }
-    xmls_add_char(d,*s++);
-  }
-  return xmls_detach(d);
+  return res;
 }
 
 /***************************** XMLSTRINGS ****************************/
-XMLSTRING xmls_new(unsigned bsize)
+XMLSTRING xmls_new(size_t bsize)
 {
   XMLSTRING ret;
   ret = memory_allocator_new(sizeof(struct _xmls));
   ret->allocated = bsize;
   ret->len = 0;
   ret->s = memory_allocator_new(bsize + 1);
-  ret->s[0] = 0;
   return ret;
+}
+
+XMLSTRING xmls_new_string(const char *s, size_t length)
+{
+  if(s==NULL) return NULL;
+
+  XMLSTRING result = xmls_new(length);
+  memcpy(result->s, s, length);
+  result->len = length;
+
+  return result;
+}
+
+XMLSTRING xmls_new_string_literal(const char *s)
+{
+  if(s==NULL) return NULL;
+
+  return xmls_new_string(s, strlen(s));
 }
 
 void xmls_add_char(XMLSTRING s, char c)
 {
   if(s->len >= s->allocated-2) {
     char *data = s->s;
-    unsigned int data_size = s->allocated;
+    size_t data_size = s->allocated;
     s->allocated = s->allocated*2 + 1;
     s->s = memory_allocator_new(s->allocated);
     memcpy(s->s, data, data_size);
@@ -187,7 +164,7 @@ void xmls_add_str(XMLSTRING s, const char *d)
 
   if(s->len+l >= s->allocated) {
     char *data = s->s;
-    unsigned int data_size = s->allocated;
+    size_t data_size = s->allocated;
     s->allocated = s->allocated*2 + l;
     s->s = memory_allocator_new(s->allocated);
     memcpy(s->s, data, data_size);
@@ -198,13 +175,19 @@ void xmls_add_str(XMLSTRING s, const char *d)
 
 char *xmls_detach(XMLSTRING s)
 {
-  char *ret;
-  if(!s)
-    return NULL;
-  ret = s->s;
-  return ret;
+  if(!s) return NULL;
+  return s->s;
 }
 
+int xmls_equals(XMLSTRING a, XMLSTRING b)
+{
+  if(a == NULL && b == NULL) return 1;
+
+  if(a == NULL || b == NULL) return 0;
+  if(a->len != b->len) return 0;
+
+  return bcmp(a->s, b->s, a->len) == 0;
+}
 
 short *utf2ws(char *s)
 {

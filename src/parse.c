@@ -122,7 +122,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
   unsigned ln = 0;
 
   state = INIT;
-  ret = xml_new_node(NULL,"root",EMPTY_NODE);
+  ret = xml_new_node(NULL,xmls_new_string_literal("root"),EMPTY_NODE);
   ret->file = uri;
 
   while(*p) {
@@ -179,7 +179,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           p = skip_spaces(p,&ln);
           for(c=p; can_name(*c);++c)
             ;
-          current = xml_new_node(NULL, xml_new_string(p, c - p), ELEMENT_NODE);
+          current = xml_new_node(NULL, xmls_new_string(p, c - p), ELEMENT_NODE);
           current->prev = previous;
           current->file = uri;
           current->line = ln;
@@ -199,7 +199,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
         p = skip_spaces(p,&ln);
         for(c=p; can_name(*c);++c)
             ;
-        if(!memcmp(ret->name,p,c-p)) {
+        if(!memcmp(ret->name->s,p,c-p)) {
             for(p=c;*p!='>';++p)
               ;
             ++p;
@@ -208,7 +208,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
             ret = previous->parent;
         } else {
           *c = 0;
-          error("do_parse:: closing tag mismatch <%s> </%s>",ret->name,p);
+          error("do_parse:: closing tag mismatch <%s> </%s>", ret->name->s, p);
           state = ERROR;
         }
         break;
@@ -228,7 +228,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           p = skip_spaces(p,&ln);
           for(c=p; can_name(*c);++c)
             ;
-          attr = xml_new_node(NULL, xml_new_string(p, c - p), ATTRIBUTE_NODE);
+          attr = xml_new_node(NULL, xmls_new_string(p, c - p), ATTRIBUTE_NODE);
           attr->file = uri;
           attr->line = ln;
           attr->next = current->attributes;
@@ -254,7 +254,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           current = xml_new_node(NULL,NULL, TEXT_NODE);
           current->file = uri;
           current->line = ln;
-          current->content = (void *)make_string(p,c);
+          current->content = xmls_new_string_literal(make_string(p,c));
           current->flags = XML_FLAG_NOESCAPE;
           current->prev = previous;
           if(previous)
@@ -282,7 +282,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           current = xml_new_node(NULL, NULL, TEXT_NODE);
           current->file = uri;
           current->line = ln;
-          current->content = (void *)make_unescaped_string(p,c);
+          current->content = xmls_new_string_literal(make_unescaped_string(p,c));
           current->prev = previous;
           if(previous)
             previous->next = current;
@@ -302,7 +302,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           char endchar = *p++;
           for(c=p;*c != endchar;++c)
             ;
-          attr->content = (void *)make_unescaped_string(p,c);
+          attr->content = xmls_new_string_literal(make_unescaped_string(p,c));
         }
         p = skip_spaces(c+1,&ln);
         state = INSIDE_TAG;
@@ -342,8 +342,8 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
 	XMLNODE   *ret;
 	FILE      *pFile;
 	char      *buffer;
-	unsigned   length;
-	long       size;
+	size_t    length;
+	long      size;
 
     debug("xml_parse_file:: file %s", file);
 	if (file == NULL)

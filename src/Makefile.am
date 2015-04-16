@@ -83,7 +83,8 @@ libturboxsl_la_SOURCES = \
   xmldict.h \
   threadpool.h \
   allocator.h \
-  xslglobs.h \
+  xsl_elements.c \
+  xsl_elements.h \
   turboxsl.h \
   ltr_xsl.h
 

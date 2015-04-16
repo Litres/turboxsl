@@ -31,11 +31,10 @@ void xml_unlink_node(XMLNODE *node)
 
 void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
 {
-  debug("xml_clear_node:: node %s", node->name);
-  memset(node,0,sizeof(XMLNODE));
+  memset(node, 0, sizeof(XMLNODE));
 }
 
-XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, char *name, NODETYPE type)
+XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type)
 {
     XMLNODE *ret = memory_allocator_new(sizeof(XMLNODE));
     if (ret == NULL)

@@ -17,7 +17,7 @@
 
 #include "ltr_xsl.h"
 #include "md5.h"
-#include "external_cache.h"
+#include "xsl_elements.h"
 
 char *call_perl_function(TRANSFORM_CONTEXT *pctx, void *function, char **args)
 {
@@ -454,7 +454,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 
     XMLNODE *format = pctx->formats;
     while (format != NULL) {
-      if (strcmp(format->name, format_name) == 0) {
+      if (strcmp(format->name->s, format_name) == 0) {
         break;
       }
       format = format->next;
@@ -467,32 +467,32 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 
     debug("xf_format:: decimal format: %s", format_name);
     XMLNODE *node = format->children;
-    char *value = xml_get_attr(node, "decimal-separator");
-    if (value != NULL) decimal_separator_sign = value;
+    XMLSTRING value = xml_get_attr(node, xsl_a_decimal_separator);
+    if (value != NULL) decimal_separator_sign = value->s;
 
-    value = xml_get_attr(node, "grouping-separator");
-    if (value != NULL) grouping_sign = value;
+    value = xml_get_attr(node, xsl_a_grouping_separator);
+    if (value != NULL) grouping_sign = value->s;
 
-    value = xml_get_attr(node, "percent");
-    if (value != NULL) percent_sign = value;
+    value = xml_get_attr(node, xsl_a_percent);
+    if (value != NULL) percent_sign = value->s;
 
-    value = xml_get_attr(node, "zero-digit");
-    if (value != NULL) digit_zero_sign = value;
+    value = xml_get_attr(node, xsl_a_zero_digit);
+    if (value != NULL) digit_zero_sign = value->s;
 
-    value = xml_get_attr(node, "digit");
-    if (value != NULL) digit_sign = value;
+    value = xml_get_attr(node, xsl_a_digit);
+    if (value != NULL) digit_sign = value->s;
 
-    value = xml_get_attr(node, "pattern-separator");
-    if (value != NULL) pattern_separator_sign = value;
+    value = xml_get_attr(node, xsl_a_pattern_separator);
+    if (value != NULL) pattern_separator_sign = value->s;
 
-    value = xml_get_attr(node, "infinity");
-    if (value != NULL) infinity_symbol = value;
+    value = xml_get_attr(node, xsl_a_infinity);
+    if (value != NULL) infinity_symbol = value->s;
 
-    value = xml_get_attr(node, "NaN");
-    if (value != NULL) nan_symbol = value;
+    value = xml_get_attr(node, xsl_a_NaN);
+    if (value != NULL) nan_symbol = value->s;
 
-    value = xml_get_attr(node, "minus-sign");
-    if (value != NULL) minus_symbol = value;
+    value = xml_get_attr(node, xsl_a_minus_sign);
+    if (value != NULL) minus_symbol = value->s;
   }
 
   if (strstr(pattern, pattern_separator_sign) != NULL) {
@@ -733,7 +733,7 @@ void xf_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *c
 
   char *s;
   if(node && node->name)
-    s = xml_strdup(node->name);
+    s = xml_strdup(node->name->s);
   else
     s = xml_strdup("");
 
@@ -753,11 +753,11 @@ void xf_local_name(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLN
 
   char *s;
   if(node && node->name) {
-    s = strchr(node->name,':');
+    s = strchr(node->name->s,':');
     if(s) {
       s = xml_strdup(s+1);
     } else {
-      s = xml_strdup(node->name);
+      s = xml_strdup(node->name->s);
     }
   }
   else
@@ -1119,7 +1119,7 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
   
   XMLNODE *key = pctx->keys;
   while (key != NULL) {
-    if (strcmp(key->name, key_name) == 0) {
+    if (strcmp(key->name->s, key_name) == 0) {
       break;
     }
     key = key->next;
@@ -1131,14 +1131,14 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
 
   debug("xf_key:: key: %s, value: %s", key_name, key_value);
 
-  char *format = key->content;
+  char *format = key->content->s;
   int size = snprintf(NULL, 0, format, key_value);
   if (size > 0) {
     int buffer_size = size + 1;
     char *buffer = memory_allocator_new(buffer_size);
     if (snprintf(buffer, buffer_size, format, key_value) == size) {
       debug("xf_key:: key predicate: %s", buffer);
-      XPATH_EXPR *expression = xpath_find_expr(pctx, buffer);
+      XPATH_EXPR *expression = xpath_find_expr(pctx, xmls_new_string_literal(buffer));
       res->v.nodeset = xpath_eval_selection(pctx, locals, current, expression);
     }
   }

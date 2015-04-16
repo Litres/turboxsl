@@ -11,7 +11,7 @@ int main(int n, char *args[]) {
 
     XSLTGLOBALDATA *gctx = XSLTInit(NULL);
     if (!gctx) {
-        fprintf(stderr, "error in style processing\n");
+        fprintf(stderr, "error in initialization\n");
         exit(1);
     }
 

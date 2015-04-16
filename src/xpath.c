@@ -28,22 +28,22 @@ static XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string);
 XMLNODE *xpath_in_selection(XMLNODE *sel, char *name)
 {
   for(;sel;sel=sel->next) {
-    if(strcmp(sel->name, name) == 0) {
+    if(strcmp(sel->name->s, name) == 0) {
       return sel;
     }
   }
   return NULL;
 }
 
-XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, char *expr)
+XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, XMLSTRING expr)
 {
   if(expr == NULL) return NULL;
 
-  XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr);
+  XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr->s);
   if(compiled == NULL) {
     memory_allocator_activate_parent(1);
-    compiled = xpath_compile(pctx, expr);
-    concurrent_dictionary_add(pctx->expressions, expr, compiled);
+    compiled = xpath_compile(pctx, expr->s);
+    concurrent_dictionary_add(pctx->expressions, expr->s, compiled);
     memory_allocator_activate_parent(0);
   }
 
@@ -61,7 +61,7 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
       if(node->children)
         add_node_str(str,node->children);
       if(node->type==TEXT_NODE)
-        xmls_add_str(str,node->content);
+        xmls_add_str(str,node->content->s);
   }
 }
 
@@ -103,7 +103,7 @@ char *node2string(XMLNODE *node)
     return NULL;
 
   if (node->type == TEXT_NODE || node->type == ATTRIBUTE_NODE)
-    return xml_strdup(node->content);
+    return xml_strdup(node->content->s);
   str = xmls_new(100);
   add_node_str(str, node);
 
@@ -238,24 +238,24 @@ int xpath_node_kind(XMLNODE *node, XMLNODE *kind)
 
   if(kind->type == XPATH_NODE_CALL)
   {
-    if(strcmp(kind->name,"text") == 0)
+    if(strcmp(kind->name->s,"text") == 0)
     {
       return node->type == TEXT_NODE;
     }
-    else if(strcmp(kind->name,"node") == 0)
+    else if(strcmp(kind->name->s,"node") == 0)
     {
       // TODO
       return 1;
     }
     else
     {
-      error("xpath_node_kind:: not supported kind: %s", kind->name);
+      error("xpath_node_kind:: not supported kind: %s", kind->name->s);
       return 0;
     }
   }
   else
   {
-    return node->type == ELEMENT_NODE && strcmp(node->name, kind->name) == 0;
+    return node->type == ELEMENT_NODE && xmls_equals(node->name, kind->name);
   }
 }
 
@@ -287,7 +287,7 @@ XMLNODE *xpath_get_self(XMLNODE *current, XMLNODE *kind)
 XMLNODE *xpath_get_parent(XMLNODE *current, XMLNODE *kind)
 {
   XMLNODE *parent = current->parent;
-  if (parent == NULL || strcmp(parent->name, "root") == 0) return NULL;
+  if (parent == NULL || strcmp(parent->name->s, "root") == 0) return NULL;
 
   unsigned pos = 0;
   return xpath_node_kind(parent, kind) ? add_to_selection(NULL, parent, &pos) : NULL;
@@ -344,7 +344,7 @@ XMLNODE *xpath_get_ancestor(XMLNODE *current, XMLNODE *kind)
   XMLNODE *ret = NULL;
   unsigned pos = 0;
   for(XMLNODE *node=current->parent;node;node=node->parent) {
-    if (strcmp(node->name, "root") == 0) return ret;
+    if (strcmp(node->name->s, "root") == 0) return ret;
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -526,7 +526,7 @@ XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
   selection = newsel;
   for(i=0;i<n;++i) {
     pctx->sort_nodes[i] = selection;
-    pctx->sort_keys[i] = sort->compiled?xpath_eval_string(pctx,locals,selection,sort->compiled):node2string(selection);
+    pctx->sort_keys[i] = sort->compiled ? xpath_eval_string(pctx,locals,selection,sort->compiled) : node2string(selection);
     if(numeric_sort) {
       if(pctx->sort_keys[i])
         nsk[i] = strtod(pctx->sort_keys[i],NULL);
@@ -593,7 +593,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
   XMLNODE *tmp;
   XMLNODE *selection;
   RVALUE rv,rv1;
-  char *name;
   double l,r;
   unsigned pos = 0;
 
@@ -618,11 +617,11 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         if(rv.type == VAL_NODESET) {
           tmp = xml_add_siblings(tmp,rv.v.nodeset,&pos,&selection);
         } else {
-          name = rval2string(&rv);
+          char *name = rval2string(&rv);
           if(!name)
             continue;
           expr = xml_new_node(pctx, NULL,TEXT_NODE);
-          expr->content = name;
+          expr->content = xmls_new_string_literal(name);
           tmp = xml_add_siblings(tmp,expr,&pos,&selection);
         }
       }
@@ -884,12 +883,12 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
 
     case TEXT_NODE:
       res->type=VAL_STRING;
-      res->v.string = xml_strdup(etree->content);
+      res->v.string = xml_strdup(etree->content->s);
       return;
 
     case XPATH_NODE_CALL:
       res->type=VAL_NULL;
-      xpath_call_dispatcher(pctx,locals,etree->name,etree->children,current,res);
+      xpath_call_dispatcher(pctx,locals,etree->name->s,etree->children,current,res);
       return;
 
     case XPATH_NODE_ATTR:
@@ -902,7 +901,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
           XMLNODE *r = NULL;
           XMLNODE *t = NULL;
           for(current = rv.v.nodeset;current;current=current->next) {
-            name = xml_get_attr(current,etree->name);
+            XMLSTRING name = xml_get_attr(current,etree->name);
             if(name) {
               expr = xml_new_node(pctx, NULL, ATTRIBUTE_NODE);
               expr->content = name;
@@ -919,7 +918,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         rval_free(&rv);
       }
       else {
-        name=current?xml_get_attr(current,etree->name):NULL;
+        XMLSTRING name = current ? xml_get_attr(current, etree->name) : NULL;
         if(name) {
           XMLNODE *attribute = xml_new_node(pctx, NULL, ATTRIBUTE_NODE);
           attribute->content = name;
@@ -935,7 +934,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       res->type =VAL_NULL;
       if(!current)
         return;
-      get_variable_rv(pctx,locals,etree->name,res);
+      get_variable_rv(pctx,locals,etree->name->s,res);
       return;
   }
   res->type = VAL_NULL;
@@ -973,7 +972,7 @@ char *xpath_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *curre
   return NULL;
 }
 
-void xpath_eval_expression(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *res)
+void xpath_eval_expression(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLSTRING expr, RVALUE *res)
 {
   XMLNODE *etree;
   rval_init(res);
@@ -1000,7 +999,7 @@ XMLNODE *xpath_eval_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE 
 }
 
 
-void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, char *expr, RVALUE *this)
+void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLSTRING expr, RVALUE *this)
 {
   XMLNODE *etree;
 
@@ -1071,7 +1070,7 @@ XMLNODE *do_var_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string, NODETYPE t)
   for (e = p+1; *e && x_is_namechar(*e); ++e)
     ;
   ret = xml_new_node(pctx, NULL, t);
-  ret->name=xml_new_string(p, e - p);
+  ret->name=xmls_new_string(p, e - p);
   string->p=e;
   skip_ws(string);
   return ret;
@@ -1194,12 +1193,12 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
       {
         while (*string->p!=')') ++(string->p);
 
-        result->attributes = xml_new_node(pctx,name,XPATH_NODE_CALL);
+        result->attributes = xml_new_node(pctx,xmls_new_string_literal(name),XPATH_NODE_CALL);
       }
       else
       {
-        result->name = name;
-        result->attributes = xml_new_node(pctx,name,EMPTY_NODE);
+        result->name = xmls_new_string_literal(name);
+        result->attributes = xml_new_node(pctx,xmls_new_string_literal(name),EMPTY_NODE);
       }
 
       return result;
@@ -1216,7 +1215,7 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
   skip_ws(string);
   if(*string->p=='(') { // call function
     ++(string->p);
-    XMLNODE *node = xml_new_node(pctx,name,XPATH_NODE_CALL);
+    XMLNODE *node = xml_new_node(pctx,xmls_new_string_literal(name),XPATH_NODE_CALL);
     for(;;) {
       skip_ws(string);
       if(*string->p==')') {
@@ -1234,12 +1233,12 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
 
   if (result == NULL)
   {
-    result = xml_new_node(pctx,name,XPATH_NODE_SELECT);
-    result->attributes = xml_new_node(pctx,name,EMPTY_NODE);
+    result = xml_new_node(pctx,xmls_new_string_literal(name),XPATH_NODE_SELECT);
+    result->attributes = xml_new_node(pctx,xmls_new_string_literal(name),EMPTY_NODE);
   }
   else
   {
-    result->name = name;
+    result->name = xmls_new_string_literal(name);
   }
 
   return result;
@@ -1258,9 +1257,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
     node1 = xml_new_node(pctx,NULL,TEXT_NODE);
     for(e=p;*e && *e != '\'';++e)
         ;
-    node1->content = memory_allocator_new((e - p) + 2);
-    memcpy(node1->content,p,e-p);
-    node1->content[e-p]=0;
+    node1->content = xmls_new_string(p, e - p);
     if(*e)++e;
     string->p = e;
     skip_ws(string);
@@ -1295,9 +1292,7 @@ XMLNODE *do_node2_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
         ;
     if(f_fl) 
     {
-      node1->content = memory_allocator_new(e - p + 2);
-      memcpy(node1->content,p,e-p);
-      node1->content[e-p]=0;
+      node1->content = xmls_new_string(p, e - p);
     } 
     else 
     {

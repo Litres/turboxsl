@@ -10,7 +10,6 @@
 **/
 
 #include <stdio.h>
-#include <string.h>
 
 #include "ltr_xsl.h"
 
@@ -48,15 +47,14 @@ int x_is_selchar(char c)
 }
 
 
-char *xml_get_attr(XMLNODE *node, char *name)
+XMLSTRING xml_get_attr(XMLNODE *node, XMLSTRING name)
 {
   XMLNODE *attr;
   while(node->type==EMPTY_NODE)
     node=node->children;
 
   for(attr=node->attributes;attr;attr=attr->next)
-    if(strcmp(attr->name, name) == 0)
-      return attr->content;
+    if(xmls_equals(attr->name, name)) return attr->content;
 
   return NULL;
 }
@@ -68,7 +66,7 @@ XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *pctx, XMLNODE *xml, char *expression)
   XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);
   pctx->root_node = xml;
   RVALUE result;
-  xpath_eval_expression(pctx, locals, xml, expression, &result);
+  xpath_eval_expression(pctx, locals, xml, xmls_new_string_literal(expression), &result);
 
   pctx->root_node = root_node;
 
@@ -76,7 +74,7 @@ XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *pctx, XMLNODE *xml, char *expression)
   if (result.type == VAL_STRING)
   {
     XMLNODE *node = xml_new_node(pctx, NULL, TEXT_NODE);
-    node->content = result.v.string;
+    node->content = xmls_new_string_literal(result.v.string);
     return node;
   }
 
@@ -105,8 +103,8 @@ char **XMLAttributes(XMLNODE *xml)
   attribute = xml->attributes;
   while (attribute)
   {
-    result[p++] = attribute->name;
-    result[p++] = attribute->content;
+    result[p++] = attribute->name->s;
+    result[p++] = attribute->content->s;
     attribute = attribute->next;
   }
 
