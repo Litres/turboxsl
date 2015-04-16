@@ -3,5 +3,6 @@
 
 <xsl:import href="../2/29.xsl"/>
 
-	
+<xsl:template match="/">666</xsl:template>	
+
 </xsl:stylesheet>

@@ -3,4 +3,9 @@
 
 <xsl:include href="../../29.xsl"/>
 
+	<xsl:template match="/">444
+		<xsl:apply-templates select="basic_arts"/>		
+	</xsl:template>
+	
+
 </xsl:stylesheet>
