@@ -213,7 +213,6 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
             int locked = threadpool_lock_on();
             apply_xslt_template(pctx, tmp->extra.v.nodeset, source, child->children, NULL, locals);
             if (locked) threadpool_lock_off();
-            tmp = copy_node_to_result(pctx, locals, source, ret, instr);
           } 
           else {
             xpath_eval_node(pctx, locals, source, expr, &(tmp->extra));
