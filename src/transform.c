@@ -221,7 +221,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
           continue;
         }
 
-        if (xmls_equals(child->name, xsl_sort))
+        if (!xmls_equals(child->name, xsl_sort))
           break;
         if (!tofree) {
           tofree = iter = xpath_copy_nodeset(iter);
@@ -314,7 +314,7 @@ void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source,
       for(child=instr->children;child;child=child->next) {
         if(child->type==EMPTY_NODE)
           continue;
-        if(xmls_equals(child->name, xsl_sort))
+        if(!xmls_equals(child->name, xsl_sort))
           break;
         iter=xpath_sort_selection(pctx, locals, iter,child);
       }
