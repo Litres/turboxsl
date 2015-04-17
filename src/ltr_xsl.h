@@ -231,6 +231,7 @@ XMLSTRING xmls_new_string(const char *s, size_t length);
 XMLSTRING xmls_new_string_literal(const char *s);
 void xmls_add_char(XMLSTRING s, char c); // appends a char to xmlstring
 void xmls_add_utf(XMLSTRING s, unsigned u); // appends unicode value to xmlstring
+void xmls_append(XMLSTRING s, XMLSTRING value);
 void xmls_add_str(XMLSTRING s, const char *d); // appends a string to xmlstring
 char *xmls_detach(XMLSTRING s); // frees xmlstring, returns content to be freed later
 int xmls_equals(XMLSTRING a, XMLSTRING b);

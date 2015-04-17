@@ -152,6 +152,12 @@ void xmls_add_utf(XMLSTRING s, unsigned u)
   }
 }
 
+void xmls_append(XMLSTRING s, XMLSTRING value)
+{
+  if (value == NULL) return;
+  xmls_add_str(s, value->s);
+}
+
 void xmls_add_str(XMLSTRING s, const char *d)
 {
   unsigned l;

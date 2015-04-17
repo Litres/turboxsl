@@ -52,12 +52,12 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
     switch(node->type) {
       case ELEMENT_NODE:
         xmls_add_char(rtext,'<');
-        xmls_add_str(rtext, node->name->s);
+        xmls_append(rtext, node->name);
         for(attr=node->attributes;attr;attr=attr->next) {
           xmls_add_char(rtext,' ');
-          xmls_add_str(rtext, attr->name->s);
+          xmls_append(rtext, attr->name);
           xmls_add_str(rtext, "=\"");
-          add_quoted_str(rtext, attr->content->s);
+          xmls_append(rtext, attr->content);
           xmls_add_char(rtext,'"');
         }
         if(ctx->outmode==MODE_HTML && is_html_empty_tag(node->name)) {
@@ -73,14 +73,14 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
               --ctx->rawout;
             }
             xmls_add_str(rtext, "</");
-            xmls_add_str(rtext, node->name->s);
+            xmls_append(rtext, node->name);
             xmls_add_char(rtext,'>');
           } else {
             if(ctx->outmode==MODE_XML) {
               xmls_add_str(rtext,"/>");
             } else {
               xmls_add_str(rtext, "></");
-              xmls_add_str(rtext, node->name->s);
+              xmls_append(rtext, node->name);
               xmls_add_char(rtext,'>');
             }
           }
@@ -89,16 +89,16 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
       case COMMENT_NODE:
         xmls_add_str(rtext,"<!--");
         if(node->content) {
-          xmls_add_str(rtext, node->content->s);
+          xmls_append(rtext, node->content);
         }
         xmls_add_str(rtext,"-->");
         break;
       case PI_NODE:
         xmls_add_str(rtext,"<?");
-        xmls_add_str(rtext, node->name->s);
+        xmls_append(rtext, node->name);
         if(node->content) {
           xmls_add_char(rtext,' ');
-          xmls_add_str(rtext, node->content->s);
+          xmls_append(rtext, node->content);
         }
         xmls_add_char(rtext,'>');
         break;
@@ -106,7 +106,7 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
         if(node->flags & XML_FLAG_CDATA)
           xmls_add_str(rtext, "<![CDATA[");
         if((node->flags & XML_FLAG_NOESCAPE)||(ctx->rawout)) {
-          xmls_add_str(rtext, node->content->s);
+          xmls_append(rtext, node->content);
         } else {
           add_quoted_str(rtext, node->content->s);
         }
@@ -138,7 +138,7 @@ char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *tree)
   if(ctx->doctype_public && ctx->doctype_system) {
     t = find_first_node(tree);
     xmls_add_str(rtext, "<!DOCTYPE ");
-    xmls_add_str(rtext, t->name->s);
+    xmls_append(rtext, t->name);
     xmls_add_str(rtext, " PUBLIC \"");
     xmls_add_str(rtext, ctx->doctype_public ? ctx->doctype_public->s : "-//W3C//DTD XHTML+RDFa 1.0//EN");
     xmls_add_str(rtext, "\" \"");

@@ -62,7 +62,7 @@ void add_node_str(XMLSTRING str, XMLNODE *node)
       if(node->children)
         add_node_str(str,node->children);
       if(node->type==TEXT_NODE)
-        xmls_add_str(str,node->content->s);
+        xmls_append(str,node->content);
   }
 }
 
