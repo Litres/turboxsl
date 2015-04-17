@@ -51,7 +51,7 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   }
 
   // if template match is empty, return empty node on match, not NULL
-  if(!content) content = xml_new_node(pctx, NULL, NULL);
+  if(!content) content = xml_new_node(pctx, NULL, EMPTY_NODE);
 
   XMLSTRING match_string = xmls_new_string_literal(match);
 
