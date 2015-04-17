@@ -609,11 +609,11 @@ void process_global_flags(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
       XMLSTRING match = xml_get_attr(node, xsl_a_match);
       XMLSTRING use = xml_get_attr(node, xsl_a_use);
       char *format = "%s[%s = '%%s']";
-      int size = snprintf(NULL, 0, format, match, use);
+      int size = snprintf(NULL, 0, format, match->s, use->s);
       if (size > 0) {
         int buffer_size = size + 1;
         char *buffer = memory_allocator_new(buffer_size);
-        if (snprintf(buffer, buffer_size, format, match, use) == size) {
+        if (snprintf(buffer, buffer_size, format, match->s, use->s) == size) {
           debug("process_global_flags:: key predicate: %s", buffer);
           tmp->content = xmls_new_string_literal(buffer);
         }
