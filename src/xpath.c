@@ -42,8 +42,9 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, XMLSTRING expr)
   XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr->s);
   if(compiled == NULL) {
     memory_allocator_activate_parent(1);
-    compiled = xpath_compile(pctx, expr->s);
-    concurrent_dictionary_add(pctx->expressions, expr->s, compiled);
+    char *copy = xml_strdup(expr->s);
+    compiled = xpath_compile(pctx, copy);
+    concurrent_dictionary_add(pctx->expressions, copy, compiled);
     memory_allocator_activate_parent(0);
   }
 
