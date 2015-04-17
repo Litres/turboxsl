@@ -71,6 +71,7 @@ void xsl_elements_setup()
     xsl_s_script = xmls_new_string_literal("script");
     xsl_s_node = xmls_new_string_literal("node");
 
+    xsl_s_head = xmls_new_string_literal("head");
     xsl_s_img = xmls_new_string_literal("img");
     xsl_s_meta = xmls_new_string_literal("meta");
     xsl_s_hr = xmls_new_string_literal("hr");

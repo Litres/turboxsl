@@ -788,6 +788,16 @@ XMLNODE *find_first_node(XMLNODE *n)
   return NULL;
 }
 
+XMLNODE *find_node_by_name(XMLNODE *root, XMLSTRING name)
+{
+  for(XMLNODE *n = root; n; n = n->next) {
+    if(xmls_equals(n->name, name)) return n;
+    XMLNODE *t = find_node_by_name(n->children, name);
+    if(t != NULL) return t;
+  }
+  return NULL;
+}
+
 void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
 {
   if (pctx->pool != NULL)
@@ -851,30 +861,26 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 
 /****************** add dtd et al if required *******************/
   XMLNODE *t = find_first_node(ret);
-
-  if(pctx->outmode==MODE_XML && !(pctx->flags&XSL_FLAG_MODE_SET)) {
-    pctx->outmode=MODE_XML;
-    if(t->type==ELEMENT_NODE) {
-      if(strcasestr(t->name->s,"html"))
-          pctx->outmode=MODE_HTML;
+  if(pctx->outmode == MODE_XML && !(pctx->flags & XSL_FLAG_MODE_SET)) {
+    pctx->outmode = MODE_XML;
+    if(t->type == ELEMENT_NODE) {
+      if(xmls_equals(t->name, xsl_s_html)) pctx->outmode = MODE_HTML;
     }
   }
 
-  if(pctx->outmode==MODE_HTML) {
-    XMLNODE *sel;
-    sel = xpath_eval_selection(pctx, locals, t, xpath_find_expr(pctx,xmls_new_string_literal("head")));
-    if(sel) {
+  if(pctx->outmode == MODE_HTML) {
+    XMLNODE *head = find_node_by_name(ret, xsl_s_head);
+    if(head) {
       XMLNODE *meta = xml_new_node(pctx, NULL,TEXT_NODE);
       meta->content = xmls_new_string_literal("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">");
       meta->flags = XML_FLAG_NOESCAPE;
-      meta->next = sel->children;
-      if(sel->children) {
-        sel->children->prev = meta;
-        meta->parent = sel->children->parent;
-        if(sel->children->parent)
-          sel->children->parent->children = meta;
+      meta->next = head->children;
+      if(head->children) {
+        head->children->prev = meta;
+        meta->parent = head->children->parent;
+        if(head->children->parent)
+          head->children->parent->children = meta;
       }
-      xpath_free_selection(pctx,sel);
     }
   }
 

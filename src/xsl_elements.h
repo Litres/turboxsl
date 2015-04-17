@@ -71,6 +71,7 @@ XMLSTRING xsl_s_lower_first;
 XMLSTRING xsl_s_script;
 XMLSTRING xsl_s_node;
 
+XMLSTRING xsl_s_head;
 XMLSTRING xsl_s_img;
 XMLSTRING xsl_s_meta;
 XMLSTRING xsl_s_hr;
