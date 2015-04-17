@@ -770,6 +770,8 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   ret->named_templ = dict_new(300);
   ret->expressions = concurrent_dictionary_create();
 
+  xpath_setup_functions(ret);
+
   ret->stylesheet = xsl_preprocess(ret, ret->stylesheet);  //root node is always empty
   process_imports(ret, ret->stylesheet->children);
   precompile_templates(ret, ret->stylesheet);
