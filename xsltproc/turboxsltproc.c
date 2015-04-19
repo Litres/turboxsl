@@ -23,10 +23,6 @@ int main(int n, char *args[]) {
     
     if (n == 5) {
         unsigned int size = (unsigned int)atoi(args[4]);
-        if (size > 10) {
-            fprintf(stderr, "pool size must be less then 10\n");
-            exit(1);
-        }
         XSLTCreateThreadPool(pctx, size);
     }
 

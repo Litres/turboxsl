@@ -61,11 +61,18 @@ libturboxsl_la_SOURCES = \
   thread_lock.h \
   concurrent_dictionary.c \
   concurrent_dictionary.h \
+  shared_variable.c \
+  shared_variable.h \
+  template_task.c \
+  template_task.h \
+  threadpool.c \
+  threadpool.h \
   parse.c \
   output.c \
   templates.c \
+  instructions.c \
+  instructions.h \
   transform.c \
-  threadpool.c \
   xpath.c \
   variables.c \
   functions.c \
@@ -81,7 +88,6 @@ libturboxsl_la_SOURCES = \
   external_cache.c \
   external_cache.h \
   xmldict.h \
-  threadpool.h \
   allocator.h \
   xsl_elements.c \
   xsl_elements.h \

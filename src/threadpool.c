@@ -8,22 +8,16 @@
  *  $Id$
  *
 **/
-
-
-#include "ltr_xsl.h"
+#include "threadpool.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-struct threadpool_task {
-    void (*routine_cb)();
+#include "logger.h"
 
-    TRANSFORM_CONTEXT *pctx;
-    XMLNODE *ret;
-    XMLNODE *source;
-    XMLNODE *params;
-    XMLNODE *locals;
-    void *mode;
+struct threadpool_task {
+    void (*routine_cb)(void *);
+    void *data;
 
     pthread_t signature;
     pthread_cond_t rcond;
@@ -31,56 +25,15 @@ struct threadpool_task {
     int terminate;
 };
 
-struct threadpool {
+struct threadpool_ {
     struct threadpool_task *tasks;
     pthread_t *thr_arr;
-    unsigned short num_of_threads;
+    unsigned int num_of_threads;
 
     pthread_mutex_t mutex;
 };
 
-struct thread_lock {
-    pthread_t thread;
-    int is_locked;
-};
-
-struct thread_lock *locks = NULL;
-
-int threadpool_lock_on()
-{
-    if (!locks) return 0;
-
-    pthread_t self = pthread_self();
-    for (int i = 0; i < 10; i++)
-    {
-        if (locks[i].thread == self)
-        {
-            if (locks[i].is_locked) return 0;
-
-            locks[i].is_locked = 1;
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-void threadpool_lock_off()
-{
-    if (!locks) return;
-
-    pthread_t self = pthread_self();
-    for (int i = 0; i < 10; i++)
-    {
-        if (locks[i].thread == self)
-        {
-            locks[i].is_locked = 0;
-            break;
-        }
-    }
-}
-
-void threadpool_wait(struct threadpool *pool)
+void threadpool_wait(threadpool *pool)
 {
     if (!pool) return;
 
@@ -102,24 +55,12 @@ void threadpool_wait(struct threadpool *pool)
     }
 }
 
-void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode)
+void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
 {
-    struct threadpool *pool = pctx->pool;
     if (!pool)
     {
-        (*routine)(pctx, ret, source, params, locals, mode);
+        (*routine)(data);
         return;
-    }
-
-    pthread_t sig = pthread_self();
-    for (int i = 0; i < 10; i++)
-    {
-        if (locks[i].thread == sig && locks[i].is_locked == 1)
-        {
-            debug("threadpool_start_full:: thread %p is locked", sig);
-            (*routine)(pctx, ret, source, params, locals, mode);
-            return;
-        }
     }
 
     /* Obtain a task */
@@ -129,20 +70,15 @@ void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNO
         return;
     }
 
-    int i;
+    pthread_t sig = pthread_self();
+    unsigned int i;
     for (i = 0; i < pool->num_of_threads; ++i)
     {
         if (pool->tasks[i].signature == 0)
         {
             debug("threadpool_start_full:: free task found %d (%p)", i, pool->thr_arr[i]);
-            pool->tasks[i].pctx = pctx;
-            pool->tasks[i].ret = ret;
-            pool->tasks[i].source = source;
-            pool->tasks[i].params = params;
-            pool->tasks[i].locals = locals;
-            pool->tasks[i].mode = mode;
-
             pool->tasks[i].routine_cb = routine;
+            pool->tasks[i].data = data;
             pool->tasks[i].signature = sig;
 
             pthread_mutex_lock(&(pool->tasks[i].rmutex));
@@ -155,14 +91,14 @@ void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNO
 
 	if (pthread_mutex_unlock(&(pool->mutex)))
     {
-		perror("pthread_mutex_unlock: ");
+        error("threadpool_start_full:: mutex unlock");;
 		return;
 	}
 
 	if (i >= pool->num_of_threads)
     {
         debug("threadpool_start_full:: no free task");
-        (*routine)(pctx, ret, source, params, locals, mode);
+        (*routine)(data);
     }
 }
 
@@ -184,7 +120,7 @@ static void *worker_thr_routine(void *data)
         /* Execute routine (if any). */
         if (task->routine_cb)
         {
-            task->routine_cb(task->pctx, task->ret, task->source, task->params, task->locals, task->mode);
+            task->routine_cb(task->data);
         }
 
         task->routine_cb = NULL;
@@ -195,15 +131,15 @@ static void *worker_thr_routine(void *data)
     return NULL;
 }
 
-struct threadpool *threadpool_init(int num_of_threads)
+threadpool *threadpool_init(unsigned int num_of_threads)
 {
     debug("threadpool_init:: pool size %d", num_of_threads);
 
     if (num_of_threads == 0) return NULL;
 
     /* Create the thread pool struct. */
-    struct threadpool *pool;
-    if ((pool = malloc(sizeof(struct threadpool))) == NULL)
+    threadpool *pool;
+    if ((pool = malloc(sizeof(threadpool))) == NULL)
     {
         perror("malloc: ");
         return NULL;
@@ -236,13 +172,8 @@ struct threadpool *threadpool_init(int num_of_threads)
     }
     memset(pool->tasks, 0, sizeof(struct threadpool_task) * num_of_threads);
 
-    locks = malloc(sizeof(struct thread_lock) * 10);
-    memset(locks, 0, sizeof(struct thread_lock) * 10);
-    locks[0].thread = pthread_self();
-    locks[0].is_locked = 0;
-
     /* Start the worker threads. */
-    for (size_t i = 0; i < num_of_threads; i++)
+    for (unsigned int i = 0; i < num_of_threads; i++)
     {
         if (pthread_mutex_init(&(pool->tasks[i].rmutex), NULL))
         {
@@ -264,21 +195,18 @@ struct threadpool *threadpool_init(int num_of_threads)
             threadpool_free(pool);
             return NULL;
         }
-
-        locks[i + 1].thread = pool->thr_arr[i];
-        locks[i + 1].is_locked = 0;
     }
     return pool;
 }
 
-void threadpool_free(struct threadpool *pool)
+void threadpool_free(threadpool *pool)
 {
     if (!pool) return;
 
     pthread_t self = pthread_self();
-    for (size_t i = 0; i < pool->num_of_threads; i++)
+    for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
-        debug("threadpool_free:: task %lu", i);
+        debug("threadpool_free:: task %d", i);
         pool->tasks[i].terminate = 1;
         pool->tasks[i].signature = self;
 
@@ -300,23 +228,23 @@ void threadpool_free(struct threadpool *pool)
     free(pool);
 }
 
-void threadpool_set_allocator(memory_allocator *allocator, struct threadpool *pool)
+void threadpool_set_allocator(memory_allocator *allocator, threadpool *pool)
 {
     if (!pool) return;
 
     debug("threadpool_set_allocator:: setup");
-    for (size_t i = 0; i < pool->num_of_threads; i++)
+    for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
         memory_allocator_add_entry(allocator, pool->thr_arr[i], 10000000);
     }
 }
 
-void threadpool_set_external_cache(external_cache *cache, struct threadpool *pool)
+void threadpool_set_external_cache(external_cache *cache, threadpool *pool)
 {
     if (!pool) return;
 
     debug("threadpool_set_cache:: setup");
-    for (size_t i = 0; i < pool->num_of_threads; i++)
+    for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
         external_cache_add_client(cache, pool->thr_arr[i]);
     }

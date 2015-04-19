@@ -15,6 +15,7 @@
 
 #include "ltr_xsl.h"
 #include "xsl_elements.h"
+#include "template_task.h"
 
 void free_variables(TRANSFORM_CONTEXT *pctx)
 {
@@ -184,9 +185,14 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
     tmp->extra.v.nodeset = xml_new_node(pctx, NULL, EMPTY_NODE);
     tmp->extra.type = VAL_NODESET;
 
-    int locked = threadpool_lock_on();
-    apply_xslt_template(pctx, tmp->extra.v.nodeset, doc, var->children, NULL, vars);
-    if (locked) threadpool_lock_off();
+    template_context *new_context = memory_allocator_new(sizeof(template_context));
+    new_context->context = pctx;
+    new_context->instruction = var->children;
+    new_context->result = tmp->extra.v.nodeset;
+    new_context->document_node = doc;
+    new_context->local_variables = vars;
+
+    template_task_run_and_wait(new_context, apply_xslt_template);
   }
   else {
     xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));
@@ -239,4 +245,34 @@ char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second)
     }
   }
   return NULL;
+}
+
+XMLNODE *copy_variables(TRANSFORM_CONTEXT *context, XMLNODE *variables)
+{
+  XMLNODE *result = xml_new_node(context, NULL, EMPTY_NODE);
+  if(variables == NULL) return result;
+  
+  for(XMLNODE *variable = variables->attributes; variable; variable = variable->next) {
+    XMLNODE *copy = xml_new_node(context, variable->name, ATTRIBUTE_NODE);
+    copy->extra.type = variable->extra.type;
+    if(variable->extra.type == VAL_BOOL || variable->extra.type == VAL_INT) {
+      copy->extra.v.integer = variable->extra.v.integer;
+    }
+
+    if(variable->extra.type == VAL_NUMBER) {
+      copy->extra.v.number = variable->extra.v.number;
+    }
+
+    if(variable->extra.type == VAL_STRING) {
+      copy->extra.v.string = variable->extra.v.string;
+    }
+
+    if(variable->extra.type == VAL_NODESET) {
+      copy->extra.v.nodeset = variable->extra.v.nodeset;
+    }
+
+    copy->next = result->attributes;
+    result->attributes = copy;
+  }
+  return result;
 }

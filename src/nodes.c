@@ -29,11 +29,6 @@ void xml_unlink_node(XMLNODE *node)
 
 /*********** for static-allocated nodes *******************/
 
-void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node)
-{
-  memset(node, 0, sizeof(XMLNODE));
-}
-
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type)
 {
     XMLNODE *ret = memory_allocator_new(sizeof(XMLNODE));

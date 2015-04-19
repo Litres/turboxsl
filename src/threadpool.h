@@ -9,7 +9,7 @@
 #include "allocator.h"
 #include "external_cache.h"
 
-struct threadpool;
+typedef struct threadpool_ threadpool;
 
 /**
  * This function creates a newly allocated thread pool.
@@ -17,9 +17,11 @@ struct threadpool;
  * @param num_of_threads The number of worker thread used in this pool.
  * @return On success returns a newly allocated thread pool, on failure NULL is returned.
  */
-struct threadpool* threadpool_init(int num_of_threads);
+threadpool* threadpool_init(unsigned int num_of_threads);
 
-void threadpool_free(struct threadpool *pool);
+void threadpool_free(threadpool *pool);
+
+void threadpool_start(threadpool *pool, void (*routine)(void *), void *data);
 
 /**
  * This function waits for children to finish
@@ -28,11 +30,11 @@ void threadpool_free(struct threadpool *pool);
  * @param signature Signature of the parent thread
  *
  */
-void threadpool_wait(struct threadpool *pool);
+void threadpool_wait(threadpool *pool);
 
-void threadpool_free(struct threadpool *pool);
+void threadpool_free(threadpool *pool);
 
-void threadpool_set_allocator(memory_allocator *allocator, struct threadpool *pool);
-void threadpool_set_external_cache(external_cache *cache, struct threadpool *pool);
+void threadpool_set_allocator(memory_allocator *allocator, threadpool *pool);
+void threadpool_set_external_cache(external_cache *cache, threadpool *pool);
 
 #endif /* THREADPOOL_H_ */

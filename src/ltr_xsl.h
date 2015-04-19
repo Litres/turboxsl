@@ -13,7 +13,6 @@
 #define LTR_XSL_H_
 
 #include <stdio.h>
-#include <pthread.h>
 
 #include "turboxsl.h"
 #include "xmldict.h"
@@ -21,6 +20,7 @@
 #include "allocator.h"
 #include "external_cache.h"
 #include "concurrent_dictionary.h"
+#include "shared_variable.h"
 #include "logger.h"
 
 typedef struct _xmls {
@@ -98,7 +98,6 @@ struct _globaldata {
   XSL_VARIABLE *vars;
   unsigned var_max;
   unsigned var_pos;
-  unsigned initialized:1;
 };
 
 typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
@@ -118,7 +117,7 @@ typedef enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} OUTPUT_MODE;
 
 struct _context {
   XSLTGLOBALDATA *gctx;
-  struct threadpool *pool;
+  threadpool *pool;
   memory_allocator *allocator;
   char *cache_key_prefix;
   char *url_local_prefix;
@@ -151,23 +150,36 @@ struct _context {
   OUTPUT_MODE outmode;
 };
 
+typedef struct template_context_ {
+  TRANSFORM_CONTEXT *context;
+  XMLNODE *instruction;
+  XMLNODE *result;
+  XMLNODE *document_node;
+  XMLNODE *parameters;
+  XMLNODE *local_variables;
+  XMLSTRING mode;
+  shared_variable *workers;
+} template_context;
 
 XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache);
 XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache);
 
 /********************** nodes.c -- nodes operations *****************/
 void xml_unlink_node(XMLNODE *node);
-void xml_clear_node(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type);
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type);
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
 
 /********************** transform.c -- XSLT mainloop ****************/
-void apply_xslt_template(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *templ, XMLNODE *params, XMLNODE *locals);
-void process_one_node(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, XMLSTRING mode);
-void apply_default_process(TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, XMLSTRING mode);
+void apply_xslt_template(template_context *context);
+void process_one_node(template_context *context);
+void apply_default_process(template_context *context);
+
 XMLNODE *find_first_node(XMLNODE *n);
 XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source, XMLNODE *foreval);
+
+void xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, XMLSTRING name, char *value);
+void copy_node_to_result_rec(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, XMLNODE *parent, XMLNODE *src);
 
 XMLSTRING xml_get_attr(XMLNODE *node, XMLSTRING name);
 char *get_absolute_path(XMLNODE *node, char *name);
@@ -183,6 +195,8 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
 void add_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLSTRING name, XMLNODE *params);
 char *xsl_get_global_key(TRANSFORM_CONTEXT *pctx, char *first, char *second);
 
+XMLNODE *copy_variables(TRANSFORM_CONTEXT *context, XMLNODE *variables);
+
 /************************* xpath.c -- xpath compilator ************************/
 void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etree, XMLNODE *current, RVALUE *res);
 
@@ -196,7 +210,6 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, XMLSTRING expr);
 XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *selection, XMLNODE *sort);
 XMLNODE *xpath_in_selection(XMLNODE *sel, char *name);
 void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel);
-XMLNODE *xpath_copy_nodeset(XMLNODE *set);
 XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr);
 XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset, XMLNODE *expr);
 XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position);
@@ -242,10 +255,5 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx);
 
 void xpath_setup_functions(TRANSFORM_CONTEXT *pctx);
 void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res);
-
-void threadpool_start_full(void (*routine)(TRANSFORM_CONTEXT *, XMLNODE *, XMLNODE *, XMLNODE *, XMLNODE *, void *), TRANSFORM_CONTEXT *pctx, XMLNODE *ret, XMLNODE *source, XMLNODE *params, XMLNODE *locals, void *mode);
-
-int threadpool_lock_on();
-void threadpool_lock_off();
 
 #endif

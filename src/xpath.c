@@ -163,22 +163,6 @@ XMLNODE *xml_append_node(XMLNODE *prev, XMLNODE *src)
   return r;
 }
 
-XMLNODE *xpath_copy_nodeset(XMLNODE *set)
-{
-  XMLNODE *node = NULL;
-  XMLNODE *tmp = NULL;
-  unsigned int pos = 0;
-  if(set == NULL)
-    return NULL;
-  for(;set;set=set->next) {
-    tmp = add_to_selection(tmp, set, &pos);
-    if(!node)
-      node = tmp;
-  }
-  return node;
-}
-
-
 XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset, XMLNODE *expr)
 {
   XMLNODE *node = NULL;
