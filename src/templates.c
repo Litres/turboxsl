@@ -71,7 +71,10 @@ template_map_entry *template_map_get_entry(template_map *map, XMLSTRING mode)
   if(mode == NULL) return map->empty_mode;
 
   template_map_entry *entry = (template_map_entry *) dict_find(map->modes, mode->s);
-  if(entry == NULL) entry = memory_allocator_new(sizeof(template_map_entry));
+  if(entry == NULL) {
+    entry = memory_allocator_new(sizeof(template_map_entry));
+    dict_add(map->modes, mode->s, entry);
+  }
 
   return entry;
 }
@@ -92,7 +95,7 @@ template *template_map_add_template(template_map_entry *entry)
   }
   result->matchtype = TMATCH_NONE;
 
-  if(entry->tail == NULL)
+  if(entry->head == NULL)
   {
     entry->head = result;
     entry->tail = result;
@@ -414,6 +417,8 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLSTRING mode)
 
   template *template = find_select_template(pctx, node, entry);
   if (template != NULL) return template->content;
+
+  if(node == pctx->root_node) return NULL;
 
   return entry->always != NULL ? entry->always->content : NULL;
 }
