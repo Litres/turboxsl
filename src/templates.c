@@ -8,44 +8,127 @@
  *  $Id$
  *
 **/
+#include "templates.h"
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include "ltr_xsl.h"
 #include "xsl_elements.h"
 
-static int templtab_add(TRANSFORM_CONTEXT *pctx, XMLNODE * content, char *name)
+typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
+
+typedef struct template_ {
+  XMLSTRING name;
+  XMLSTRING match;
+  XMLNODE *expr;
+  unsigned int expression_weight;
+  MATCH_TYPE matchtype;
+  XMLNODE *content;
+  struct template_ *next;
+} template;
+
+typedef struct template_map_entry_ {
+  template *head;
+  template *tail;
+  template *root;
+  template *always;
+} template_map_entry;
+
+struct template_map_ {
+  template_map_entry *empty_mode;
+  XMLDICT *modes;
+};
+
+template_map *template_map_create()
 {
-  if(pctx->templcnt>=pctx->templno) 
+  template_map *result = memory_allocator_new(sizeof(template_map));
+  if(result == NULL)
   {
-    pctx->templno += 100;
-    pctx->templtab = realloc(pctx->templtab, pctx->templno*sizeof(TEMPLATE));
+    error("template_map_create:: memory");
+    return NULL;
   }
 
-  unsigned r = pctx->templcnt++;
-  pctx->templtab[r].name = xmls_new_string_literal(name);
-  pctx->templtab[r].content = content;
-  pctx->templtab[r].match = NULL;
-  pctx->templtab[r].mode = NULL;
-  pctx->templtab[r].expr = NULL;
-  pctx->templtab[r].priority = 0.0;
-  pctx->templtab[r].matchtype = TMATCH_NONE;
-  return r;
+  result->empty_mode = memory_allocator_new(sizeof(template_map_entry));
+  if (result->empty_mode == NULL)
+  {
+    error("template_map_create:: memory");
+    return NULL;
+  }
+
+  result->modes = dict_new(100);
+
+  return result;
 }
 
-static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *match, XMLSTRING mode)
+void template_map_release(template_map *map)
+{
+  dict_free(map->modes);
+}
+
+template_map_entry *template_map_get_entry(template_map *map, XMLSTRING mode)
+{
+  if(mode == NULL) return map->empty_mode;
+
+  template_map_entry *entry = (template_map_entry *) dict_find(map->modes, mode->s);
+  if(entry == NULL) entry = memory_allocator_new(sizeof(template_map_entry));
+
+  return entry;
+}
+
+template_map_entry *template_map_find_entry(template_map *map, XMLSTRING mode)
+{
+  if(mode == NULL) return map->empty_mode;
+  return (template_map_entry *) dict_find(map->modes, mode->s);
+}
+
+template *template_map_add_template(template_map_entry *entry)
+{
+  template *result = memory_allocator_new(sizeof(template));
+  if(result == NULL)
+  {
+    error("template_map_add_template:: memory");
+    return NULL;
+  }
+  result->matchtype = TMATCH_NONE;
+
+  if(entry->tail == NULL)
+  {
+    entry->head = result;
+    entry->tail = result;
+  }
+  else
+  {
+    entry->tail->next = result;
+    entry->tail = result;
+  }
+
+  return result;
+}
+
+template *template_map_find_template(template_map_entry *entry, XMLSTRING match)
+{
+  for(template *t = entry->head; t; t = t->next)
+  {
+    if(xmls_equals(t->match, match)) return t;
+  }
+  return NULL;
+}
+
+static void add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *match, XMLSTRING mode)
 {
   // skip leading whitespace;
   while(x_is_ws(*match)) ++match;
 
-  //trailing whitespace
-  for(size_t r=strlen(match);r;--r) {
-    if(x_is_ws(match[r-1])) {
-      match[r-1]=0;
+  // trailing whitespace
+  for(size_t r = strlen(match); r; --r)
+  {
+    if(x_is_ws(match[r-1]))
+    {
+      match[r-1] = 0;
     } 
-    else {
+    else
+    {
       break;
     }
   }
@@ -54,29 +137,44 @@ static unsigned add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char 
   if(!content) content = xml_new_node(pctx, NULL, EMPTY_NODE);
 
   XMLSTRING match_string = xmls_new_string_literal(match);
+  template_map_entry *entry = template_map_get_entry(pctx->templates, mode);
 
-  for (unsigned i = 0; i < pctx->templcnt; i++) {
-    if (xmls_equals(pctx->templtab[i].match, match_string)
-        && xmls_equals(pctx->templtab[i].mode, mode)) {
-      debug("add_templ_match:: found existing template: %d", i);
-      pctx->templtab[i].content = content;
-      return i;
+  template *exists = template_map_find_template(entry, match_string);
+  if(exists != NULL)
+  {
+    debug("add_templ_match:: found existing template");
+    exists->content = content;
+    return;
+  }
+
+  template *t = template_map_add_template(entry);
+  t->match = match_string;
+  t->content = content;
+
+  if(match[0] == '/' && match[1] == 0)
+  {
+    t->matchtype = TMATCH_ROOT;
+    entry->root = t;
+  }
+  else if(match[0] == '*' && match[1] == 0)
+  {
+    t->matchtype = TMATCH_ALWAYS;
+    entry->always = t;
+  }
+  else
+  {
+    t->matchtype = TMATCH_SELECT;
+    t->expr = xpath_find_expr(pctx, match_string);
+
+    XMLNODE *command = t->expr;
+    unsigned int weight = 0;
+    while(command != NULL)
+    {
+      weight = weight + 1;
+      command = command->children;
     }
+    t->expression_weight = weight;
   }
-
-  unsigned r = templtab_add(pctx, content, NULL);
-  pctx->templtab[r].match = match_string;
-  pctx->templtab[r].mode = mode;
-  if(match[0] == '/' && match[1] == 0) {
-    pctx->templtab[r].matchtype = TMATCH_ROOT;
-  } else if(match[0] == '*' && match[1] == 0) {
-    pctx->templtab[r].matchtype = TMATCH_ALWAYS;
-  } else {
-    pctx->templtab[r].matchtype = TMATCH_SELECT;
-    pctx->templtab[r].expr = xpath_find_expr(pctx, match_string);
-  }
-  
-  return r;
 }
 
 static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, XMLSTRING name, XMLSTRING match, XMLSTRING mode)
@@ -287,52 +385,44 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
   }
 }
 
+template *find_select_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, template_map_entry *entry)
+{
+  template *result = NULL;
+  unsigned int expression_weight = 0;
+
+  for(template *t = entry->head; t; t = t->next)
+  {
+    if(t->matchtype == TMATCH_SELECT && select_match(pctx, node, t->expr))
+    {
+      if(t->expression_weight > expression_weight)
+      {
+        expression_weight = t->expression_weight;
+        result = t;
+      }
+    }
+  }
+
+  return result;
+}
+
 XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLSTRING mode)
 {
-  XMLNODE *template = NULL;
-  unsigned int expression_length = 0;
-  for(int i=0;i<pctx->templcnt;++i) {
-    if(!xmls_equals(pctx->templtab[i].mode, mode)) continue;
+  template_map_entry *entry = template_map_find_entry(pctx->templates, mode);
+  if(entry == NULL) return NULL;
 
-    if(pctx->templtab[i].matchtype == TMATCH_ROOT) {
-      if(node == pctx->root_node) return pctx->templtab[i].content;
-    }
+  if(node == pctx->root_node && entry->root != NULL) return entry->root->content;
 
-    if(pctx->templtab[i].matchtype == TMATCH_SELECT) {
-      if(select_match(pctx, node, pctx->templtab[i].expr)) {
-        XMLNODE *command = pctx->templtab[i].expr;
-        unsigned int length = 0;
-        while(command != NULL) {
-          length = length + 1;
-          command = command->children;
-        }
-        if(length > expression_length) {
-          expression_length = length;
-          template = pctx->templtab[i].content;
-        }
-      }
-    }
-  }
+  template *template = find_select_template(pctx, node, entry);
+  if (template != NULL) return template->content;
 
-  if (template != NULL) return template;
-
-  if(node!=pctx->root_node) {
-    for(int i=0;i<pctx->templcnt;++i) {
-      if(xmls_equals(pctx->templtab[i].mode, mode) && pctx->templtab[i].matchtype == TMATCH_ALWAYS) {
-        return pctx->templtab[i].content;
-      }
-    }
-  }
-
-  return NULL;
+  return entry->always != NULL ? entry->always->content : NULL;
 }
 
 XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, XMLSTRING name)
 {
-  if(name==NULL)
-    return NULL;
+  if(name == NULL) return NULL;
 
-  XMLNODE *template = dict_find(pctx->named_templ,name->s);
+  XMLNODE *template = (XMLNODE *) dict_find(pctx->named_templ, name->s);
   return template == NULL ? NULL : template->children;
 }
 

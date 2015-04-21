@@ -448,13 +448,13 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
   concurrent_dictionary_release(pctx->expressions);
+  template_map_release(pctx->templates);
   dict_free(pctx->named_templ);
   xml_free_document(pctx->stylesheet);
 
   memory_allocator_release(pctx->allocator);
   threadpool_free(pctx->pool);
 
-  free(pctx->templtab);
   free(pctx->sort_keys);
   free(pctx->sort_nodes);
   free(pctx->functions);
@@ -497,6 +497,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   ret->sort_keys = (char **)malloc(ret->sort_size*sizeof(char *));
   ret->sort_nodes = (XMLNODE **)malloc(ret->sort_size*sizeof(XMLNODE *));
 
+  ret->templates = template_map_create();
   ret->named_templ = dict_new(300);
   ret->expressions = concurrent_dictionary_create();
 

@@ -70,6 +70,7 @@ libturboxsl_la_SOURCES = \
   parse.c \
   output.c \
   templates.c \
+  templates.h \
   instructions.c \
   instructions.h \
   transform.c \

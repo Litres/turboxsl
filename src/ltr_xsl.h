@@ -16,6 +16,7 @@
 
 #include "turboxsl.h"
 #include "xmldict.h"
+#include "templates.h"
 #include "threadpool.h"
 #include "allocator.h"
 #include "external_cache.h"
@@ -100,18 +101,6 @@ struct _globaldata {
   unsigned var_pos;
 };
 
-typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
-
-typedef struct {
-  XMLSTRING name;
-  XMLSTRING match;
-  XMLSTRING mode;
-  XMLNODE *expr;
-  MATCH_TYPE matchtype;
-  XMLNODE *content;
-  double priority;
-} TEMPLATE;
-
 typedef enum {XSL_FLAG_OUTPUT=1, XSL_FLAG_OMIT_DESC=2, XSL_FLAG_STANDALONE=4, XSL_FLAG_INDENT=8, XSL_FLAG_MODE_SET=16} XSL_FLAG;
 typedef enum {MODE_NONE=0, MODE_XML, MODE_HTML, MODE_TEXT} OUTPUT_MODE;
 
@@ -121,9 +110,7 @@ struct _context {
   memory_allocator *allocator;
   char *cache_key_prefix;
   char *url_local_prefix;
-  TEMPLATE *templtab;   // templates used in matching
-  unsigned templno;
-  unsigned templcnt;
+  template_map *templates;
   XMLDICT *named_templ; // templates for call'ing
   XMLNODE *root_node;
   XMLNODE *stylesheet;
