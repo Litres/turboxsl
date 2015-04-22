@@ -66,7 +66,7 @@ void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
     /* Obtain a task */
     if (pthread_mutex_lock(&(pool->mutex)))
     {
-        error("threadpool_start_full:: mutex lock");
+        error("threadpool_start:: mutex lock");
         return;
     }
 
@@ -76,7 +76,6 @@ void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
     {
         if (pool->tasks[i].signature == 0)
         {
-            debug("threadpool_start_full:: free task found %d (%p)", i, pool->thr_arr[i]);
             pool->tasks[i].routine_cb = routine;
             pool->tasks[i].data = data;
             pool->tasks[i].signature = sig;
@@ -95,13 +94,8 @@ void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
 		return;
 	}
 
-	if (i >= pool->num_of_threads)
-    {
-        debug("threadpool_start_full:: no free task");
-        (*routine)(data);
-    }
+	if (i >= pool->num_of_threads) (*routine)(data);
 }
-
 
 static void *worker_thr_routine(void *data)
 {
@@ -127,7 +121,6 @@ static void *worker_thr_routine(void *data)
         task->signature = 0;
     }
 
-    debug("worker_thr_routine:: terminated");
     return NULL;
 }
 

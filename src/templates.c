@@ -169,14 +169,10 @@ static void add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *mat
     t->matchtype = TMATCH_SELECT;
     t->expr = xpath_find_expr(pctx, match_string);
 
-    XMLNODE *command = t->expr;
-    unsigned int weight = 0;
-    while(command != NULL)
+    for(XMLNODE *n = t->expr; n; n = n->children)
     {
-      weight = weight + 1;
-      command = command->children;
+      t->expression_weight += 1;
     }
-    t->expression_weight = weight;
   }
 }
 
