@@ -47,19 +47,14 @@ char *xml_new_string(const char *s, size_t length)
 
 XMLSTRING xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, XMLSTRING string)
 {
-  char *s_str, *p, *r;
-  XMLSTRING res;
+  if(!string) return NULL;
 
-  if(!string)
-    return NULL;
-
-  char *s = string->s;
-  if(!strchr(s,'{') && !strchr(s,'}')) {
-    return xmls_new_string_literal(s);
+  if(!strchr(string->s,'{') && !strchr(string->s,'}')) {
+    return xmls_new_string_literal(string->s);
   }
 
-  res = xmls_new(100);
-
+  XMLSTRING res = xmls_new(100);
+  char *s = xml_strdup(string->s);
   while(*s) {
     if(*s == '{') { //evaluate
       ++s;
@@ -67,10 +62,10 @@ XMLSTRING xml_process_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
         xmls_add_char(res, *s++);
         continue;
       }
-      p=strchr(s,'}');
+      char *p=strchr(s,'}');
       if(p)
         *p=0;
-      r = xpath_eval_string(pctx, locals, context, xpath_find_expr(pctx,xmls_new_string_literal(s)));
+      char *r = xpath_eval_string(pctx, locals, context, xpath_find_expr(pctx,xmls_new_string_literal(s)));
       if(r) {
         xmls_add_str(res, r);
       }
