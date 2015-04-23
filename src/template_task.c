@@ -49,6 +49,9 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
         return;
     }
 
+    // create new variable for path
+    context->workers = shared_variable_create();
+
     template_task_context *task_context = memory_allocator_new(sizeof(template_task_context));
     if (task_context == NULL)
     {
@@ -58,7 +61,7 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
 
     task_context->context = context;
     task_context->function = function;
-    task_context->workers = shared_variable_create();
+    task_context->workers = context->workers;
 
     threadpool_start(context->context->pool, template_task_function, task_context);
 

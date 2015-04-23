@@ -103,7 +103,6 @@ void xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, XMLSTRING name,
 
 void apply_xslt_template(template_context *context)
 {
-  XMLNODE *tmp = NULL;
   for(XMLNODE *instr = context->instruction; instr; instr = instr->next) {
     if(instr->type == EMPTY_NODE) {
       if(instr->children) {
@@ -116,12 +115,12 @@ void apply_xslt_template(template_context *context)
     if(instructions_is_xsl(instr)) {
       instructions_process(context, instr);
     } else {
-      tmp = copy_node_to_result(context->context, context->local_variables, context->document_node, context->result, instr);
+      XMLNODE *result = copy_node_to_result(context->context, context->local_variables, context->document_node, context->result, instr);
       if(instr->children) {
         template_context *new_context = memory_allocator_new(sizeof(template_context));
         new_context->context = context->context;
         new_context->instruction = instr->children;
-        new_context->result = tmp;
+        new_context->result = result;
         new_context->document_node = context->document_node;
         new_context->parameters = context->parameters;
         new_context->local_variables = copy_variables(context->context, context->local_variables);
