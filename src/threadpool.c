@@ -15,7 +15,7 @@
 
 #include "logger.h"
 
-struct threadpool_task {
+typedef struct threadpool_task_ {
     void (*routine_cb)(void *);
     void *data;
 
@@ -23,11 +23,11 @@ struct threadpool_task {
     pthread_cond_t rcond;
     pthread_mutex_t rmutex;
     int terminate;
-};
+} threadpool_task;
 
 struct threadpool_ {
-    struct threadpool_task *tasks;
-    pthread_t *thr_arr;
+    threadpool_task *tasks;
+    pthread_t *threads;
     unsigned int num_of_threads;
 
     pthread_mutex_t mutex;
@@ -63,7 +63,6 @@ void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
         return;
     }
 
-    /* Obtain a task */
     if (pthread_mutex_lock(&(pool->mutex)))
     {
         error("threadpool_start:: mutex lock");
@@ -90,7 +89,7 @@ void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
 
 	if (pthread_mutex_unlock(&(pool->mutex)))
     {
-        error("threadpool_start_full:: mutex unlock");;
+        error("threadpool_start:: mutex unlock");;
 		return;
 	}
 
@@ -99,25 +98,18 @@ void threadpool_start(threadpool *pool, void (*routine)(void *), void *data)
 
 static void *worker_thr_routine(void *data)
 {
-    struct threadpool_task *task = (struct threadpool_task *) data;
+    threadpool_task *task = (threadpool_task *) data;
 
     while (!task->terminate)
     {
         pthread_mutex_lock(&(task->rmutex));
-        while (task->signature == 0)
-        {
-            /* wait for task */
-            pthread_cond_wait(&(task->rcond), &(task->rmutex));
-        }
+        while (task->signature == 0) pthread_cond_wait(&(task->rcond), &(task->rmutex));
         pthread_mutex_unlock(&(task->rmutex));
 
-        /* Execute routine (if any). */
-        if (task->routine_cb)
-        {
-            task->routine_cb(task->data);
-        }
+        if (task->routine_cb) task->routine_cb(task->data);
 
         task->routine_cb = NULL;
+        task->data = NULL;
         task->signature = 0;
     }
 
@@ -130,61 +122,58 @@ threadpool *threadpool_init(unsigned int num_of_threads)
 
     if (num_of_threads == 0) return NULL;
 
-    /* Create the thread pool struct. */
-    threadpool *pool;
-    if ((pool = malloc(sizeof(threadpool))) == NULL)
+    threadpool *pool = malloc(sizeof(threadpool));
+    if (pool == NULL)
     {
-        perror("malloc: ");
+        error("threadpool_init:: malloc");
         return NULL;
     }
     pool->num_of_threads = num_of_threads;
 
-    /* Init the mutex and cond vars. */
     if (pthread_mutex_init(&(pool->mutex), NULL))
     {
-        perror("pthread_mutex_init: ");
+        error("threadpool_init:: mutex");
         free(pool);
         return NULL;
     }
 
-    /* Create the thr_arr. */
-    if ((pool->thr_arr = malloc(sizeof(pthread_t) * num_of_threads)) == NULL)
+    pool->threads = malloc(sizeof(pthread_t) * num_of_threads);
+    if (pool->threads == NULL)
     {
-        perror("malloc: ");
+        error("threadpool_init:: malloc");
         free(pool);
         return NULL;
     }
 
-    /* Create the task array. */
-    if ((pool->tasks = malloc(sizeof(struct threadpool_task) * num_of_threads)) == NULL)
+    pool->tasks = malloc(sizeof(threadpool_task) * num_of_threads);
+    if (pool->tasks == NULL)
     {
-        perror("malloc: ");
-        free(pool->thr_arr);
+        error("threadpool_init:: malloc");
+        free(pool->threads);
         free(pool);
         return NULL;
     }
-    memset(pool->tasks, 0, sizeof(struct threadpool_task) * num_of_threads);
+    memset(pool->tasks, 0, sizeof(threadpool_task) * num_of_threads);
 
-    /* Start the worker threads. */
     for (unsigned int i = 0; i < num_of_threads; i++)
     {
         if (pthread_mutex_init(&(pool->tasks[i].rmutex), NULL))
         {
-            perror("pthread_mutex_init: ");
+            error("threadpool_init:: mutex");
             free(pool);
             return NULL;
         }
 
         if (pthread_cond_init(&(pool->tasks[i].rcond), NULL))
         {
-            perror("pthread_mutex_init: ");
+            error("threadpool_init:: variable");
             free(pool);
             return NULL;
         }
 
-        if (pthread_create(&(pool->thr_arr[i]), NULL, worker_thr_routine, &(pool->tasks[i])))
+        if (pthread_create(&(pool->threads[i]), NULL, worker_thr_routine, &(pool->tasks[i])))
         {
-            perror("pthread_create:");
+            error("threadpool_init:: thread");
             threadpool_free(pool);
             return NULL;
         }
@@ -207,14 +196,14 @@ void threadpool_free(threadpool *pool)
         pthread_cond_broadcast(&(pool->tasks[i].rcond));
         pthread_mutex_unlock(&(pool->tasks[i].rmutex));
 
-        pthread_join(pool->thr_arr[i], NULL);
+        pthread_join(pool->threads[i], NULL);
 
         pthread_cond_destroy(&(pool->tasks[i].rcond));
         pthread_mutex_destroy(&(pool->tasks[i].rmutex));
     }
 
     free(pool->tasks);
-    free(pool->thr_arr);
+    free(pool->threads);
 
     pthread_mutex_destroy(&(pool->mutex));
 
@@ -228,7 +217,7 @@ void threadpool_set_allocator(memory_allocator *allocator, threadpool *pool)
     debug("threadpool_set_allocator:: setup");
     for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
-        memory_allocator_add_entry(allocator, pool->thr_arr[i], 10000000);
+        memory_allocator_add_entry(allocator, pool->threads[i], 10000000);
     }
 }
 
@@ -239,6 +228,6 @@ void threadpool_set_external_cache(external_cache *cache, threadpool *pool)
     debug("threadpool_set_cache:: setup");
     for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
-        external_cache_add_client(cache, pool->thr_arr[i]);
+        external_cache_add_client(cache, pool->threads[i]);
     }
 }
