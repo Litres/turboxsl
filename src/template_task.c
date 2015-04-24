@@ -49,12 +49,6 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
         return;
     }
 
-    if (!thread_pool_try_wait(context->context->pool))
-    {
-        function(context);
-        return;
-    }
-
     // create new variable for path
     context->workers = shared_variable_create();
 
@@ -73,6 +67,4 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
 
     shared_variable_wait(task_context->workers);
     shared_variable_release(task_context->workers);
-
-    thread_pool_finish_wait(context->context->pool);
 }
