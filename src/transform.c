@@ -404,7 +404,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   memset(ret,0,sizeof(XSLTGLOBALDATA));
 
   ret->allocator = memory_allocator_create(NULL);
-  memory_allocator_add_entry(ret->allocator, pthread_self(), 100000);
+  memory_allocator_add_entry(ret->allocator, pthread_self(), 500000);
   memory_allocator_set_current(ret->allocator);
 
   xsl_elements_setup();
@@ -481,7 +481,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   {
       return NULL;
   }
-  memory_allocator_add_entry(ret->allocator, pthread_self(), 10000000);
+  memory_allocator_add_entry(ret->allocator, pthread_self(), 500000);
   memory_allocator_set_current(ret->allocator);
 
   ret->gctx = gctx;

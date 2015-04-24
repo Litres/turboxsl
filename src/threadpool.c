@@ -217,7 +217,7 @@ void threadpool_set_allocator(memory_allocator *allocator, threadpool *pool)
     debug("threadpool_set_allocator:: setup");
     for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
-        memory_allocator_add_entry(allocator, pool->threads[i], 10000000);
+        memory_allocator_add_entry(allocator, pool->threads[i], 500000);
     }
 }
 
