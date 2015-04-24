@@ -126,7 +126,7 @@ void apply_xslt_template(template_context *context)
         new_context->local_variables = copy_variables(context->context, context->local_variables);
         new_context->workers = context->workers;
 
-        template_task_run(new_context, apply_xslt_template);
+        apply_xslt_template(new_context);
       }
     }
   }
@@ -177,6 +177,7 @@ void process_one_node(template_context *context)
     new_context->document_node = context->document_node;
     new_context->parameters = context->parameters;
     new_context->local_variables = scope;
+    new_context->workers = context->workers;
 
     apply_xslt_template(new_context);
   } else {
@@ -404,7 +405,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   memset(ret,0,sizeof(XSLTGLOBALDATA));
 
   ret->allocator = memory_allocator_create(NULL);
-  memory_allocator_add_entry(ret->allocator, pthread_self(), 500000);
+  memory_allocator_add_entry(ret->allocator, pthread_self(), 1000000);
   memory_allocator_set_current(ret->allocator);
 
   xsl_elements_setup();
@@ -481,7 +482,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   {
       return NULL;
   }
-  memory_allocator_add_entry(ret->allocator, pthread_self(), 500000);
+  memory_allocator_add_entry(ret->allocator, pthread_self(), 1000000);
   memory_allocator_set_current(ret->allocator);
 
   ret->gctx = gctx;
@@ -573,7 +574,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 
   // memory allocator for output document
   memory_allocator *allocator = memory_allocator_create(pctx->allocator);
-  memory_allocator_add_entry(allocator, pthread_self(), 10000000);
+  memory_allocator_add_entry(allocator, pthread_self(), 1000000);
   memory_allocator_set_current(allocator);
 
   XMLNODE *ret = xml_new_node(pctx, xmls_new_string_literal("out"), EMPTY_NODE);

@@ -198,13 +198,13 @@ void instruction_if(template_context *context, XMLNODE *instruction)
         template_context *new_context = memory_allocator_new(sizeof(template_context));
         new_context->context = context->context;
         new_context->instruction = instruction->children;
-        new_context->result = xml_append_child(context->context, context->result, EMPTY_NODE);
+        new_context->result = context->result;
         new_context->document_node = context->document_node;
         new_context->parameters = context->parameters;
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
 
-        template_task_run(new_context, apply_xslt_template);
+        apply_xslt_template(new_context);
     }
 }
 
@@ -232,13 +232,13 @@ void instruction_choose(template_context *context, XMLNODE *instruction)
                 template_context *new_context = memory_allocator_new(sizeof(template_context));
                 new_context->context = context->context;
                 new_context->instruction = i->children;
-                new_context->result = xml_append_child(context->context, context->result, EMPTY_NODE);
+                new_context->result = context->result;
                 new_context->document_node = context->document_node;
                 new_context->parameters = context->parameters;
                 new_context->local_variables = context->local_variables;
                 new_context->workers = context->workers;
 
-                template_task_run(new_context, apply_xslt_template);
+                apply_xslt_template(new_context);
                 break;
             }
         }
@@ -250,13 +250,13 @@ void instruction_choose(template_context *context, XMLNODE *instruction)
         template_context *new_context = memory_allocator_new(sizeof(template_context));
         new_context->context = context->context;
         new_context->instruction = otherwise->children;
-        new_context->result = xml_append_child(context->context, context->result, EMPTY_NODE);
+        new_context->result = context->result;
         new_context->document_node = context->document_node;
         new_context->parameters = context->parameters;
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
 
-        template_task_run(new_context, apply_xslt_template);
+        apply_xslt_template(new_context);
     }
 }
 
@@ -383,7 +383,7 @@ void instruction_copy(template_context *context, XMLNODE *instruction)
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
 
-        template_task_run(new_context, process_one_node);
+        apply_xslt_template(new_context);
     }
 }
 
