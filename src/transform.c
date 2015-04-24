@@ -419,7 +419,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
 
 void XSLTAddURLRevision(XSLTGLOBALDATA *data, const char *url, const char *revision)
 {
-  dict_add(data->revisions, xml_strdup(url), xml_strdup(revision));
+  dict_add(data->revisions, xmls_new_string_literal(url), xml_strdup(revision));
 }
 
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)

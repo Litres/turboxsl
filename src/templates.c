@@ -70,10 +70,10 @@ template_map_entry *template_map_get_entry(template_map *map, XMLSTRING mode)
 {
   if(mode == NULL) return map->empty_mode;
 
-  template_map_entry *entry = (template_map_entry *) dict_find(map->modes, mode->s);
+  template_map_entry *entry = (template_map_entry *) dict_find(map->modes, mode);
   if(entry == NULL) {
     entry = memory_allocator_new(sizeof(template_map_entry));
-    dict_add(map->modes, mode->s, entry);
+    dict_add(map->modes, mode, entry);
   }
 
   return entry;
@@ -82,7 +82,7 @@ template_map_entry *template_map_get_entry(template_map *map, XMLSTRING mode)
 template_map_entry *template_map_find_entry(template_map *map, XMLSTRING mode)
 {
   if(mode == NULL) return map->empty_mode;
-  return (template_map_entry *) dict_find(map->modes, mode->s);
+  return (template_map_entry *) dict_find(map->modes, mode);
 }
 
 template *template_map_add_template(template_map_entry *entry)
@@ -208,14 +208,14 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, XMLSTRING n
   } 
   else 
   {
-    if (dict_find(pctx->named_templ, name->s) != NULL)
+    if (dict_find(pctx->named_templ, name) != NULL)
     {
       debug("add_template:: replace template: %s", name->s);
-      dict_replace(pctx->named_templ, name->s, template);
+      dict_replace(pctx->named_templ, name, template);
     }
     else
     {
-      dict_add(pctx->named_templ, name->s, template);
+      dict_add(pctx->named_templ, name, template);
     }
   }
 }
@@ -423,7 +423,7 @@ XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, XMLSTRING name)
 {
   if(name == NULL) return NULL;
 
-  XMLNODE *template = (XMLNODE *) dict_find(pctx->named_templ, name->s);
+  XMLNODE *template = (XMLNODE *) dict_find(pctx->named_templ, name);
   return template == NULL ? NULL : template->children;
 }
 

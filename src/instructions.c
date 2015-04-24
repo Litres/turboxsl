@@ -421,7 +421,7 @@ void instruction_processing_instruction(template_context *context, XMLNODE *inst
 
 void instruction_add(XMLSTRING name, void(*function)(template_context *, XMLNODE *))
 {
-    dict_add(instructions, name->s, function);
+    dict_add(instructions, name, function);
 }
 
 void instructions_create()
@@ -463,7 +463,7 @@ int instructions_is_xsl(XMLNODE *instruction)
 void instructions_process(template_context *context, XMLNODE *instruction)
 {
     XMLSTRING name = instruction->name;
-    void(*function)(template_context *, XMLNODE *) = dict_find(instructions, name->s);
+    void(*function)(template_context *, XMLNODE *) = dict_find(instructions, name);
     if (function == NULL)
     {
         error("instructions_process:: instruction <%s> not supported!", name->s);

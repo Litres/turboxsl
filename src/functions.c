@@ -947,10 +947,8 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   memory_allocator_activate_parent(0);
 }
 
-char *create_veristat_url(TRANSFORM_CONTEXT *pctx, const char *url)
+char *create_veristat_url(TRANSFORM_CONTEXT *pctx, XMLSTRING url)
 {
-  size_t url_length = strlen(url);
-
   const char *revision = dict_find(pctx->gctx->revisions, url);
   //
   size_t revision_length = revision == NULL ? 0 : strlen(revision) + 1;
@@ -958,9 +956,9 @@ char *create_veristat_url(TRANSFORM_CONTEXT *pctx, const char *url)
   const char *static_prefix = "/static/";
   size_t static_prefix_length = strlen(static_prefix);
 
-  XMLSTRING result = xmls_new(static_prefix_length + url_length + revision_length);
+  XMLSTRING result = xmls_new(static_prefix_length + url->len + revision_length);
   xmls_add_str(result, static_prefix);
-  xmls_add_str(result, url);
+  xmls_add_str(result, url->s);
   if(revision_length > 0) {
     xmls_add_str(result, "?");
     xmls_add_str(result, revision);
@@ -985,7 +983,7 @@ void xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
     return;
   }
 
-  res->v.string = create_veristat_url(pctx, rv.v.string);
+  res->v.string = create_veristat_url(pctx, xmls_new_string_literal(rv.v.string));
 }
 
 void xf_veristat_local(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -1014,7 +1012,7 @@ void xf_veristat_local(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, 
     url = t;
   }
 
-  res->v.string = create_veristat_url(pctx, url);
+  res->v.string = create_veristat_url(pctx, xmls_new_string_literal(url));
 }
 
 void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)

@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include "turboxsl.h"
+#include "strings.h"
 #include "xmldict.h"
 #include "templates.h"
 #include "threadpool.h"
@@ -23,12 +24,6 @@
 #include "concurrent_dictionary.h"
 #include "shared_variable.h"
 #include "logger.h"
-
-typedef struct _xmls {
-  char *s;
-  size_t len;
-  size_t allocated;
-} *XMLSTRING;
 
 typedef enum {VAL_NULL=0, VAL_BOOL, VAL_INT, VAL_NUMBER, VAL_STRING, VAL_NODESET} RVALUE_TYPE;
 
@@ -226,15 +221,11 @@ char *xml_new_string(const char *s, size_t length);
 char *node2string(XMLNODE *node);
 char *nodes2string(XMLNODE *node);
 
-XMLSTRING xmls_new(size_t bsize); // allocates xmlstring
-XMLSTRING xmls_new_string(const char *s, size_t length);
-XMLSTRING xmls_new_string_literal(const char *s);
 void xmls_add_char(XMLSTRING s, char c); // appends a char to xmlstring
 void xmls_add_utf(XMLSTRING s, unsigned u); // appends unicode value to xmlstring
 void xmls_append(XMLSTRING s, XMLSTRING value);
 void xmls_add_str(XMLSTRING s, const char *d); // appends a string to xmlstring
 char *xmls_detach(XMLSTRING s); // frees xmlstring, returns content to be freed later
-int xmls_equals(XMLSTRING a, XMLSTRING b);
 
 short *utf2ws(char *s);
 

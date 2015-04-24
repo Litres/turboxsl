@@ -18,7 +18,7 @@
 #include "logger.h"
 
 typedef struct _dict_entry {
-  const char *name;
+  XMLSTRING name;
   const void *data;
   unsigned next;
 } XMLDICTENTRY;
@@ -44,9 +44,10 @@ unsigned long hash_function(unsigned char *str)
   return hash;
 }
 
-unsigned int bucket_number(const char *str)
+unsigned int bucket_number(XMLSTRING str)
 {
-  return hash_function(str) % 127;
+  if (str->hash == 0) str->hash = hash_function(str->s);
+  return (unsigned int)(str->hash % 127);
 }
 
 XMLDICT *dict_new(unsigned size)
@@ -79,7 +80,7 @@ void dict_free(XMLDICT *dict)
   }
 }
 
-const void *dict_find(XMLDICT *dict, const char *name)
+const void *dict_find(XMLDICT *dict, XMLSTRING name)
 {
   if(!dict || !name)
     return NULL;
@@ -87,14 +88,13 @@ const void *dict_find(XMLDICT *dict, const char *name)
   unsigned h = bucket_number(name);
   for(h=dict->hash[h];h;) {
     --h;
-    if(strcmp(dict->entries[h].name, name) == 0)
-      return dict->entries[h].data;
+    if(xmls_equals(dict->entries[h].name, name)) return dict->entries[h].data;
     h = dict->entries[h].next;
   }
   return NULL;
 }
 
-int dict_add(XMLDICT *dict, const char *name, const void *data)
+int dict_add(XMLDICT *dict, XMLSTRING name, const void *data)
 {
   unsigned h,d;
 
@@ -108,8 +108,7 @@ int dict_add(XMLDICT *dict, const char *name, const void *data)
   d = h = bucket_number(name);
   for(h=dict->hash[h];h;) {
     --h;
-    if(strcmp(dict->entries[h].name, name) == 0)
-      return 0; // already have this
+    if(xmls_equals(dict->entries[h].name, name)) return 0; // already have this
     h = dict->entries[h].next;
   }
   dict->entries[dict->used].name = name;
@@ -119,7 +118,7 @@ int dict_add(XMLDICT *dict, const char *name, const void *data)
   return 1;
 }
 
-void dict_replace(XMLDICT *dict, const char *name, const void *data)
+void dict_replace(XMLDICT *dict, XMLSTRING name, const void *data)
 {
   if(!dict || !name)
     return;

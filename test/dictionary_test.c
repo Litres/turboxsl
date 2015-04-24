@@ -1,11 +1,11 @@
-#include "xmldict.h"
-
 #include <stdio.h>
 #include <string.h>
 
+#include "xmldict.h"
+
 int main(int argc, char *argv[])
 {
-    const char *key = "key";
+    XMLSTRING key = xmls_new_string_literal("key");
     const char *value = "value";
 
     XMLDICT *dictionary = dict_new(10);

@@ -80,6 +80,7 @@ libturboxsl_la_SOURCES = \
   nodes.c \
   utils.c \
   strings.c \
+  strings.h \
   xmldict.c \
   md5.c \
   md5.h \
