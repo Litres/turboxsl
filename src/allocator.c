@@ -199,7 +199,7 @@ void *memory_allocator_new(size_t size)
     {
         if (data->next_entry == NULL)
         {
-            memory_allocator_data *new_data = memory_allocator_create_data(data->data_size);
+            memory_allocator_data *new_data = memory_allocator_create_data(size < data->data_size ? data->data_size : size);
             if (new_data == NULL)
             {
                 return NULL;
