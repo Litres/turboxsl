@@ -32,19 +32,18 @@ memory_allocator_data *memory_allocator_create_data(size_t size)
     memory_allocator_data *data = malloc(sizeof(memory_allocator_data));
     if (data == NULL)
     {
-        error("memory_allocator_data:: malloc");
+        error("memory_allocator_create_data:: memory");
         return NULL;
     }
     memset(data, 0, sizeof(memory_allocator_data));
     data->data_size = size;
 
-    data->area = malloc(size);
+    data->area = calloc(1, size);
     if (data->area == NULL)
     {
-        error("memory_allocator_data:: data malloc");
+        error("memory_allocator_create_data:: memory");
         return NULL;
     }
-    memset(data->area, 0, size);
 
     return data;
 }
@@ -199,7 +198,8 @@ void *memory_allocator_new(size_t size)
     {
         if (data->next_entry == NULL)
         {
-            memory_allocator_data *new_data = memory_allocator_create_data(size < data->data_size ? data->data_size : size);
+            size_t new_size = 2 * (size > data->data_size ? size : data->data_size);
+            memory_allocator_data *new_data = memory_allocator_create_data(new_size);
             if (new_data == NULL)
             {
                 return NULL;
