@@ -21,14 +21,17 @@
 
 char *call_perl_function(TRANSFORM_CONTEXT *pctx, void *function, char **args)
 {
-  if (pthread_mutex_lock(&(pctx->lock))) {
+  if(pthread_mutex_lock(&(pctx->lock))) {
     error("call_perl_function:: lock");
     return NULL;
   }
+
   char *result = (pctx->gctx->perl_cb_dispatcher)(function, args, pctx->gctx->interpreter);
-  if (pthread_mutex_unlock(&(pctx->lock))) {
+
+  if(pthread_mutex_unlock(&(pctx->lock))) {
     error("call_perl_function:: unlock");
   }
+
   return result;
 }
 
@@ -939,6 +942,8 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
       p_args[1] = NULL;
       p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
       external_cache_set(pctx->gctx->cache, cache_key, p);
+      concurrent_dictionary_add(pctx->gctx->urldict, key, p);
+    } else {
       concurrent_dictionary_add(pctx->gctx->urldict, key, p);
     }
   }
