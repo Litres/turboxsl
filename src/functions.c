@@ -832,21 +832,21 @@ void xf_text(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *c
 
 void xf_check(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
-  char *str;
-  char *rights;
   res->type = VAL_BOOL;
   res->v.integer = 0;
 
+  if(pctx->user_rights == NULL)
+  {
+    error("xf_check:: user rights not defined");
+    return;
+  }
+
   if(args) {
+    RVALUE rv;
     xpath_execute_scalar(pctx, locals, args, current, &rv);
-    str=rval2string(&rv);
+    char *str = rval2string(&rv);
     if(str) {
-      rights = xsl_get_global_key(pctx, "rights",NULL);
-      if(rights) {
-        if(strstr(rights,str))
-          res->v.integer = 1;
-      }
+      if(dict_find(pctx->user_rights, xmls_new_string_literal(str)) != NULL) res->v.integer = 1;
     }
   }
 }

@@ -384,6 +384,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 
   memory_allocator_release(data->allocator);
   dict_free(data->revisions);
+  dict_free(data->group_rights);
   concurrent_dictionary_release(data->urldict);
   if (data->cache != NULL) external_cache_release(data->cache);
 
@@ -413,12 +414,13 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
 
   ret->urldict = concurrent_dictionary_create();
   ret->revisions = dict_new(300);
+  ret->group_rights = dict_new(300);
   ret->interpreter = interpreter;
 
   return ret;
 }
 
-void XSLTAddURLRevision(XSLTGLOBALDATA *data, const char *url, const char *revision)
+void XSLTAddURLRevision(XSLTGLOBALDATA *data, char *url, char *revision)
 {
   dict_add(data->revisions, xmls_new_string_literal(url), xml_strdup(revision));
 }

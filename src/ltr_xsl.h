@@ -84,6 +84,7 @@ struct _globaldata {
   memory_allocator *allocator;
   concurrent_dictionary *urldict;
   XMLDICT *revisions;
+  XMLDICT *group_rights;
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;
   unsigned perl_cb_ptr;
@@ -105,6 +106,7 @@ struct _context {
   memory_allocator *allocator;
   char *cache_key_prefix;
   char *url_local_prefix;
+  XMLDICT *user_rights;
   template_map *templates;
   XMLDICT *named_templ; // templates for call'ing
   XMLNODE *root_node;

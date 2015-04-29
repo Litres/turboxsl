@@ -95,6 +95,7 @@ libturboxsl_la_SOURCES = \
   allocator.h \
   xsl_elements.c \
   xsl_elements.h \
+  group_rights.c \
   turboxsl.h \
   ltr_xsl.h
 
