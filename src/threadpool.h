@@ -21,16 +21,10 @@ threadpool* threadpool_init(unsigned int num_of_threads);
 
 void threadpool_free(threadpool *pool);
 
-void threadpool_start(threadpool *pool, void (*routine)(void *), void *data);
+int thread_pool_try_wait(threadpool *pool);
+void thread_pool_finish_wait(threadpool *pool);
 
-/**
- * This function waits for children to finish
- *
- * @param pool The thread pool structure.
- * @param signature Signature of the parent thread
- *
- */
-void threadpool_wait(threadpool *pool);
+void threadpool_start(threadpool *pool, void (*routine)(void *), void *data);
 
 void threadpool_free(threadpool *pool);
 

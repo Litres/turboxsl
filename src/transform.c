@@ -447,13 +447,17 @@ void XMLFreeDocument(XMLNODE *doc)
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
+
+  memory_allocator_set_current(pctx->allocator);
+
   concurrent_dictionary_release(pctx->expressions);
   template_map_release(pctx->templates);
   dict_free(pctx->named_templ);
+  threadpool_free(pctx->pool);
+
   xml_free_document(pctx->stylesheet);
 
   memory_allocator_release(pctx->allocator);
-  threadpool_free(pctx->pool);
 
   free(pctx->sort_keys);
   free(pctx->sort_nodes);
@@ -593,8 +597,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   new_context->local_variables = xml_new_node(pctx, NULL, EMPTY_NODE);
 
   info("XSLTProcess:: start process");
-  template_task_run(new_context, process_one_node);
-  threadpool_wait(pctx->pool);
+  template_task_run_and_wait(new_context, process_one_node);
   info("XSLTProcess:: end process");
 
 /****************** add dtd et al if required *******************/

@@ -61,6 +61,8 @@ libturboxsl_la_SOURCES = \
   thread_lock.h \
   concurrent_dictionary.c \
   concurrent_dictionary.h \
+  unbounded_queue.c \
+  unbounded_queue.h \
   shared_variable.c \
   shared_variable.h \
   template_task.c \
