@@ -94,7 +94,7 @@ memory_allocator_entry *memory_allocator_find_entry(memory_allocator *allocator)
     while (t != NULL && t->thread != self) t = t->next_entry;
     if (t == NULL || t->thread != self)
     {
-        error("memory_allocator_new:: unknown thread");
+        error("memory_allocator_find_entry:: unknown thread");
         return NULL;
     }
     return t;

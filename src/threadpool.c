@@ -118,7 +118,7 @@ int thread_pool_try_wait(threadpool *pool)
 {
     if (pthread_mutex_lock(&(pool->blocked_lock)))
     {
-        error("unbounded_queue_enqueue:: write lock");
+        error("thread_pool_try_wait:: lock");
         return 0;
     }
 
@@ -138,7 +138,7 @@ void thread_pool_finish_wait(threadpool *pool)
 {
     if (pthread_mutex_lock(&(pool->blocked_lock)))
     {
-        error("unbounded_queue_enqueue:: write lock");
+        error("thread_pool_finish_wait:: lock");
         return;
     }
 
@@ -176,7 +176,7 @@ void threadpool_set_external_cache(external_cache *cache, threadpool *pool)
 {
     if (!pool) return;
 
-    debug("threadpool_set_cache:: setup");
+    debug("threadpool_set_external_cache:: setup");
     for (unsigned int i = 0; i < pool->num_of_threads; i++)
     {
         external_cache_add_client(cache, pool->threads[i]);

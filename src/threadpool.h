@@ -26,8 +26,6 @@ void thread_pool_finish_wait(threadpool *pool);
 
 void threadpool_start(threadpool *pool, void (*routine)(void *), void *data);
 
-void threadpool_free(threadpool *pool);
-
 void threadpool_set_allocator(memory_allocator *allocator, threadpool *pool);
 void threadpool_set_external_cache(external_cache *cache, threadpool *pool);
 

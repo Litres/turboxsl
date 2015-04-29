@@ -50,7 +50,7 @@ void unbounded_queue_close(unbounded_queue *queue)
 {
     if (pthread_mutex_lock(&(queue->read_lock)))
     {
-        error("unbounded_queue_dequeue:: lock");
+        error("unbounded_queue_close:: lock");
         return;
     }
 

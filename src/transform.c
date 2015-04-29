@@ -448,8 +448,6 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
 
-  memory_allocator_set_current(pctx->allocator);
-
   concurrent_dictionary_release(pctx->expressions);
   template_map_release(pctx->templates);
   dict_free(pctx->named_templ);
@@ -511,6 +509,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   process_imports(ret, ret->stylesheet->children);
   precompile_templates(ret, ret->stylesheet);
   process_global_flags(ret, ret->stylesheet);
+
   return ret;
 }
 
@@ -626,6 +625,8 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   }
 
   free_variables(pctx);
+
+  memory_allocator_set_current(pctx->allocator);
 
   return ret;
 }
