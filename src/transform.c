@@ -539,12 +539,6 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
     return;
   }
 
-  if (size > 10)
-  {
-    error("XSLTCreateThreadPool:: maximum size is 10");
-    return;
-  }
-
   pctx->pool = threadpool_init(size);
   threadpool_set_allocator(pctx->allocator, pctx->pool);
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
