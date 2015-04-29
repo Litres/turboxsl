@@ -1,6 +1,7 @@
 #include "unbounded_queue.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "thread_lock.h"
 #include "logger.h"
@@ -27,6 +28,8 @@ unbounded_queue *unbounded_queue_create()
         error("unbounded_queue_create:: memory");
         return NULL;
     }
+
+    memset(result, 0, sizeof(unbounded_queue));
 
     result->head = malloc(sizeof(unbounded_queue_entry));
     if (result->head == NULL)
