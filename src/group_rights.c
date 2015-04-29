@@ -11,6 +11,8 @@ typedef struct library_entry_ {
 
 void XSLTDefineGroupRights(XSLTGLOBALDATA *data, char *library, char *group, char **actions, int action_count)
 {
+    memory_allocator_set_current(data->allocator);
+
     XMLSTRING library_string = xmls_new_string_literal(library);
     library_entry *rights = dict_find(data->group_rights, library_string);
     if (rights == NULL)
@@ -33,6 +35,8 @@ void XSLTDefineGroupRights(XSLTGLOBALDATA *data, char *library, char *group, cha
 
 void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, int group_count)
 {
+    memory_allocator_set_current(ctx->allocator);
+
     XMLSTRING library_string = xmls_new_string_literal(library);
     library_entry *rights = dict_find(ctx->gctx->group_rights, library_string);
     if (rights == NULL)

@@ -422,11 +422,13 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
 
 void XSLTAddURLRevision(XSLTGLOBALDATA *data, char *url, char *revision)
 {
+  memory_allocator_set_current(data->allocator);
   dict_add(data->revisions, xmls_new_string_literal(url), xml_strdup(revision));
 }
 
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)
 {
+  memory_allocator_set_current(data->allocator);
   data->cache = external_cache_create(xml_strdup(server_list));
 }
 
@@ -449,6 +451,8 @@ void XMLFreeDocument(XMLNODE *doc)
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
 {
   info("XSLTFreeProcessor");
+
+  memory_allocator_set_current(pctx->allocator);
 
   concurrent_dictionary_release(pctx->expressions);
   template_map_release(pctx->templates);
@@ -544,6 +548,8 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
     return;
   }
 
+  memory_allocator_set_current(pctx->allocator);
+
   pctx->pool = threadpool_init(size);
   threadpool_set_allocator(pctx->allocator, pctx->pool);
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
@@ -551,11 +557,13 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
 
 void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
 {
+  memory_allocator_set_current(ctx->allocator);
   ctx->cache_key_prefix = xml_strdup(prefix);
 }
 
 void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
 {
+  memory_allocator_set_current(ctx->allocator);
   ctx->url_local_prefix = xml_strdup(prefix);
 }
 
@@ -627,8 +635,6 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   }
 
   free_variables(pctx);
-
-  memory_allocator_set_current(pctx->allocator);
 
   return ret;
 }

@@ -1,8 +1,9 @@
 #include "unbounded_queue.h"
 
+#include <stdlib.h>
+
 #include "thread_lock.h"
 #include "logger.h"
-#include "allocator.h"
 
 typedef struct unbounded_queue_entry_ {
     void *value;
@@ -20,19 +21,22 @@ struct unbounded_queue_ {
 
 unbounded_queue *unbounded_queue_create()
 {
-    unbounded_queue *result = memory_allocator_new(sizeof(unbounded_queue));
+    unbounded_queue *result = malloc(sizeof(unbounded_queue));
     if (result == NULL)
     {
         error("unbounded_queue_create:: memory");
         return NULL;
     }
 
-    result->head = memory_allocator_new(sizeof(unbounded_queue_entry));
+    result->head = malloc(sizeof(unbounded_queue_entry));
     if (result->head == NULL)
     {
         error("unbounded_queue_create:: memory");
         return NULL;
     }
+
+    result->head->value = NULL;
+    result->head->next = NULL;
     result->tail = result->head;
 
     thread_lock_create_recursive(&(result->write_lock));
@@ -64,6 +68,8 @@ void unbounded_queue_release(unbounded_queue *queue)
     pthread_mutex_destroy(&(queue->write_lock));
     pthread_mutex_destroy(&(queue->read_lock));
     pthread_cond_destroy(&(queue->read_condition));
+
+    free(queue);
 }
 
 void unbounded_queue_enqueue(unbounded_queue *queue, void *value)
@@ -74,7 +80,7 @@ void unbounded_queue_enqueue(unbounded_queue *queue, void *value)
         return;
     }
 
-    unbounded_queue_entry *entry = memory_allocator_new(sizeof(unbounded_queue_entry));
+    unbounded_queue_entry *entry = malloc(sizeof(unbounded_queue_entry));
     if (entry == NULL)
     {
         error("unbounded_queue_enqueue:: memory");
@@ -82,6 +88,8 @@ void unbounded_queue_enqueue(unbounded_queue *queue, void *value)
     else
     {
         entry->value = value;
+        entry->next = NULL;
+
         queue->tail->next = entry;
         queue->tail = entry;
     }
@@ -114,7 +122,9 @@ void *unbounded_queue_dequeue(unbounded_queue *queue)
     while (queue->head->next == NULL) pthread_cond_wait(&(queue->read_condition), &(queue->read_lock));
 
     void *result = queue->head->next->value;
+    unbounded_queue_entry *head = queue->head;
     queue->head = queue->head->next;
+    free(head);
 
     pthread_mutex_unlock(&(queue->read_lock));
 

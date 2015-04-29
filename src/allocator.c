@@ -100,7 +100,6 @@ memory_allocator_entry *memory_allocator_find_entry(memory_allocator *allocator)
     return t;
 }
 
-
 memory_allocator *memory_allocator_create(memory_allocator *parent)
 {
     memory_allocator *allocator = malloc(sizeof(memory_allocator));

@@ -374,23 +374,23 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
 	}
 	buffer[length] = 0;
 
-    memory_allocator *cache = NULL;
+    memory_allocator *allocator = NULL;
     if (has_cache == 0)
     {
-      cache = memory_allocator_create(NULL);
-      memory_allocator_add_entry(cache, pthread_self(), 1000000);
-      memory_allocator_set_current(cache);
+      allocator = memory_allocator_create(NULL);
+      memory_allocator_add_entry(allocator, pthread_self(), 1000000);
+      memory_allocator_set_current(allocator);
     }
 
 	ret = do_parse(gctx, buffer, file);
     free(buffer);
 
     if (ret == NULL) {
-      memory_allocator_release(cache);
+      memory_allocator_release(allocator);
       return NULL;
     }
     renumber_children(ret);
-    ret->allocator = cache;
+    ret->allocator = allocator;
 
 	return ret;
 }
@@ -399,22 +399,22 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache)
 {
   XMLNODE *ret;
 
-  memory_allocator *cache = NULL;
+  memory_allocator *allocator = NULL;
   if (has_cache == 0)
   {
-    cache = memory_allocator_create(NULL);
-    memory_allocator_add_entry(cache, pthread_self(), 1000000);
-    memory_allocator_set_current(cache);
+    allocator = memory_allocator_create(NULL);
+    memory_allocator_add_entry(allocator, pthread_self(), 1000000);
+    memory_allocator_set_current(allocator);
   }
 
   ret = do_parse(gctx, string, "(string)");
   if (ret == NULL) {
-    memory_allocator_release(cache);
+    memory_allocator_release(allocator);
     return NULL;
   }
 
   renumber_children(ret);
-  ret->allocator = cache;
+  ret->allocator = allocator;
 
   return ret;
 }
