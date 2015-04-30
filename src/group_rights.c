@@ -37,6 +37,9 @@ void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, in
 {
     memory_allocator_set_current(ctx->allocator);
 
+    dict_free(ctx->user_rights);
+    ctx->user_rights = dict_new(50);
+
     XMLSTRING library_string = xmls_new_string_literal(library);
     library_entry *rights = dict_find(ctx->gctx->group_rights, library_string);
     if (rights == NULL)
@@ -44,9 +47,6 @@ void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, in
         error("XSLTSetUserContext:: unknown library: %s", library);
         return;
     }
-
-    dict_free(ctx->user_rights);
-    ctx->user_rights = dict_new(50);
 
     for (int i = 0; i < group_count; i++)
     {
