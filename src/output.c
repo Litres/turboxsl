@@ -108,7 +108,7 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
         if((node->flags & XML_FLAG_NOESCAPE)||(ctx->rawout)) {
           xmls_append(rtext, node->content);
         } else {
-          add_quoted_str(rtext, node->content->s);
+          if(node->content != NULL) add_quoted_str(rtext, node->content->s);
         }
         if(node->flags & XML_FLAG_CDATA)
           xmls_add_str(rtext, "]]>");
