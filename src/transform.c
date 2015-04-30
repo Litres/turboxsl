@@ -613,7 +613,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   XMLNODE *t = find_first_node(ret);
   if(pctx->outmode == MODE_XML && !(pctx->flags & XSL_FLAG_MODE_SET)) {
     pctx->outmode = MODE_XML;
-    if(t->type == ELEMENT_NODE) {
+    if(t != NULL && t->type == ELEMENT_NODE) {
       if(xmls_equals(t->name, xsl_s_html)) pctx->outmode = MODE_HTML;
     }
   }
