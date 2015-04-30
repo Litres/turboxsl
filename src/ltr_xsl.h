@@ -209,7 +209,10 @@ int rval2bool(RVALUE *rv);
 char *rval2string(RVALUE *rv);
 double rval2number(RVALUE *rv);
 int rval_equal(RVALUE *left, RVALUE *right, unsigned eq);
-int rval_compare(RVALUE *left, RVALUE *right);
+int rval_less(RVALUE *left, RVALUE *right);
+int rval_less_or_equal(RVALUE *left, RVALUE *right);
+int rval_greater(RVALUE *left, RVALUE *right);
+int rval_greater_or_equal(RVALUE *left, RVALUE *right);
 
 int match(char **eptr, char *str);
 int x_can_number(char *p);

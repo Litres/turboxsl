@@ -763,11 +763,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
       res->type=VAL_BOOL;
-      if(0>rval_compare(&rv, &rv1)) {
-      	res->v.integer=1;
-      } else {
-      	res->v.integer=0;
-      }
+      res->v.integer = rval_less(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return;
@@ -776,11 +772,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
       res->type=VAL_BOOL;
-      if(0>=rval_compare(&rv, &rv1)) {
-      	res->v.integer=1;
-      } else {
-      	res->v.integer=0;
-      }
+      res->v.integer = rval_less_or_equal(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return;
@@ -789,11 +781,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
       res->type=VAL_BOOL;
-      if(0<rval_compare(&rv, &rv1)) {
-      	res->v.integer=1;
-      } else {
-      	res->v.integer=0;
-      }
+      res->v.integer = rval_greater(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return;
@@ -802,11 +790,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
       res->type=VAL_BOOL;
-      if(0<=rval_compare(&rv, &rv1)) {
-      	res->v.integer=1;
-      } else {
-      	res->v.integer=0;
-      }
+      res->v.integer = rval_greater_or_equal(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return;
@@ -916,9 +900,8 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
       return;
 
     case XPATH_NODE_VAR:
-      res->type =VAL_NULL;
-      if(!current)
-        return;
+      res->type = VAL_NULL;
+      if(!current) return;
       get_variable_rv(pctx,locals,etree->name->s,res);
       return;
   }

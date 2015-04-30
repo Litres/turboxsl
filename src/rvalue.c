@@ -123,7 +123,7 @@ char *p,*n;
 
   switch(rv->type) {
     case VAL_NULL:
-      return 0.0; //maybe nan?
+      return nan("");
     case VAL_BOOL:
       rv->type=VAL_NULL;
       return (double)(rv->v.integer?1:0);
@@ -172,8 +172,7 @@ char *p,*n;
 
 /**************************** < <= > >= ***************************/
 
-
-int rval_compare(RVALUE *left, RVALUE *right)
+double rval_compare(RVALUE *left, RVALUE *right)
 {
   double ld,rd;
 
@@ -188,6 +187,9 @@ int rval_compare(RVALUE *left, RVALUE *right)
 
   ld = rval2number(left);
   rd = rval2number(right);
+
+  if(isnan(ld) || isnan(rd)) return nan("");
+
   if(ld < rd) {
     return -1;
   }
@@ -195,6 +197,30 @@ int rval_compare(RVALUE *left, RVALUE *right)
     return 1;
   }
   else return 0;
+}
+
+int rval_less(RVALUE *left, RVALUE *right)
+{
+  double r = rval_compare(left, right);
+  return isnan(r) ? 0 : 0 > r;
+}
+
+int rval_less_or_equal(RVALUE *left, RVALUE *right)
+{
+  double r = rval_compare(left, right);
+  return isnan(r) ? 0 : 0 >= r;
+}
+
+int rval_greater(RVALUE *left, RVALUE *right)
+{
+  double r = rval_compare(left, right);
+  return isnan(r) ? 0 : 0 < r;
+}
+
+int rval_greater_or_equal(RVALUE *left, RVALUE *right)
+{
+  double r = rval_compare(left, right);
+  return isnan(r) ? 0 : 0 <= r;
 }
 
 int nodeset_equal_common(RVALUE *value, RVALUE *nodeset, unsigned eq)

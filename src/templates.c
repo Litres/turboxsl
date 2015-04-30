@@ -310,10 +310,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
     case XPATH_NODE_LE:
       xpath_execute_scalar(pctx, NULL, templ->children, node, &rv);
       xpath_execute_scalar(pctx, NULL, templ->children->next, node, &rv1);
-
-      if (0 >= rval_compare(&rv, &rv1))
-        retVal = 1;
-
+      retVal = rval_less_or_equal(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return retVal;
@@ -322,10 +319,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
     case XPATH_NODE_GE:
       xpath_execute_scalar(pctx, NULL, templ->children, node, &rv);
       xpath_execute_scalar(pctx, NULL, templ->children->next, node, &rv1);
-
-      if (0 <= rval_compare(&rv, &rv1))
-        retVal = 1;
-
+      retVal = rval_greater_or_equal(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return retVal;
@@ -334,10 +328,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
     case XPATH_NODE_LT:
       xpath_execute_scalar(pctx, NULL, templ->children, node, &rv);
       xpath_execute_scalar(pctx, NULL, templ->children->next, node, &rv1);
-
-      if (0 > rval_compare(&rv, &rv1))
-        retVal = 1;
-
+      retVal = rval_less(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return retVal;
@@ -346,10 +337,7 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
     case XPATH_NODE_GT:
       xpath_execute_scalar(pctx, NULL, templ->children, node, &rv);
       xpath_execute_scalar(pctx, NULL, templ->children->next, node, &rv1);
-
-      if (0 < rval_compare(&rv, &rv1))
-        retVal = 1;
-
+      retVal = rval_greater_or_equal(&rv, &rv1);
       rval_free(&rv);
       rval_free(&rv1);
       return retVal;
