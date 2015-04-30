@@ -123,7 +123,7 @@ int thread_pool_try_wait(threadpool *pool)
     }
 
     int result = 0;
-    if (pool->num_of_blocked < pool->num_of_threads - 2)
+    if (pool->num_of_blocked < pool->num_of_threads)
     {
         pool->num_of_blocked += 1;
         result = 1;
