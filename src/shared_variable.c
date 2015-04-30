@@ -46,7 +46,7 @@ void shared_variable_decrease(shared_variable *variable)
 {
     pthread_mutex_lock(&(variable->mutex));
     variable->value -= 1;
-    pthread_cond_broadcast(&(variable->condition));
+    if (variable->value == 0) pthread_cond_broadcast(&(variable->condition));
     pthread_mutex_unlock(&(variable->mutex));
 }
 
