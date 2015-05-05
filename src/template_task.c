@@ -22,6 +22,12 @@ void template_task_run(template_context *context, void (*function)(template_cont
         return;
     }
 
+    if (context->workers == NULL)
+    {
+        function(context);
+        return;
+    }
+
     template_task_context *task_context = memory_allocator_new(sizeof(template_task_context));
     if (task_context == NULL)
     {
