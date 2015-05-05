@@ -626,7 +626,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
         }
         rval_free(&rv);
       } else {   // no children -- select attributes from context node
-        selection = xpath_get_attrs(current);
+        selection = xpath_get_attrs(add_to_selection(NULL, current, &pos));
         res->v.nodeset = selection;
       }
       return;
