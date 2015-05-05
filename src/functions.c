@@ -905,7 +905,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     return;
   }
 
-  memory_allocator_activate_parent(1);
+  int allocator_activated = memory_allocator_activate_parent(1);
   XMLSTRING buffer = xmls_new(100);
   for(XMLNODE *parg=args;parg;parg=parg->next) {
     RVALUE rv;
@@ -918,7 +918,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   if(buffer->len == 0) {
     debug("xf_urlcode:: key is empty, return default value");
     res->v.string = xml_strdup("/");
-    memory_allocator_activate_parent(0);
+    if (allocator_activated) memory_allocator_activate_parent(0);
     return;
   }
 
@@ -949,7 +949,7 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   }
 
   res->v.string = xml_strdup(p);
-  memory_allocator_activate_parent(0);
+  if (allocator_activated) memory_allocator_activate_parent(0);
 }
 
 char *create_veristat_url(TRANSFORM_CONTEXT *pctx, XMLSTRING url)

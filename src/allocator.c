@@ -167,7 +167,7 @@ void memory_allocator_set_current(memory_allocator *allocator)
     current_allocator = allocator;
 }
 
-void memory_allocator_activate_parent(int activate)
+int memory_allocator_activate_parent(int activate)
 {
     pthread_t self = pthread_self();
     memory_allocator_entry *t = current_allocator->entry;
@@ -175,9 +175,13 @@ void memory_allocator_activate_parent(int activate)
     if (t == NULL || t->thread != self)
     {
         error("memory_allocator_activate_parent:: unknown thread");
-        return;
+        return 0;
     }
+
+    if (t->is_actual == !activate) return 0;
+
     t->is_actual = !activate;
+    return 1;
 }
 
 void *memory_allocator_new(size_t size)

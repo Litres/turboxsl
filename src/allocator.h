@@ -13,7 +13,7 @@ void memory_allocator_add_entry(memory_allocator *allocator, pthread_t thread, s
 
 void memory_allocator_set_current(memory_allocator *allocator);
 
-void memory_allocator_activate_parent(int activate);
+int memory_allocator_activate_parent(int activate);
 
 void *memory_allocator_new(size_t size);
 
