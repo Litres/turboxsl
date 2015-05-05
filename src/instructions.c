@@ -370,15 +370,46 @@ void instruction_text(template_context *context, XMLNODE *instruction)
 
 void instruction_copy(template_context *context, XMLNODE *instruction)
 {
-    XMLNODE *copy = xml_append_child(context->context, context->result, context->document_node->type);
-    copy->name = context->document_node->name;
+    XMLNODE *document_node = context->document_node;
+    XMLNODE *result = context->result;
+    if (document_node->type == ATTRIBUTE_NODE)
+    {
+        XMLNODE *node = result;
+        if (node->type == EMPTY_NODE) node = node->parent;
+
+        if (node != NULL && node->type == ELEMENT_NODE)
+        {
+            XMLNODE *attribute = xml_new_node(context->context, document_node->name, ATTRIBUTE_NODE);
+            attribute->content = document_node->content;
+
+            if (node->attributes == NULL)
+            {
+                node->attributes = attribute;
+            }
+            else
+            {
+                node->attributes->next = attribute;
+            }
+        }
+    }
+    else if (document_node->type == TEXT_NODE)
+    {
+        result = xml_append_child(context->context, result, TEXT_NODE);
+        result->content = document_node->content;
+    }
+    else if (document_node->type == ELEMENT_NODE)
+    {
+        result = xml_append_child(context->context, result, ELEMENT_NODE);
+        result->name = document_node->name;
+    }
+
     if (instruction->children)
     {
         template_context *new_context = memory_allocator_new(sizeof(template_context));
         new_context->context = context->context;
         new_context->instruction = instruction->children;
-        new_context->result = copy;
-        new_context->document_node = context->document_node;
+        new_context->result = result;
+        new_context->document_node = document_node;
         new_context->parameters = context->parameters;
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
