@@ -10,7 +10,6 @@
 **/
 
 #include <stdio.h>
-#include <string.h>
 
 #include "ltr_xsl.h"
 
@@ -99,4 +98,18 @@ XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src)
     }
   }
   return ret;
+}
+
+int is_new_task_allowed(XMLNODE *node)
+{
+    if (node->type == TEXT_NODE) return 0;
+
+    XMLNODE *t = node->next;
+    while (t != NULL)
+    {
+        if (t->type == ELEMENT_NODE) return 1;
+        t = t->next;
+    }
+
+    return 0;
 }

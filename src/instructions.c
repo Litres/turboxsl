@@ -135,7 +135,7 @@ void instruction_apply_templates(template_context *context, XMLNODE *instruction
         new_context->mode = mode;
         new_context->workers = context->workers;
 
-        node->next != NULL ? template_task_run(new_context, process_one_node) : process_one_node(new_context);
+        is_new_task_allowed(node) ? template_task_run(new_context, process_one_node) : process_one_node(new_context);
     }
 }
 
@@ -303,7 +303,7 @@ void instruction_for_each(template_context *context, XMLNODE *instruction)
         new_context->local_variables = copy_variables(context->context, context->local_variables);
         new_context->workers = context->workers;
 
-        node->next != NULL ? template_task_run(new_context, apply_xslt_template) : apply_xslt_template(new_context);
+        is_new_task_allowed(node) ? template_task_run(new_context, apply_xslt_template) : apply_xslt_template(new_context);
     }
 }
 

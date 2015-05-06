@@ -154,6 +154,8 @@ XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type);
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type);
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
 
+int is_new_task_allowed(XMLNODE *node);
+
 /********************** transform.c -- XSLT mainloop ****************/
 void apply_xslt_template(template_context *context);
 void process_one_node(template_context *context);

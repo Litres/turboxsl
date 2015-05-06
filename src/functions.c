@@ -900,7 +900,6 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   }
 
   if(pctx->gctx->perl_urlcode == NULL) {
-    error("xf_urlcode:: no Perl callback");
     res->v.string = xml_strdup("/");
     return;
   }
