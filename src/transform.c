@@ -156,7 +156,7 @@ void apply_default_process(template_context *context)
       new_context->mode = context->mode;
       new_context->workers = context->workers;
 
-      template_task_run(new_context, process_one_node);
+      child->next != NULL ? template_task_run(new_context, process_one_node) : process_one_node(new_context);
     }
   }
 }
