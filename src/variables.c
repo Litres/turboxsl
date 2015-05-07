@@ -192,7 +192,7 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
     new_context->document_node = doc;
     new_context->local_variables = vars;
 
-    template_task_run_and_wait(new_context, apply_xslt_template);
+    apply_xslt_template(new_context);
   }
   else {
     xpath_eval_node(pctx, vars, doc, vsel, &(tmp->extra));

@@ -40,7 +40,7 @@ void instruction_call_template(template_context *context, XMLNODE *instruction)
             new_context->document_node = context->document_node;
             new_context->local_variables = context->local_variables;
 
-            template_task_run_and_wait(new_context, apply_xslt_template);
+            apply_xslt_template(new_context);
         }
         else
         {
@@ -106,7 +106,7 @@ void instruction_apply_templates(template_context *context, XMLNODE *instruction
                 new_context->document_node = context->document_node;
                 new_context->local_variables = context->local_variables;
 
-                template_task_run_and_wait(new_context, apply_xslt_template);
+                apply_xslt_template(new_context);
             }
             else
             {

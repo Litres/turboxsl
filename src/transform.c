@@ -72,7 +72,7 @@ XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *sou
   new_context->document_node = source;
   new_context->local_variables = locals;
 
-  template_task_run_and_wait(new_context, apply_xslt_template);
+  apply_xslt_template(new_context);
 
   XMLSTRING res = xmls_new(200);
   output_node_rec(tmp, res, pctx);
