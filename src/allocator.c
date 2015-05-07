@@ -22,7 +22,8 @@ typedef struct memory_allocator_entry {
 
 struct memory_allocator_ {
     memory_allocator *parent_allocator;
-    struct memory_allocator_entry *entry;
+    struct memory_allocator_entry *head_entry;
+    pthread_key_t entry_key;
 };
 
 memory_allocator *current_allocator = NULL;
@@ -79,7 +80,7 @@ size_t memory_allocator_entry_size(memory_allocator_entry *entry)
 size_t memory_allocator_size(memory_allocator *allocator)
 {
     size_t result = 0;
-    memory_allocator_entry *current = allocator->entry;
+    memory_allocator_entry *current = allocator->head_entry;
     while (current != NULL)
     {
         result = result + memory_allocator_entry_size(current);
@@ -90,14 +91,21 @@ size_t memory_allocator_size(memory_allocator *allocator)
 
 memory_allocator_entry *memory_allocator_find_entry(memory_allocator *allocator)
 {
-    pthread_t self = pthread_self();
-    memory_allocator_entry *t = allocator->entry;
-    while (t != NULL && t->thread != self) t = t->next_entry;
-    if (t == NULL || t->thread != self)
+    memory_allocator_entry *t = (memory_allocator_entry *) pthread_getspecific(allocator->entry_key);
+    if (t == NULL)
     {
-        error("memory_allocator_find_entry:: unknown thread");
-        return NULL;
+        pthread_t self = pthread_self();
+        t = allocator->head_entry;
+        while (t != NULL && t->thread != self) t = t->next_entry;
+        if (t == NULL || t->thread != self)
+        {
+            error("memory_allocator_find_entry:: unknown thread");
+            return NULL;
+        }
+
+        pthread_setspecific(allocator->entry_key, t);
     }
+
     return t;
 }
 
@@ -113,13 +121,19 @@ memory_allocator *memory_allocator_create(memory_allocator *parent)
     memset(allocator, 0, sizeof(memory_allocator));
     allocator->parent_allocator = parent;
 
+    if (pthread_key_create(&(allocator->entry_key), NULL))
+    {
+        error("memory_allocator_create:: key");
+        return NULL;
+    }
+
     return allocator;
 }
 
 void memory_allocator_release(memory_allocator *allocator)
 {
     debug("memory_allocator_release:: total size: %lu bytes", memory_allocator_size(allocator));
-    memory_allocator_entry *current = allocator->entry;
+    memory_allocator_entry *current = allocator->head_entry;
     while (current != NULL)
     {
         memory_allocator_entry *next = current->next_entry;
@@ -127,6 +141,8 @@ void memory_allocator_release(memory_allocator *allocator)
         free(current);
         current = next;
     }
+
+    pthread_key_delete(allocator->entry_key);
 
     free(allocator);
 }
@@ -151,13 +167,13 @@ void memory_allocator_add_entry(memory_allocator *allocator, pthread_t thread, s
     }
     e->tail = e->head;
 
-    if (allocator->entry == NULL)
+    if (allocator->head_entry == NULL)
     {
-        allocator->entry = e;
+        allocator->head_entry = e;
     }
     else
     {
-        memory_allocator_entry *t = allocator->entry;
+        memory_allocator_entry *t = allocator->head_entry;
         while (t->next_entry != NULL) t = t->next_entry;
         t->next_entry = e;
     }
@@ -171,7 +187,7 @@ void memory_allocator_set_current(memory_allocator *allocator)
 int memory_allocator_activate_parent(int activate)
 {
     pthread_t self = pthread_self();
-    memory_allocator_entry *t = current_allocator->entry;
+    memory_allocator_entry *t = current_allocator->head_entry;
     while (t != NULL && t->thread != self) t = t->next_entry;
     if (t == NULL || t->thread != self)
     {
