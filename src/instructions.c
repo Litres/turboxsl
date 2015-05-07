@@ -180,7 +180,7 @@ void instruction_element(template_context *context, XMLNODE *instruction)
     new_context->local_variables = copy_variables(context->context, context->local_variables);
     new_context->workers = context->workers;
 
-    template_task_run(new_context, apply_xslt_template);
+    apply_xslt_template(new_context);
 }
 
 void instruction_if(template_context *context, XMLNODE *instruction)
