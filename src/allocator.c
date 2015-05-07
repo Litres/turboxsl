@@ -45,7 +45,6 @@ memory_allocator_data *memory_allocator_create_data(size_t size)
         error("memory_allocator_create_data:: memory");
         return NULL;
     }
-    memset(data->area, 0, size);
 
     return data;
 }
@@ -238,6 +237,8 @@ void *memory_allocator_new(size_t size)
 
     void *result = data->area + data->offset;
     data->offset = data->offset + size;
+
+    memset(result, 0, size);
 
     return result;
 }
