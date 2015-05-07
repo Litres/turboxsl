@@ -38,12 +38,13 @@ memory_allocator_data *memory_allocator_create_data(size_t size)
     memset(data, 0, sizeof(memory_allocator_data));
     data->data_size = size;
 
-    data->area = calloc(1, size);
+    data->area = malloc(size);
     if (data->area == NULL)
     {
         error("memory_allocator_create_data:: memory");
         return NULL;
     }
+    memset(data->area, 0, size);
 
     return data;
 }
