@@ -91,7 +91,7 @@ int external_cache_set(external_cache *cache, char *key, char *value)
 
     size_t key_length = strlen(key);
     size_t value_length = strlen(value);
-    memcached_return_t r = memcached_set(t->object, key, key_length, value, value_length, 0, 0);
+    memcached_return_t r = memcached_set(t->object, key, key_length, value, value_length, 20 * 60, 0);
     if (r != MEMCACHED_SUCCESS)
     {
         error("external_cache_set:: set failed: %s", memcached_strerror(t->object, r));
