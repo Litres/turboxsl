@@ -25,12 +25,10 @@ typedef struct {
 static XMLNODE *do_or_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string);
 
 
-XMLNODE *xpath_in_selection(XMLNODE *sel, char *name)
+XMLNODE *xpath_in_selection(XMLNODE *sel, XMLSTRING name)
 {
-  for(;sel;sel=sel->next) {
-    if(strcmp(sel->name->s, name) == 0) {
-      return sel;
-    }
+  for(; sel; sel = sel->next) {
+    if(xmls_equals(sel->name, name)) return sel;
   }
   return NULL;
 }
@@ -902,7 +900,7 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     case XPATH_NODE_VAR:
       res->type = VAL_NULL;
       if(!current) return;
-      get_variable_rv(pctx,locals,etree->name->s,res);
+      get_variable_rv(pctx,locals,etree->name,res);
       return;
   }
   res->type = VAL_NULL;

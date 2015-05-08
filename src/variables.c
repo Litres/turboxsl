@@ -134,19 +134,19 @@ void rval_copy(TRANSFORM_CONTEXT *pctx, RVALUE *dst, RVALUE *src)
   }
 }
 
-void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE *rv)
+void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLSTRING name, RVALUE *rv)
 {
   unsigned i;
   if(vars && vars->attributes) {  //first try locals
     for(vars=vars->attributes;vars;vars=vars->next) {
-      if(xml_strcmp(name, vars->name->s) == 0) {
+      if(xmls_equals(name, vars->name)) {
         rval_copy(pctx,rv,&vars->extra);
         return;
       }
     }
   }
   for(i=0;i<pctx->var_pos;++i) { // then globals
-    if(xml_strcmp(name, pctx->vars[i].name) == 0) {
+    if(xml_strcmp(name->s, pctx->vars[i].name) == 0) {
       rval_copy(pctx,rv,&pctx->vars[i].extra);
       return;
     }

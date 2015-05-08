@@ -262,7 +262,7 @@ void instruction_param(template_context *context, XMLNODE *instruction)
 {
     XMLSTRING name = xml_get_attr(instruction, xsl_a_name);
     XMLSTRING select = xml_get_attr(instruction, xsl_a_select);
-    if (!xpath_in_selection(context->parameters, name->s) && (select || instruction->children))
+    if (!xpath_in_selection(context->parameters, name) && (select || instruction->children))
     {
         do_local_var(context->context, context->local_variables, context->document_node, instruction);
     }

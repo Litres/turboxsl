@@ -174,7 +174,7 @@ XMLNODE *find_template(TRANSFORM_CONTEXT *pctx, XMLNODE *source, XMLSTRING mode)
 XMLNODE *template_byname(TRANSFORM_CONTEXT *pctx, XMLSTRING name);
 void precompile_templates(TRANSFORM_CONTEXT *pctx, XMLNODE *node);
 void precompile_variables(TRANSFORM_CONTEXT *pctx, XMLNODE *stylesheet, XMLNODE *doc);
-void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, char *name, RVALUE *rv);
+void get_variable_rv(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLSTRING name, RVALUE *rv);
 void free_variables(TRANSFORM_CONTEXT *pctx);
 
 void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE *var);
@@ -194,7 +194,7 @@ void xpath_eval_node(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current,
 
 XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, XMLSTRING expr);
 XMLNODE *xpath_sort_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *selection, XMLNODE *sort);
-XMLNODE *xpath_in_selection(XMLNODE *sel, char *name);
+XMLNODE *xpath_in_selection(XMLNODE *sel, XMLSTRING name);
 void xpath_free_selection(TRANSFORM_CONTEXT *pctx, XMLNODE *sel);
 XMLNODE *xpath_compile(TRANSFORM_CONTEXT *pctx, char *expr);
 XMLNODE *xpath_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *nodeset, XMLNODE *expr);
