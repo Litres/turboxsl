@@ -731,7 +731,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
     case XPATH_NODE_EQ:
       xpath_execute_scalar(pctx,locals,etree->children,current,&rv);
       xpath_execute_scalar(pctx,locals,etree->children->next,current,&rv1);
-
       res->type = VAL_BOOL;
       if(rval_equal(&rv, &rv1, 1)) {
         res->v.integer = 1;
@@ -905,8 +904,6 @@ void xpath_execute_scalar(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *etr
   }
   res->type = VAL_NULL;
 }
-
-
 
 int xpath_eval_boolean(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *current, XMLNODE *etree)
 {

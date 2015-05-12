@@ -220,6 +220,25 @@ static void add_template(TRANSFORM_CONTEXT *pctx, XMLNODE *template, XMLSTRING n
   }
 }
 
+int select_match_with_filter(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *node, XMLNODE *expr)
+{
+  if(node == NULL) return 0;
+
+  if(expr->type == XPATH_NODE_INT) {
+    long n = expr->extra.v.integer;
+    return node->position == n;
+  }
+
+  RVALUE rv;
+  xpath_execute_scalar(pctx, locals, expr, node, &rv);
+  if(rv.type == VAL_INT) {
+    long n = rv.v.integer;
+    return node->position == n;
+  }
+
+  return rval2bool(&rv);
+}
+
 static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 {
   XMLNODE *t;
@@ -246,26 +265,23 @@ static int select_match(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *templ)
 
 
     case XPATH_NODE_CONTEXT:
-        return 1;
+      return 1;
 
 
     case XPATH_NODE_SELF:
-        return select_match(pctx, node, templ->children);
+      return select_match(pctx, node, templ->children);
 
 
     case XPATH_NODE_FILTER:
       if(!select_match(pctx, node, templ->children))
         return 0;
 
-      return xpath_filter(pctx, NULL, node, templ->children->next) != NULL;
+      return select_match_with_filter(pctx, NULL, node, templ->children->next);
 
 
     case XPATH_NODE_UNION:
-      for(;node;node=node->next) {
-        for(t=templ->children;t;t=t->next) {
-          if(select_match(pctx,node,t))
-            return 1;
-        }
+      for(t=templ->children;t;t=t->next) {
+        if(select_match(pctx,node,t)) return 1;
       }
       return 0;
 
