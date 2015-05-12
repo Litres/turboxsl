@@ -191,7 +191,7 @@ char *get_absolute_path(XMLNODE *node, char *name)
   char *p = strrchr(file, '/');
   if(p != NULL) {
     size_t path_length = p - file + 1;
-    char *result = memory_allocator_new(path_length + strlen(name));
+    char *result = memory_allocator_new(path_length + strlen(name) + 1);
     memcpy(result, file, path_length);
     memcpy(result + path_length, name, strlen(name));
     return result;
