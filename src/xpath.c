@@ -16,6 +16,7 @@
 #include <math.h>
 
 #include "ltr_xsl.h"
+#include "xsl_elements.h"
 
 typedef struct {
   const char *value;
@@ -270,7 +271,7 @@ XMLNODE *xpath_get_self(XMLNODE *current, XMLNODE *kind)
 XMLNODE *xpath_get_parent(XMLNODE *current, XMLNODE *kind)
 {
   XMLNODE *parent = current->parent;
-  if (parent == NULL || strcmp(parent->name->s, "root") == 0) return NULL;
+  if (parent == NULL || xmls_equals(parent->name, xsl_s_root)) return NULL;
 
   unsigned pos = 0;
   return xpath_node_kind(parent, kind) ? add_to_selection(NULL, parent, &pos) : NULL;
@@ -327,7 +328,7 @@ XMLNODE *xpath_get_ancestor(XMLNODE *current, XMLNODE *kind)
   XMLNODE *ret = NULL;
   unsigned pos = 0;
   for(XMLNODE *node=current->parent;node;node=node->parent) {
-    if (strcmp(node->name->s, "root") == 0) return ret;
+    if (xmls_equals(node->name, xsl_s_root)) return ret;
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;

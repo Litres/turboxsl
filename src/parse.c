@@ -15,6 +15,7 @@
 #include <errno.h>
 
 #include "ltr_xsl.h"
+#include "xsl_elements.h"
 
 enum {INIT, OPEN, CLOSE, COMMENT, BODY, TEXT, XMLDECL, INSIDE_TAG, ATTR_VALUE, CDATA, DOCTYPE, ERROR} state;
 
@@ -122,7 +123,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
   unsigned ln = 0;
 
   state = INIT;
-  ret = xml_new_node(NULL,xmls_new_string_literal("root"),EMPTY_NODE);
+  ret = xml_new_node(NULL,xsl_s_root,EMPTY_NODE);
   ret->file = uri;
 
   while(*p) {
