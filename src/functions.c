@@ -981,13 +981,14 @@ void xf_veristat(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNOD
 
   RVALUE rv;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  if(rv.type != VAL_STRING || rv.v.string == NULL) {
+  char *url = rval2string(&rv);
+  if(url == NULL) {
     error("xf_veristat:: wrong argument");
     res->v.string = NULL;
     return;
   }
 
-  res->v.string = create_veristat_url(pctx, xmls_new_string_literal(rv.v.string));
+  res->v.string = create_veristat_url(pctx, xmls_new_string_literal(url));
 }
 
 void xf_veristat_local(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
