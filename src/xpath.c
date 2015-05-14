@@ -361,7 +361,8 @@ XMLNODE *xpath_get_preceding_sibling(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->original->prev;node;node=node->prev) {
+  XMLNODE *original = current->original != NULL ? current->original : current;
+  for(XMLNODE *node=original->prev;node;node=node->prev) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -375,7 +376,8 @@ XMLNODE *xpath_get_preceding(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->original->prev;node;node=node->prev) {
+  XMLNODE *original = current->original != NULL ? current->original : current;
+  for(XMLNODE *node=original->prev;node;node=node->prev) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -394,7 +396,8 @@ XMLNODE *xpath_get_following_sibling(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->original->next;node;node=node->next) {
+  XMLNODE *original = current->original != NULL ? current->original : current;
+  for(XMLNODE *node=original->next;node;node=node->next) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -408,7 +411,8 @@ XMLNODE *xpath_get_following(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->original->next;node;node=node->next) {
+  XMLNODE *original = current->original != NULL ? current->original : current;
+  for(XMLNODE *node=original->next;node;node=node->next) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
