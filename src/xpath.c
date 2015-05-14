@@ -117,6 +117,7 @@ XMLNODE *add_to_selection(XMLNODE *prev, XMLNODE *src, unsigned int *position)
     return prev;
 
   XMLNODE *dst = xml_new_node(NULL, NULL, src->type); //src->name already hashed, just copy pointer
+  dst->original = src;
   dst->name = src->name;
   dst->content = src->content;
   dst->attributes = src->attributes;
@@ -360,7 +361,7 @@ XMLNODE *xpath_get_preceding_sibling(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->prev;node;node=node->prev) {
+  for(XMLNODE *node=current->original->prev;node;node=node->prev) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -374,7 +375,7 @@ XMLNODE *xpath_get_preceding(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->prev;node;node=node->prev) {
+  for(XMLNODE *node=current->original->prev;node;node=node->prev) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -393,7 +394,7 @@ XMLNODE *xpath_get_following_sibling(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->next;node;node=node->next) {
+  for(XMLNODE *node=current->original->next;node;node=node->next) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;
@@ -407,7 +408,7 @@ XMLNODE *xpath_get_following(XMLNODE *current, XMLNODE *kind)
   XMLNODE *tmp = NULL;
   XMLNODE *ret = NULL;
   unsigned pos = 0;
-  for(XMLNODE *node=current->next;node;node=node->next) {
+  for(XMLNODE *node=current->original->next;node;node=node->next) {
     if(xpath_node_kind(node, kind)) {
       tmp = add_to_selection(tmp,node,&pos);
       if(!ret) ret = tmp;

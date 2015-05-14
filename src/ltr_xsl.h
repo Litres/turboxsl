@@ -56,6 +56,7 @@ struct _xmlnode {
   struct _xmlnode *prev;
   struct _xmlnode *children;
   struct _xmlnode *attributes;
+  struct _xmlnode *original;
   XML_FLAG flags;
   unsigned position;
   unsigned order;
