@@ -104,7 +104,3 @@ libturboxsl_la_LIBADD = -lpthread -lm -lmemcached -lck
 libturboxslincdir=$(includedir)/turboxsl
 libturboxslinc_HEADERS = turboxsl.h
 
-man_MANS = turboxsl.3
-
-EXTRA_DIST = $(man_MANS)
-
