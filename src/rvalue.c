@@ -228,7 +228,7 @@ int nodeset_equal_common(RVALUE *value, RVALUE *nodeset, unsigned eq)
   XMLNODE *node = nodeset->v.nodeset;
   if(node == NULL) return 0;
 
-  if(node->type == EMPTY_NODE) node = node->children;
+  if(node->type == EMPTY_NODE && node->children != NULL) node = node->children;
 
   RVALUE t;
   for(XMLNODE *p = node; p; p = p->next) {
