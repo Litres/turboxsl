@@ -33,15 +33,6 @@ char *skip_spaces(char *p, unsigned *ln)  // TODO add UTF8 spaces
 }
 
 static
-char *make_string(char *p, char *s)
-{
-  char * buf = memory_allocator_new(s - p + 2);
-  memcpy(buf,p,s-p);
-  buf[s-p]=0;
-  return buf;
-}
-
-static
 void decode_entity(char **s, XMLSTRING d)
 {
   unsigned u;
@@ -79,20 +70,18 @@ void decode_entity(char **s, XMLSTRING d)
 }
 
 static
-char *make_unescaped_string(char *p, char *s)
+XMLSTRING make_unescaped_string(char *p, char *s)
 {
-  char c;
   XMLSTRING buf = xmls_new(s-p);
-
   while(p<s) {
-    c = *p++;
+    char c = *p++;
     if(c=='&') {
       decode_entity(&p, buf);
     } else {
       xmls_add_char(buf, c);
     }
   }
-  return xmls_detach(buf);
+  return buf;
 }
 
 
@@ -118,7 +107,6 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
   XMLNODE *previous = NULL;
   char *p = document;
   char *c;
-  char *buffer;
   unsigned comment_depth = 0;
   unsigned ln = 0;
 
@@ -255,7 +243,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           current = xml_new_node(NULL,NULL, TEXT_NODE);
           current->file = uri;
           current->line = ln;
-          current->content = xmls_new_string_literal(make_string(p,c));
+          current->content = xmls_new_string(p, c - p);
           current->flags = XML_FLAG_NOESCAPE;
           current->prev = previous;
           if(previous)
@@ -283,7 +271,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           current = xml_new_node(NULL, NULL, TEXT_NODE);
           current->file = uri;
           current->line = ln;
-          current->content = xmls_new_string_literal(make_unescaped_string(p,c));
+          current->content = make_unescaped_string(p,c);
           current->prev = previous;
           if(previous)
             previous->next = current;
@@ -303,7 +291,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
           char endchar = *p++;
           for(c=p;*c != endchar;++c)
             ;
-          attr->content = xmls_new_string_literal(make_unescaped_string(p,c));
+          attr->content = make_unescaped_string(p,c);
         }
         p = skip_spaces(c+1,&ln);
         state = INSIDE_TAG;
