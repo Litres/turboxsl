@@ -48,19 +48,8 @@ threadpool *threadpool_init(unsigned int num_of_threads)
     if (num_of_threads == 0) return NULL;
 
     threadpool *pool = memory_allocator_new(sizeof(threadpool));
-    if (pool == NULL)
-    {
-        error("threadpool_init:: memory");
-        return NULL;
-    }
     pool->num_of_threads = num_of_threads;
-
     pool->stop_task = memory_allocator_new(sizeof(threadpool_task));
-    if (pool->stop_task == NULL)
-    {
-        error("threadpool_init:: memory");
-        return NULL;
-    }
 
     if (pthread_mutex_init(&(pool->blocked_lock), NULL))
     {
@@ -76,12 +65,6 @@ threadpool *threadpool_init(unsigned int num_of_threads)
     }
 
     pool->threads = memory_allocator_new(sizeof(pthread_t) * num_of_threads);
-    if (pool->threads == NULL)
-    {
-        error("threadpool_init:: malloc");
-        return NULL;
-    }
-
     for (unsigned int i = 0; i < num_of_threads; i++)
     {
         if (pthread_create(&(pool->threads[i]), NULL, worker_thr_routine, pool))

@@ -31,12 +31,6 @@ void xml_unlink_node(XMLNODE *node)
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type)
 {
     XMLNODE *ret = memory_allocator_new(sizeof(XMLNODE));
-    if (ret == NULL)
-    {
-        error("xml_new_node:: malloc");
-        return NULL;
-    }
-
     ret->type = type;
     ret->name = name;
     ret->uid = ret;

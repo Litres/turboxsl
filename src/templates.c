@@ -43,19 +43,7 @@ struct template_map_ {
 template_map *template_map_create()
 {
   template_map *result = memory_allocator_new(sizeof(template_map));
-  if(result == NULL)
-  {
-    error("template_map_create:: memory");
-    return NULL;
-  }
-
   result->empty_mode = memory_allocator_new(sizeof(template_map_entry));
-  if (result->empty_mode == NULL)
-  {
-    error("template_map_create:: memory");
-    return NULL;
-  }
-
   result->modes = dict_new(100);
 
   return result;
@@ -88,11 +76,6 @@ template_map_entry *template_map_find_entry(template_map *map, XMLSTRING mode)
 template *template_map_add_template(template_map_entry *entry)
 {
   template *result = memory_allocator_new(sizeof(template));
-  if(result == NULL)
-  {
-    error("template_map_add_template:: memory");
-    return NULL;
-  }
   result->matchtype = TMATCH_NONE;
 
   if(entry->head == NULL)

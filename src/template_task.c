@@ -29,12 +29,6 @@ void template_task_run(template_context *context, void (*function)(template_cont
     }
 
     template_task_context *task_context = memory_allocator_new(sizeof(template_task_context));
-    if (task_context == NULL)
-    {
-        error("template_task_run:: context");
-        return;
-    }
-
     task_context->context = context;
     task_context->function = function;
     // continue template task
@@ -65,12 +59,6 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
     context->workers = shared_variable_create();
 
     template_task_context *task_context = memory_allocator_new(sizeof(template_task_context));
-    if (task_context == NULL)
-    {
-        error("template_task_run_and_wait:: context");
-        return;
-    }
-
     task_context->context = context;
     task_context->function = function;
     task_context->workers = context->workers;
