@@ -3,9 +3,9 @@
 
 #include "ltr_xsl.h"
 
-typedef struct template_task_context_ template_task_context;
+typedef struct template_task_ template_task;
 
-void template_task_run(template_context *context, void (*function)(template_context *));
+void template_task_run(XMLNODE *instruction, template_context *context, void (*function)(template_context *));
 
 void template_task_run_and_wait(template_context *context, void (*function)(template_context *));
 

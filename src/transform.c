@@ -18,6 +18,7 @@
 
 #include "xsl_elements.h"
 #include "template_task.h"
+#include "template_task_graph.h"
 #include "instructions.h"
 
 XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, XMLNODE *parent, XMLNODE *src)
@@ -125,6 +126,7 @@ void apply_xslt_template(template_context *context)
         new_context->parameters = context->parameters;
         new_context->local_variables = copy_variables(context->context, context->local_variables);
         new_context->workers = context->workers;
+        new_context->task_mode = context->task_mode;
 
         apply_xslt_template(new_context);
       }
@@ -155,8 +157,9 @@ void apply_default_process(template_context *context)
       new_context->local_variables = copy_variables(context->context, context->local_variables);
       new_context->mode = context->mode;
       new_context->workers = context->workers;
+      new_context->task_mode = context->task_mode;
 
-      is_new_task_allowed(child) ? template_task_run(new_context, process_one_node) : process_one_node(new_context);
+      process_one_node(new_context);
     }
   }
 }
@@ -178,6 +181,7 @@ void process_one_node(template_context *context)
     new_context->parameters = context->parameters;
     new_context->local_variables = scope;
     new_context->workers = context->workers;
+    new_context->task_mode = context->task_mode;
 
     apply_xslt_template(new_context);
   } else {
@@ -457,6 +461,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   concurrent_dictionary_release(pctx->expressions);
   template_map_release(pctx->templates);
   dict_free(pctx->named_templ);
+  dict_free(pctx->parallel_instructions);
   threadpool_free(pctx->pool);
 
   xml_free_document(pctx->stylesheet);
@@ -510,6 +515,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   ret->expressions = concurrent_dictionary_create();
 
   xpath_setup_functions(ret);
+  instructions_set_parallel(ret);
 
   ret->stylesheet = xsl_preprocess(ret, ret->stylesheet);  //root node is always empty
   process_imports(ret, ret->stylesheet->children);
@@ -555,6 +561,20 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
 }
 
+void XSLTSetParallelInstructions(TRANSFORM_CONTEXT *ctx, char **tags, int tag_count)
+{
+  memory_allocator_set_current(ctx->allocator);
+
+  dict_free(ctx->parallel_instructions);
+  ctx->parallel_instructions = dict_new(32);
+
+  for (int i = 0; i < tag_count; i++)
+  {
+    XMLSTRING tag_string = xmls_new_string_literal(tags[i]);
+    dict_add(ctx->parallel_instructions, tag_string, tag_string);
+  }
+}
+
 void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
 {
   memory_allocator_set_current(ctx->allocator);
@@ -565,6 +585,12 @@ void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
 {
   memory_allocator_set_current(ctx->allocator);
   ctx->url_local_prefix = xml_strdup(prefix);
+}
+
+void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename)
+{
+  memory_allocator_set_current(ctx->allocator);
+  ctx->task_graph = template_task_graph_create(xmls_new_string_literal(filename));
 }
 
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
@@ -608,6 +634,8 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   info("XSLTProcess:: start process");
   template_task_run_and_wait(new_context, process_one_node);
   info("XSLTProcess:: end process");
+
+  template_task_graph_release(pctx->task_graph);
 
 /****************** add dtd et al if required *******************/
   XMLNODE *t = find_first_node(ret);

@@ -67,6 +67,8 @@ libturboxsl_la_SOURCES = \
   shared_variable.h \
   template_task.c \
   template_task.h \
+  template_task_graph.c \
+  template_task_graph.h \
   threadpool.c \
   threadpool.h \
   parse.c \

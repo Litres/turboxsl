@@ -108,6 +108,8 @@ struct _context {
   char *cache_key_prefix;
   char *url_local_prefix;
   XMLDICT *user_rights;
+  XMLDICT *parallel_instructions;
+  void *task_graph; // TODO fix dependency graph
   template_map *templates;
   XMLDICT *named_templ; // templates for call'ing
   XMLNODE *root_node;
@@ -135,6 +137,8 @@ struct _context {
   OUTPUT_MODE outmode;
 };
 
+typedef enum {DEFAULT, DENY, SINGLE} TEMPLATE_TASK_MODE;
+
 typedef struct template_context_ {
   TRANSFORM_CONTEXT *context;
   XMLNODE *instruction;
@@ -144,6 +148,7 @@ typedef struct template_context_ {
   XMLNODE *local_variables;
   XMLSTRING mode;
   shared_variable *workers;
+  TEMPLATE_TASK_MODE task_mode;
 } template_context;
 
 XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache);
@@ -155,12 +160,11 @@ XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type);
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type);
 void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
 
-int is_new_task_allowed(XMLNODE *node);
+int is_node_parallel(XMLNODE *node);
 
 /********************** transform.c -- XSLT mainloop ****************/
 void apply_xslt_template(template_context *context);
 void process_one_node(template_context *context);
-void apply_default_process(template_context *context);
 
 XMLNODE *find_first_node(XMLNODE *n);
 XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source, XMLNODE *foreval);

@@ -94,7 +94,7 @@ XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src)
   return ret;
 }
 
-int is_new_task_allowed(XMLNODE *node)
+int is_node_parallel(XMLNODE *node)
 {
     if (node->type == TEXT_NODE) return 0;
 

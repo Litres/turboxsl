@@ -18,9 +18,11 @@ void XSLTEnd(XSLTGLOBALDATA *data);
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *data, char *stylesheet);
 void XSLTCreateThreadPool(TRANSFORM_CONTEXT *ctx, unsigned int size);
+void XSLTSetParallelInstructions(TRANSFORM_CONTEXT *ctx, char **tags, int tag_count);
 void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);
 void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);
 void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, int group_count);
+void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename);
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *ctx);
 

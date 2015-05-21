@@ -50,6 +50,7 @@ void xsl_elements_setup()
     xsl_a_datatype = xmls_new_string_literal("data-type");
     xsl_a_order    = xmls_new_string_literal("order");
     xsl_a_caseorder = xmls_new_string_literal("case-order");
+    xsl_a_fork     = xmls_new_string_literal("fork");
 
     xsl_a_decimal_separator = xmls_new_string_literal("decimal-separator");
     xsl_a_grouping_separator = xmls_new_string_literal("grouping-separator");
@@ -65,12 +66,14 @@ void xsl_elements_setup()
     xsl_s_html = xmls_new_string_literal("html");
     xsl_s_text = xmls_new_string_literal("text");
     xsl_s_yes = xmls_new_string_literal("yes");
+    xsl_s_no = xmls_new_string_literal("no");
     xsl_s_number = xmls_new_string_literal("number");
     xsl_s_descending = xmls_new_string_literal("descending");
     xsl_s_lower_first = xmls_new_string_literal("lower-first");
     xsl_s_script = xmls_new_string_literal("script");
     xsl_s_node = xmls_new_string_literal("node");
     xsl_s_root = xmls_new_string_literal("root");
+    xsl_s_deny = xmls_new_string_literal("deny");
 
     xsl_s_head = xmls_new_string_literal("head");
     xsl_s_img = xmls_new_string_literal("img");

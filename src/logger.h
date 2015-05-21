@@ -15,6 +15,11 @@ void logger_release();
 
 #define info(M, ...) zlog_info(logger_category, M, ##__VA_ARGS__)
 #define error(M, ...) zlog_error(logger_category, M, ##__VA_ARGS__)
+
+#ifndef DEBUG
+#define debug(M, ...)
+#else
 #define debug(M, ...) zlog_debug(logger_category, M, ##__VA_ARGS__)
+#endif
 
 #endif

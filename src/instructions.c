@@ -39,6 +39,7 @@ void instruction_call_template(template_context *context, XMLNODE *instruction)
             new_context->result = parameter->extra.v.nodeset;
             new_context->document_node = context->document_node;
             new_context->local_variables = context->local_variables;
+            new_context->task_mode = SINGLE;
 
             apply_xslt_template(new_context);
         }
@@ -59,8 +60,9 @@ void instruction_call_template(template_context *context, XMLNODE *instruction)
     new_context->parameters = parameters;
     new_context->local_variables = local_variables;
     new_context->workers = context->workers;
+    new_context->task_mode = context->task_mode;
 
-    apply_xslt_template(new_context);
+    template_task_run(instruction, new_context, apply_xslt_template);
 }
 
 void instruction_apply_templates(template_context *context, XMLNODE *instruction)
@@ -105,6 +107,7 @@ void instruction_apply_templates(template_context *context, XMLNODE *instruction
                 new_context->result = parameter->extra.v.nodeset;
                 new_context->document_node = context->document_node;
                 new_context->local_variables = context->local_variables;
+                new_context->task_mode = SINGLE;
 
                 apply_xslt_template(new_context);
             }
@@ -134,8 +137,9 @@ void instruction_apply_templates(template_context *context, XMLNODE *instruction
         new_context->local_variables = local_variables;
         new_context->mode = mode;
         new_context->workers = context->workers;
+        new_context->task_mode = context->task_mode;
 
-        is_new_task_allowed(node) ? template_task_run(new_context, process_one_node) : process_one_node(new_context);
+        is_node_parallel(node) ? template_task_run(instruction, new_context, process_one_node) : process_one_node(new_context);
     }
 }
 
@@ -179,8 +183,9 @@ void instruction_element(template_context *context, XMLNODE *instruction)
     new_context->parameters = context->parameters;
     new_context->local_variables = copy_variables(context->context, context->local_variables);
     new_context->workers = context->workers;
+    new_context->task_mode = context->task_mode;
 
-    apply_xslt_template(new_context);
+    template_task_run(instruction, new_context, apply_xslt_template);
 }
 
 void instruction_if(template_context *context, XMLNODE *instruction)
@@ -201,6 +206,7 @@ void instruction_if(template_context *context, XMLNODE *instruction)
         new_context->parameters = context->parameters;
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
+        new_context->task_mode = context->task_mode;
 
         apply_xslt_template(new_context);
     }
@@ -235,6 +241,7 @@ void instruction_choose(template_context *context, XMLNODE *instruction)
                 new_context->parameters = context->parameters;
                 new_context->local_variables = context->local_variables;
                 new_context->workers = context->workers;
+                new_context->task_mode = context->task_mode;
 
                 apply_xslt_template(new_context);
                 break;
@@ -253,6 +260,7 @@ void instruction_choose(template_context *context, XMLNODE *instruction)
         new_context->parameters = context->parameters;
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
+        new_context->task_mode = context->task_mode;
 
         apply_xslt_template(new_context);
     }
@@ -302,8 +310,9 @@ void instruction_for_each(template_context *context, XMLNODE *instruction)
         new_context->parameters = context->parameters;
         new_context->local_variables = copy_variables(context->context, context->local_variables);
         new_context->workers = context->workers;
+        new_context->task_mode = context->task_mode;
 
-        is_new_task_allowed(node) ? template_task_run(new_context, apply_xslt_template) : apply_xslt_template(new_context);
+        is_node_parallel(node) ? template_task_run(instruction, new_context, apply_xslt_template) : apply_xslt_template(new_context);
     }
 }
 
@@ -411,6 +420,7 @@ void instruction_copy(template_context *context, XMLNODE *instruction)
         new_context->parameters = context->parameters;
         new_context->local_variables = context->local_variables;
         new_context->workers = context->workers;
+        new_context->task_mode = context->task_mode;
 
         apply_xslt_template(new_context);
     }
@@ -500,4 +510,11 @@ void instructions_process(template_context *context, XMLNODE *instruction)
     }
 
     function(context, instruction);
+}
+
+void instructions_set_parallel(TRANSFORM_CONTEXT *pctx)
+{
+    pctx->parallel_instructions = dict_new(32);
+    dict_add(pctx->parallel_instructions, xsl_apply, xsl_apply);
+    dict_add(pctx->parallel_instructions, xsl_foreach, xsl_foreach);
 }

@@ -1147,6 +1147,14 @@ void xf_key(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *cu
   }
 }
 
+void xf_thread_id(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+{
+  res->type = VAL_STRING;
+  char buffer[256];
+  sprintf(buffer, "%p", pthread_self());
+  res->v.string = xml_strdup(buffer);
+}
+
 /*******************************************************************************/
 
 void xf_stub(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -1159,8 +1167,6 @@ void xf_stub(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *c
  * Adds a function to context storage
  *
  */
-
-
 void add_function(TRANSFORM_CONTEXT *pctx, char *fname, void (*fun)(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res))
 {
   if(!pctx->functions) {
@@ -1207,7 +1213,7 @@ static void do_callback(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args,
 void xpath_setup_functions(TRANSFORM_CONTEXT *pctx)
 {
   add_function(pctx,"ltr:url_code",xf_urlcode); // 2132!!!
-  add_function(pctx, "ltr:veristat_local", xf_veristat_local); // 642
+  add_function(pctx,"ltr:veristat_local", xf_veristat_local); // 642
   add_function(pctx,"position",xf_position); // 356
   add_function(pctx,"count",xf_count); // 288
   add_function(pctx,"chk:check_rights",xf_check); // 202
@@ -1246,11 +1252,12 @@ void xpath_setup_functions(TRANSFORM_CONTEXT *pctx)
   add_function(pctx,"ltr:encode_base64",xf_base64); // 2
   add_function(pctx,"exsl:node-set",xf_exnodeset); // 2
   add_function(pctx,"starts-with",xf_starts); // 0
-  add_function(pctx, "local-name", xf_local_name); // 2
+  add_function(pctx,"local-name", xf_local_name); // 2
   add_function(pctx,"node",xf_node); // 0
   add_function(pctx,"string",xf_tostr); // 0 ?
   add_function(pctx,"system-property",xf_stub); // 0
   add_function(pctx,"ltr:existsOnHost",xf_exists); // 0
+  add_function(pctx,"ltr:thread-id",xf_thread_id);
 }
 
 void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res)
