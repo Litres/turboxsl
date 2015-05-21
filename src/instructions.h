@@ -11,4 +11,6 @@ int instructions_is_xsl(XMLNODE *instruction);
 
 void instructions_process(template_context *context, XMLNODE *instruction);
 
+void instructions_set_parallel(TRANSFORM_CONTEXT *pctx);
+
 #endif

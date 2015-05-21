@@ -50,6 +50,7 @@ XMLSTRING xsl_a_use;
 XMLSTRING xsl_a_datatype;
 XMLSTRING xsl_a_order;
 XMLSTRING xsl_a_caseorder;
+XMLSTRING xsl_a_fork;
 
 XMLSTRING xsl_a_decimal_separator;
 XMLSTRING xsl_a_grouping_separator;
@@ -65,12 +66,14 @@ XMLSTRING xsl_s_xml;
 XMLSTRING xsl_s_html;
 XMLSTRING xsl_s_text;
 XMLSTRING xsl_s_yes;
+XMLSTRING xsl_s_no;
 XMLSTRING xsl_s_number;
 XMLSTRING xsl_s_descending;
 XMLSTRING xsl_s_lower_first;
 XMLSTRING xsl_s_script;
 XMLSTRING xsl_s_node;
 XMLSTRING xsl_s_root;
+XMLSTRING xsl_s_deny;
 
 XMLSTRING xsl_s_head;
 XMLSTRING xsl_s_img;
