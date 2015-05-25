@@ -50,7 +50,7 @@ void xsl_elements_setup()
     xsl_a_datatype = xmls_new_string_literal("data-type");
     xsl_a_order    = xmls_new_string_literal("order");
     xsl_a_caseorder = xmls_new_string_literal("case-order");
-    xsl_a_fork     = xmls_new_string_literal("fork");
+    xsl_a_fork     = xmls_new_string_literal("t:fork");
 
     xsl_a_decimal_separator = xmls_new_string_literal("decimal-separator");
     xsl_a_grouping_separator = xmls_new_string_literal("grouping-separator");
@@ -82,4 +82,8 @@ void xsl_elements_setup()
     xsl_s_br = xmls_new_string_literal("br");
     xsl_s_link = xmls_new_string_literal("link");
     xsl_s_input = xmls_new_string_literal("input");
+
+    xsl_s_red = xmls_new_string_literal("red");
+    xsl_s_green = xmls_new_string_literal("green");
+    xsl_s_yellow = xmls_new_string_literal("yellow");
 }

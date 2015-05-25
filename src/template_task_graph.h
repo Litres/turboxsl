@@ -11,6 +11,10 @@ void template_task_graph_release(template_task_graph_t *graph);
 
 void template_task_graph_set_current(template_task_graph_t *graph, template_context *task);
 
-void template_task_graph_add(template_task_graph_t *graph, XMLNODE *instruction, template_context *task);
+void template_task_graph_add_parallel(template_task_graph_t *graph, XMLNODE *instruction, template_context *task);
+
+void template_task_graph_add_serial(template_task_graph_t *graph, XMLNODE *instruction, template_context *task);
+
+void template_task_graph_save(TRANSFORM_CONTEXT *context, template_task_graph_t *graph);
 
 #endif

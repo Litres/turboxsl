@@ -83,6 +83,10 @@ XMLSTRING xsl_s_br;
 XMLSTRING xsl_s_link;
 XMLSTRING xsl_s_input;
 
+XMLSTRING xsl_s_red;
+XMLSTRING xsl_s_green;
+XMLSTRING xsl_s_yellow;
+
 void xsl_elements_setup();
 
 #endif

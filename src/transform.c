@@ -462,6 +462,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   template_map_release(pctx->templates);
   dict_free(pctx->named_templ);
   dict_free(pctx->parallel_instructions);
+  template_task_graph_release(pctx->task_graph);
   threadpool_free(pctx->pool);
 
   xml_free_document(pctx->stylesheet);
@@ -635,7 +636,7 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   template_task_run_and_wait(new_context, process_one_node);
   info("XSLTProcess:: end process");
 
-  template_task_graph_release(pctx->task_graph);
+  template_task_graph_save(pctx, pctx->task_graph);
 
 /****************** add dtd et al if required *******************/
   XMLNODE *t = find_first_node(ret);

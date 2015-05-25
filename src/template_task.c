@@ -39,6 +39,7 @@ void template_task_run(XMLNODE *instruction, template_context *context, void (*f
         if (!xmls_equals(fork, xsl_s_yes))
         {
             debug("deny task mode");
+            template_task_graph_add_serial(context->context->task_graph, instruction, context);
             function(context);
             return;
         }
@@ -53,6 +54,7 @@ void template_task_run(XMLNODE *instruction, template_context *context, void (*f
             if (xmls_equals(fork, xsl_s_no))
             {
                 debug("no fork");
+                template_task_graph_add_serial(context->context->task_graph, instruction, context);
                 function(context);
                 return;
             }
@@ -68,6 +70,7 @@ void template_task_run(XMLNODE *instruction, template_context *context, void (*f
             if (dict_find(context->context->parallel_instructions, instruction->name) == NULL)
             {
                 debug("instruction not found in default list");
+                template_task_graph_add_serial(context->context->task_graph, instruction, context);
                 function(context);
                 return;
             }
@@ -85,7 +88,7 @@ void template_task_run(XMLNODE *instruction, template_context *context, void (*f
         shared_variable_increase(task->workers);
     }
 
-    template_task_graph_add(task->context->context->task_graph, instruction, context);
+    template_task_graph_add_parallel(context->context->task_graph, instruction, context);
     threadpool_start(context->context->pool, template_task_function, task);
 }
 
@@ -111,7 +114,7 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
     task->function = function;
     task->workers = context->workers;
 
-    template_task_graph_add(task->context->context->task_graph, NULL, context);
+    template_task_graph_add_parallel(context->context->task_graph, NULL, context);
     threadpool_start(context->context->pool, template_task_function, task);
 
     shared_variable_wait(task->workers);
