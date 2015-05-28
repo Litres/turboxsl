@@ -75,6 +75,7 @@ XMLNODE *xpath_nodeset_copy(TRANSFORM_CONTEXT *pctx, XMLNODE *src)
 
   ret = dst = xml_new_node(pctx, NULL,src->type);
   for(;;) {
+    dst->original = src->original;
     dst->name = src->name;
     dst->position = ++i;
     dst->order = src->order;
