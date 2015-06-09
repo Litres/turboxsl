@@ -63,6 +63,9 @@ void template_task_run(XMLNODE *instruction, template_context *context, void (*f
             {
                 debug("switch to deny task mode");
                 context->task_mode = DENY;
+                template_task_graph_add_serial(context->context->task_graph, instruction, context);
+                function(context);
+                return;
             }
         }
         else
