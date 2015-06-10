@@ -895,16 +895,15 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
   res->type = VAL_STRING;
   if(args == NULL) {
     debug("xf_urlcode:: no arguments");
-    res->v.string = xml_strdup("/");
+    res->v.string = "/";
     return;
   }
 
   if(pctx->gctx->perl_urlcode == NULL) {
-    res->v.string = xml_strdup("/");
+    res->v.string = "/";
     return;
   }
 
-  int allocator_activated = memory_allocator_activate_parent(1);
   XMLSTRING buffer = xmls_new(100);
   for(XMLNODE *parg=args;parg;parg=parg->next) {
     RVALUE rv;
@@ -916,39 +915,47 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
 
   if(buffer->len == 0) {
     debug("xf_urlcode:: key is empty, return default value");
-    res->v.string = xml_strdup("/");
-    if (allocator_activated) memory_allocator_activate_parent(0);
+    res->v.string = "/";
     return;
   }
 
   char *key = xmls_detach(buffer);
-  char *cache_key = key;
-  if(pctx->cache_key_prefix != NULL) {
-    size_t prefix_length = strlen(pctx->cache_key_prefix);
-    size_t key_length = strlen(key);
-    char *t = memory_allocator_new(prefix_length + key_length + 1);
-    memcpy(t, pctx->cache_key_prefix, prefix_length);
-    memcpy(t + prefix_length, key, key_length);
-    cache_key = t;
-  }
-
   char *p = concurrent_dictionary_find(pctx->gctx->urldict, key);
   if(!p) {
+    char *cache_key = key;
+    if(pctx->cache_key_prefix != NULL) {
+      size_t prefix_length = strlen(pctx->cache_key_prefix);
+      size_t key_length = strlen(key);
+      char *t = memory_allocator_new(prefix_length + key_length + 1);
+      memcpy(t, pctx->cache_key_prefix, prefix_length);
+      memcpy(t + prefix_length, key, key_length);
+      cache_key = t;
+    }
+
     p = external_cache_get(pctx->gctx->cache, cache_key);
     if(!p) {
       char *p_args[2];
       p_args[0] = key;
       p_args[1] = NULL;
       p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
-      external_cache_set(pctx->gctx->cache, cache_key, p);
-      concurrent_dictionary_add(pctx->gctx->urldict, key, p);
+
+      int allocator_activated = memory_allocator_activate_parent(1);
+      char *key_copy = xml_strdup(key);
+      char *cache_key_copy = xml_strdup(cache_key);
+      char *p_copy = xml_strdup(p);
+      external_cache_set(pctx->gctx->cache, cache_key_copy, p_copy);
+      concurrent_dictionary_add(pctx->gctx->urldict, key_copy, p_copy);
+      if (allocator_activated) memory_allocator_activate_parent(0);
     } else {
-      concurrent_dictionary_add(pctx->gctx->urldict, key, p);
+      int allocator_activated = memory_allocator_activate_parent(1);
+      char *key_copy = xml_strdup(key);
+      char *p_copy = xml_strdup(p);
+      concurrent_dictionary_add(pctx->gctx->urldict, key_copy, p_copy);
+      if (allocator_activated) memory_allocator_activate_parent(0);
     }
   }
 
   res->v.string = xml_strdup(p);
-  if (allocator_activated) memory_allocator_activate_parent(0);
 }
 
 char *create_veristat_url(TRANSFORM_CONTEXT *pctx, XMLSTRING url)

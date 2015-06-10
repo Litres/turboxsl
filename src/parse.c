@@ -326,7 +326,7 @@ XMLNODE *XMLParseFile(XSLTGLOBALDATA *gctx, char *file)
   return xml_parse_file(gctx, xml_strdup(file), 0);
 }
 
-XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
+XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator)
 {
 	XMLNODE   *ret;
 	FILE      *pFile;
@@ -364,7 +364,7 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache)
 	buffer[length] = 0;
 
     memory_allocator *allocator = NULL;
-    if (has_cache == 0)
+    if (has_allocator == 0)
     {
       allocator = memory_allocator_create(NULL);
       memory_allocator_add_entry(allocator, pthread_self(), 1000000);

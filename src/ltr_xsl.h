@@ -151,7 +151,7 @@ typedef struct template_context_ {
   TEMPLATE_TASK_MODE task_mode;
 } template_context;
 
-XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_cache);
+XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator);
 XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache);
 
 /********************** nodes.c -- nodes operations *****************/

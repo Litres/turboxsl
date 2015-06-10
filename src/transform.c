@@ -500,7 +500,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   memory_allocator_set_current(ret->allocator);
 
   ret->gctx = gctx;
-  ret->stylesheet = XMLParseFile(gctx, stylesheet);
+  ret->stylesheet = xml_parse_file(gctx, xml_strdup(stylesheet), 1);
   if(!ret->stylesheet) {
     free(ret);
     return NULL;
@@ -559,6 +559,7 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
 
   pctx->pool = threadpool_init(size);
   threadpool_set_allocator(pctx->allocator, pctx->pool);
+
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
 }
 

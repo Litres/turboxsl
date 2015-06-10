@@ -183,6 +183,11 @@ void memory_allocator_set_current(memory_allocator *allocator)
     current_allocator = allocator;
 }
 
+memory_allocator *memory_allocator_get_current()
+{
+    return current_allocator;
+}
+
 int memory_allocator_activate_parent(int activate)
 {
     pthread_t self = pthread_self();
