@@ -40,11 +40,11 @@ XMLNODE *xpath_find_expr(TRANSFORM_CONTEXT *pctx, XMLSTRING expr)
 
   XMLNODE *compiled = concurrent_dictionary_find(pctx->expressions, expr->s);
   if(compiled == NULL) {
-    int allocator_activated = memory_allocator_activate_parent(1);
+    int allocator_activated = memory_allocator_activate_mode(MEMORY_ALLOCATOR_MODE_STYLESHEET);
     char *copy = xml_strdup(expr->s);
     compiled = xpath_compile(pctx, copy);
     concurrent_dictionary_add(pctx->expressions, copy, compiled);
-    if (allocator_activated) memory_allocator_activate_parent(0);
+    if (allocator_activated) memory_allocator_activate_mode(MEMORY_ALLOCATOR_MODE_SELF);
   }
 
   return compiled;

@@ -122,12 +122,6 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
 
 char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *tree)
 {
-  memory_allocator *current_allocator = memory_allocator_get_current();
-
-  memory_allocator *allocator = memory_allocator_create(NULL);
-  memory_allocator_add_entry(allocator, pthread_self(), 1000000);
-  memory_allocator_set_current(allocator);
-
   XMLSTRING rtext = xmls_new(10000);
   XMLNODE *t;
   if(ctx->outmode==MODE_XML) {
@@ -153,10 +147,6 @@ char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *tree)
   }
   if(tree)
     output_node_rec(tree,rtext,ctx);
-
-  memory_allocator_release(allocator);
-  memory_allocator_set_current(current_allocator);
-
   return xmls_detach(rtext);
 }
 

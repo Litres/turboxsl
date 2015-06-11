@@ -366,7 +366,7 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator)
     memory_allocator *allocator = NULL;
     if (has_allocator == 0)
     {
-      allocator = memory_allocator_create(NULL);
+      allocator = memory_allocator_create();
       memory_allocator_add_entry(allocator, pthread_self(), 1000000);
       memory_allocator_set_current(allocator);
     }
@@ -384,14 +384,14 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator)
 	return ret;
 }
 
-XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache)
+XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator)
 {
   XMLNODE *ret;
 
   memory_allocator *allocator = NULL;
-  if (has_cache == 0)
+  if (has_allocator == 0)
   {
-    allocator = memory_allocator_create(NULL);
+    allocator = memory_allocator_create();
     memory_allocator_add_entry(allocator, pthread_self(), 1000000);
     memory_allocator_set_current(allocator);
   }

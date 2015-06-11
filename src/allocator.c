@@ -14,14 +14,14 @@ typedef struct memory_allocator_data {
 
 typedef struct memory_allocator_entry {
     pthread_t thread;
-    int is_actual;
+    MEMORY_ALLOCATOR_MODE mode;
     memory_allocator_data *head;
     memory_allocator_data *tail;
     struct memory_allocator_entry *next_entry;
 } memory_allocator_entry;
 
 struct memory_allocator_ {
-    memory_allocator *parent_allocator;
+    memory_allocator **custom_allocators;
     struct memory_allocator_entry *head_entry;
     pthread_key_t entry_key;
 };
@@ -108,7 +108,7 @@ memory_allocator_entry *memory_allocator_find_entry(memory_allocator *allocator)
     return t;
 }
 
-memory_allocator *memory_allocator_create(memory_allocator *parent)
+memory_allocator *memory_allocator_create()
 {
     memory_allocator *allocator = malloc(sizeof(memory_allocator));
     if (allocator == NULL)
@@ -118,7 +118,6 @@ memory_allocator *memory_allocator_create(memory_allocator *parent)
     }
 
     memset(allocator, 0, sizeof(memory_allocator));
-    allocator->parent_allocator = parent;
 
     if (pthread_key_create(&(allocator->entry_key), NULL))
     {
@@ -127,6 +126,15 @@ memory_allocator *memory_allocator_create(memory_allocator *parent)
     }
 
     return allocator;
+}
+
+void memory_allocator_set_custom(memory_allocator *allocator, MEMORY_ALLOCATOR_MODE mode, memory_allocator *custom_allocator)
+{
+    // TODO remove hard code?
+    if (allocator->custom_allocators == NULL) allocator->custom_allocators = malloc(2 * sizeof(memory_allocator));
+
+    if (mode == MEMORY_ALLOCATOR_MODE_STYLESHEET) allocator->custom_allocators[0] = custom_allocator;
+    if (mode == MEMORY_ALLOCATOR_MODE_GLOBAL) allocator->custom_allocators[1] = custom_allocator;
 }
 
 void memory_allocator_release(memory_allocator *allocator)
@@ -157,7 +165,7 @@ void memory_allocator_add_entry(memory_allocator *allocator, pthread_t thread, s
 
     memset(e, 0, sizeof(memory_allocator_entry));
     e->thread = thread;
-    e->is_actual = 1;
+    e->mode = MEMORY_ALLOCATOR_MODE_SELF;
     e->head = memory_allocator_create_data(size);
     if (e->head == NULL)
     {
@@ -183,12 +191,7 @@ void memory_allocator_set_current(memory_allocator *allocator)
     current_allocator = allocator;
 }
 
-memory_allocator *memory_allocator_get_current()
-{
-    return current_allocator;
-}
-
-int memory_allocator_activate_parent(int activate)
+int memory_allocator_activate_mode(MEMORY_ALLOCATOR_MODE mode)
 {
     pthread_t self = pthread_self();
     memory_allocator_entry *t = current_allocator->head_entry;
@@ -199,9 +202,9 @@ int memory_allocator_activate_parent(int activate)
         return 0;
     }
 
-    if (t->is_actual == !activate) return 0;
+    if (t->mode == mode) return 0;
 
-    t->is_actual = !activate;
+    t->mode = mode;
     return 1;
 }
 
@@ -210,10 +213,14 @@ void *memory_allocator_new(size_t size)
     memory_allocator_entry *t = memory_allocator_find_entry(current_allocator);
     if (t == NULL) return NULL;
 
-    memory_allocator *parent_allocator = current_allocator->parent_allocator;
-    if (parent_allocator != NULL && !t->is_actual)
+    memory_allocator **custom_allocators = current_allocator->custom_allocators;
+    if (custom_allocators != NULL && t->mode != MEMORY_ALLOCATOR_MODE_SELF)
     {
-        t = memory_allocator_find_entry(parent_allocator);
+        memory_allocator *custom_allocator = NULL;
+        if (t->mode == MEMORY_ALLOCATOR_MODE_STYLESHEET) custom_allocator = custom_allocators[0];
+        if (t->mode == MEMORY_ALLOCATOR_MODE_GLOBAL) custom_allocator = custom_allocators[1];
+
+        t = memory_allocator_find_entry(custom_allocator);
         if (t == NULL) return NULL;
     }
 

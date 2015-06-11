@@ -152,7 +152,7 @@ typedef struct template_context_ {
 } template_context;
 
 XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator);
-XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_cache);
+XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator);
 
 /********************** nodes.c -- nodes operations *****************/
 void xml_unlink_node(XMLNODE *node);

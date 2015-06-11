@@ -409,7 +409,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   XSLTGLOBALDATA *ret = malloc(sizeof(XSLTGLOBALDATA));
   memset(ret,0,sizeof(XSLTGLOBALDATA));
 
-  ret->allocator = memory_allocator_create(NULL);
+  ret->allocator = memory_allocator_create();
   memory_allocator_add_entry(ret->allocator, pthread_self(), 1000000);
   memory_allocator_set_current(ret->allocator);
 
@@ -491,7 +491,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
     return NULL;
   }
 
-  ret->allocator = memory_allocator_create(NULL);
+  ret->allocator = memory_allocator_create();
   if (ret->allocator == NULL)
   {
       return NULL;
@@ -558,6 +558,7 @@ void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
   memory_allocator_set_current(pctx->allocator);
 
   pctx->pool = threadpool_init(size);
+  threadpool_set_allocator(pctx->gctx->allocator, pctx->pool);
   threadpool_set_allocator(pctx->allocator, pctx->pool);
 
   if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
@@ -608,7 +609,11 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
   }
 
   // memory allocator for output document
-  memory_allocator *allocator = memory_allocator_create(pctx->allocator);
+  memory_allocator *allocator = memory_allocator_create();
+
+  memory_allocator_set_custom(allocator, MEMORY_ALLOCATOR_MODE_STYLESHEET, pctx->allocator);
+  memory_allocator_set_custom(allocator, MEMORY_ALLOCATOR_MODE_GLOBAL, pctx->gctx->allocator);
+
   memory_allocator_add_entry(allocator, pthread_self(), 1000000);
   memory_allocator_set_current(allocator);
 

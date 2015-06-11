@@ -5,7 +5,15 @@
 
 typedef struct memory_allocator_ memory_allocator;
 
-memory_allocator *memory_allocator_create(memory_allocator *parent);
+typedef enum {
+    MEMORY_ALLOCATOR_MODE_SELF = 0,
+    MEMORY_ALLOCATOR_MODE_STYLESHEET,
+    MEMORY_ALLOCATOR_MODE_GLOBAL
+} MEMORY_ALLOCATOR_MODE;
+
+memory_allocator *memory_allocator_create();
+
+void memory_allocator_set_custom(memory_allocator *allocator, MEMORY_ALLOCATOR_MODE mode, memory_allocator *custom_allocator);
 
 void memory_allocator_release(memory_allocator *allocator);
 
@@ -13,9 +21,7 @@ void memory_allocator_add_entry(memory_allocator *allocator, pthread_t thread, s
 
 void memory_allocator_set_current(memory_allocator *allocator);
 
-memory_allocator *memory_allocator_get_current();
-
-int memory_allocator_activate_parent(int activate);
+int memory_allocator_activate_mode(MEMORY_ALLOCATOR_MODE mode);
 
 void *memory_allocator_new(size_t size);
 
