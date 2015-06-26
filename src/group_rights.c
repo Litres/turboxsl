@@ -14,7 +14,7 @@ void XSLTDefineGroupRights(XSLTGLOBALDATA *data, char *library, char *group, cha
     memory_allocator_set_current(data->allocator);
 
     XMLSTRING library_string = xmls_new_string_literal(library);
-    library_entry *rights = dict_find(data->group_rights, library_string);
+    library_entry *rights = (library_entry *) dict_find(data->group_rights, library_string);
     if (rights == NULL)
     {
         rights = memory_allocator_new(sizeof(library_entry));
@@ -41,7 +41,7 @@ void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, in
     ctx->user_rights = dict_new(50);
 
     XMLSTRING library_string = xmls_new_string_literal(library);
-    library_entry *rights = dict_find(ctx->gctx->group_rights, library_string);
+    library_entry *rights = (library_entry *) dict_find(ctx->gctx->group_rights, library_string);
     if (rights == NULL)
     {
         error("XSLTSetUserContext:: unknown library: %s", library);
@@ -51,7 +51,7 @@ void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, in
     for (int i = 0; i < group_count; i++)
     {
         XMLSTRING group_string = xmls_new_string_literal(groups[i]);
-        group_entry *entry = dict_find(rights->groups, group_string);
+        group_entry *entry = (group_entry *) dict_find(rights->groups, group_string);
         if (entry == NULL)
         {
             error("XSLTSetUserContext:: unknown group: %s", group_string->s);

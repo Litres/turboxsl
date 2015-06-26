@@ -28,6 +28,12 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *ctx);
 
 XMLNODE *XMLParse(XSLTGLOBALDATA *data, char *text);
 XMLNODE *XMLParseFile(XSLTGLOBALDATA *data, char *filename);
+
+XMLNODE *XMLCreateDocument();
+XMLNODE *XMLCreateElement(XMLNODE *parent, char *name);
+void XMLAddText(XMLNODE *element, char *text);
+void XMLAddAttribute(XMLNODE *element, char *name, char *value);
+
 char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XMLOutputFile(TRANSFORM_CONTEXT *ctx, XMLNODE *xml, char *filename);
 XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *ctx, XMLNODE *xml, char *expression);

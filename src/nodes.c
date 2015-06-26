@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "ltr_xsl.h"
+#include "xsl_elements.h"
 
 void xml_unlink_node(XMLNODE *node)
 {
@@ -107,4 +108,65 @@ int is_node_parallel(XMLNODE *node)
     }
 
     return 0;
+}
+
+XMLNODE *XMLCreateDocument()
+{
+  memory_allocator *allocator = memory_allocator_create();
+  memory_allocator_add_entry(allocator, pthread_self(), 100000);
+  memory_allocator_set_current(allocator);
+
+  XMLNODE *result = xml_new_node(NULL, xsl_s_root, EMPTY_NODE);
+  result->allocator = allocator;
+
+  return result;
+}
+
+XMLNODE *XMLCreateElement(XMLNODE *parent, char *name)
+{
+  XMLNODE *result = xml_new_node(NULL, xmls_new_string_literal(name), ELEMENT_NODE);
+  if (parent != NULL)
+  {
+    result->parent = parent;
+    if (parent->children)
+    {
+        XMLNODE *p;
+        for (p = parent->children; p->next; p = p->next);
+        result->prev = p;
+        p->next = result;
+    }
+    else
+    {
+        parent->children = result;
+    }
+  }
+  return result;
+}
+
+void XMLAddText(XMLNODE *element, char *text)
+{
+  XMLNODE *result = xml_new_node(NULL, NULL, TEXT_NODE);
+  result->content = xmls_new_string_literal(text);
+  result->parent = element;
+  if (element->children)
+  {
+      XMLNODE *p;
+      for (p = element->children; p->next; p = p->next);
+      result->prev = p;
+      p->next = result;
+  }
+  else
+  {
+      element->children = result;
+  }
+}
+
+void XMLAddAttribute(XMLNODE *element, char *name, char *value)
+{
+  XMLNODE *attribute = xml_new_node(NULL, xmls_new_string_literal(name), ATTRIBUTE_NODE);
+  attribute->content = xmls_new_string_literal(value);
+  attribute->parent = element;
+
+  attribute->next = element->attributes;
+  element->attributes = attribute;
 }
