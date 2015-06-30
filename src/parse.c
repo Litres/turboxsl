@@ -347,6 +347,11 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator)
 		fclose(pFile);
 		return NULL;
 	}
+    if (size == 0) {
+      error("xml_parse_file:: empty file");
+      fclose(pFile);
+      return NULL;
+    }
 
 	buffer = (char*) malloc(size + 10);
 	if (buffer == NULL) {
@@ -386,7 +391,11 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator)
 
 XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator)
 {
-  XMLNODE *ret;
+  if (strlen(string) == 0)
+  {
+    error("xml_parse_string:: empty string");
+    return NULL;
+  }
 
   memory_allocator *allocator = NULL;
   if (has_allocator == 0)
@@ -396,7 +405,7 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator)
     memory_allocator_set_current(allocator);
   }
 
-  ret = do_parse(gctx, string, "(string)");
+  XMLNODE *ret = do_parse(gctx, string, "(string)");
   if (ret == NULL) {
     memory_allocator_release(allocator);
     return NULL;
