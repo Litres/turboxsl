@@ -191,6 +191,7 @@ void do_local_var(TRANSFORM_CONTEXT *pctx, XMLNODE *vars, XMLNODE *doc, XMLNODE 
     new_context->result = tmp->extra.v.nodeset;
     new_context->document_node = doc;
     new_context->local_variables = vars;
+    new_context->task_mode = SINGLE;
 
     apply_xslt_template(new_context);
   }

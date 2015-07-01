@@ -72,6 +72,7 @@ XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *sou
   new_context->result = tmp;
   new_context->document_node = source;
   new_context->local_variables = locals;
+  new_context->task_mode = SINGLE;
 
   apply_xslt_template(new_context);
 
