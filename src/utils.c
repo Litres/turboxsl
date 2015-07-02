@@ -98,7 +98,7 @@ char **XMLAttributes(XMLNODE *xml)
   if (count == 0) return NULL;
 
   // last is terminator
-  char **result = memory_allocator_new(2 * count + 1);
+  char **result = memory_allocator_new((2 * count + 1) * sizeof(char *));
   unsigned int p = 0;
   attribute = xml->attributes;
   while (attribute)
