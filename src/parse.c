@@ -17,8 +17,7 @@
 #include "ltr_xsl.h"
 #include "xsl_elements.h"
 
-enum {INIT, OPEN, CLOSE, COMMENT, BODY, TEXT, XMLDECL, INSIDE_TAG, ATTR_VALUE, CDATA, DOCTYPE, ERROR} state;
-
+typedef enum {INIT, OPEN, CLOSE, COMMENT, BODY, TEXT, XMLDECL, INSIDE_TAG, ATTR_VALUE, CDATA, DOCTYPE, ERROR} PARSE_STATE;
 
 static
 char *skip_spaces(char *p, unsigned *ln)  // TODO add UTF8 spaces
@@ -110,7 +109,7 @@ XMLNODE *do_parse(XSLTGLOBALDATA *gctx, char *document, char *uri)
   unsigned comment_depth = 0;
   unsigned ln = 0;
 
-  state = INIT;
+  PARSE_STATE state = INIT;
   ret = xml_new_node(NULL,xsl_s_root,EMPTY_NODE);
   ret->file = uri;
 
@@ -407,7 +406,7 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator)
 
   XMLNODE *ret = do_parse(gctx, string, "(string)");
   if (ret == NULL) {
-    memory_allocator_release(allocator);
+    if (allocator != NULL) memory_allocator_release(allocator);
     return NULL;
   }
 
