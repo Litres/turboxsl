@@ -33,6 +33,7 @@ XMLNODE *XMLCreateDocument();
 XMLNODE *XMLCreateElement(XMLNODE *parent, char *name);
 void XMLAddText(XMLNODE *element, char *text);
 void XMLAddAttribute(XMLNODE *element, char *name, char *value);
+void XMLAddChildFromString(XSLTGLOBALDATA *context, XMLNODE *element, char *value);
 
 char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XMLOutputFile(TRANSFORM_CONTEXT *ctx, XMLNODE *xml, char *filename);

@@ -1192,7 +1192,7 @@ XMLNODE *do_select_expr(TRANSFORM_CONTEXT *pctx, XPATH_STRING *string)
         break;
       }
       XMLNODE *argument = do_or_expr(pctx,string);
-      xml_add_child(pctx, node, argument);
+      xml_add_child(node, argument);
       skip_ws(string);
       if(*string->p==',')
         ++(string->p);

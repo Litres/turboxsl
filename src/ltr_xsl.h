@@ -158,7 +158,7 @@ XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator)
 void xml_unlink_node(XMLNODE *node);
 XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type);
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type);
-void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node,XMLNODE *child);
+void xml_add_child(XMLNODE *node,XMLNODE *child);
 
 int is_node_parallel(XMLNODE *node);
 

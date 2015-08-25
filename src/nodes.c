@@ -41,11 +41,11 @@ XMLNODE *xml_new_node(TRANSFORM_CONTEXT *pctx, XMLSTRING name, NODETYPE type)
 XMLNODE *xml_append_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, NODETYPE type)
 {
   XMLNODE *ret = xml_new_node(pctx, NULL, type);
-  xml_add_child(pctx, node, ret);
+  xml_add_child(node, ret);
   return ret;
 }
 
-void xml_add_child(TRANSFORM_CONTEXT *pctx, XMLNODE *node, XMLNODE *child)
+void xml_add_child(XMLNODE *node, XMLNODE *child)
 {
     if (!child)
     {
@@ -125,21 +125,7 @@ XMLNODE *XMLCreateDocument()
 XMLNODE *XMLCreateElement(XMLNODE *parent, char *name)
 {
   XMLNODE *result = xml_new_node(NULL, xmls_new_string_literal(name), ELEMENT_NODE);
-  if (parent != NULL)
-  {
-    result->parent = parent;
-    if (parent->children)
-    {
-        XMLNODE *p;
-        for (p = parent->children; p->next; p = p->next);
-        result->prev = p;
-        p->next = result;
-    }
-    else
-    {
-        parent->children = result;
-    }
-  }
+  if (parent != NULL) xml_add_child(parent, result);
   return result;
 }
 
@@ -148,17 +134,7 @@ void XMLAddText(XMLNODE *element, char *text)
   XMLNODE *result = xml_new_node(NULL, NULL, TEXT_NODE);
   result->content = xmls_new_string_literal(text);
   result->parent = element;
-  if (element->children)
-  {
-      XMLNODE *p;
-      for (p = element->children; p->next; p = p->next);
-      result->prev = p;
-      p->next = result;
-  }
-  else
-  {
-      element->children = result;
-  }
+  xml_add_child(element, result);
 }
 
 void XMLAddAttribute(XMLNODE *element, char *name, char *value)
@@ -169,4 +145,10 @@ void XMLAddAttribute(XMLNODE *element, char *name, char *value)
 
   attribute->next = element->attributes;
   element->attributes = attribute;
+}
+
+void XMLAddChildFromString(XSLTGLOBALDATA *context, XMLNODE *element, char *value)
+{
+  XMLNODE *child = xml_parse_string(context, value, 1);
+  xml_add_child(element, child);
 }
