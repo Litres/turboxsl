@@ -149,6 +149,6 @@ void XMLAddAttribute(XMLNODE *element, char *name, char *value)
 
 void XMLAddChildFromString(XSLTGLOBALDATA *context, XMLNODE *element, char *value)
 {
-  XMLNODE *child = xml_parse_string(context, value, 1);
-  xml_add_child(element, child);
+  XMLNODE *root = xml_parse_string(context, value, 1);
+  xml_add_child(element, root->children);
 }
