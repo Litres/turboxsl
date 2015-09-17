@@ -150,5 +150,10 @@ void XMLAddAttribute(XMLNODE *element, char *name, char *value)
 void XMLAddChildFromString(XSLTGLOBALDATA *context, XMLNODE *element, char *value)
 {
   XMLNODE *root = xml_parse_string(context, value, 1);
+  if (root == NULL)
+  {
+    error("XMLAddChildFromString:: fail to parse string: %s", value);
+    return;
+  }
   xml_add_child(element, root->children);
 }
