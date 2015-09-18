@@ -94,7 +94,14 @@ int external_cache_set(external_cache *cache, char *key, char *value)
     memcached_return_t r = memcached_set(t->object, key, key_length, value, value_length, 20 * 60, 0);
     if (r != MEMCACHED_SUCCESS)
     {
-        error("external_cache_set:: set failed: %s", memcached_strerror(t->object, r));
+        if (r == MEMCACHED_BAD_KEY_PROVIDED)
+        {
+            error("external_cache_set:: set failed, bad key provided: %s", key);
+        }
+        else
+        {
+            error("external_cache_set:: set failed: %s", memcached_strerror(t->object, r));
+        }
         return 0;
     }
     return 1;
@@ -123,7 +130,14 @@ char *external_cache_get(external_cache *cache, char *key)
     {
         if (r != MEMCACHED_NOTFOUND)
         {
-            error("external_cache_get:: get failed: %s", memcached_strerror(t->object, r));
+            if (r == MEMCACHED_BAD_KEY_PROVIDED)
+            {
+                error("external_cache_get:: get failed, bad key provided: %s", key);
+            }
+            else
+            {
+                error("external_cache_get:: get failed: %s", memcached_strerror(t->object, r));
+            }
         }
         return NULL;
     }
