@@ -390,7 +390,7 @@ XMLNODE *xml_parse_file(XSLTGLOBALDATA *gctx, char *file, int has_allocator)
 
 XMLNODE *xml_parse_string(XSLTGLOBALDATA *gctx, char *string, int has_allocator)
 {
-  if (strlen(string) == 0)
+  if (string == NULL || strlen(string) == 0)
   {
     error("xml_parse_string:: empty string");
     return NULL;

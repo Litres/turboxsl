@@ -137,13 +137,20 @@ char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *tree)
 
   if(ctx->doctype_public && ctx->doctype_system) {
     t = find_first_node(tree);
-    xmls_add_str(rtext, "<!DOCTYPE ");
-    xmls_append(rtext, t->name);
-    xmls_add_str(rtext, " PUBLIC \"");
-    xmls_add_str(rtext, ctx->doctype_public ? ctx->doctype_public->s : "-//W3C//DTD XHTML+RDFa 1.0//EN");
-    xmls_add_str(rtext, "\" \"");
-    xmls_add_str(rtext, ctx->doctype_system ? ctx->doctype_system->s : "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd");
-    xmls_add_str(rtext, "\">\n");
+    if (t != NULL)
+    {
+      xmls_add_str(rtext, "<!DOCTYPE ");
+      xmls_append(rtext, t->name);
+      xmls_add_str(rtext, " PUBLIC \"");
+      xmls_add_str(rtext, ctx->doctype_public ? ctx->doctype_public->s : "-//W3C//DTD XHTML+RDFa 1.0//EN");
+      xmls_add_str(rtext, "\" \"");
+      xmls_add_str(rtext, ctx->doctype_system ? ctx->doctype_system->s : "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd");
+      xmls_add_str(rtext, "\">\n");
+    }
+    else
+    {
+      error("XMLOutput:: first node not found");
+    }
   }
   if(tree)
     output_node_rec(tree,rtext,ctx);
