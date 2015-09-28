@@ -17,9 +17,7 @@
 void add_quoted_str(XMLSTRING rtext, char *s)
 {
   while(*s) {
-    if(*s=='"') {
-      xmls_add_str(rtext,"&quot;");
-    } else if(*s=='<') {
+    if(*s=='<') {
       xmls_add_str(rtext,"&lt;");
     } else if(*s=='>') {
       xmls_add_str(rtext,"&gt;");
