@@ -30,6 +30,27 @@ void add_quoted_str(XMLSTRING rtext, char *s)
   }
 }
 
+void add_quoted_attribute_value(XMLSTRING rtext, XMLSTRING value)
+{
+  if(value==NULL) return;
+
+  char *s = value->s;
+  while(*s) {
+    if(*s=='"') {
+      xmls_add_str(rtext,"&quot;");
+    } else if(*s=='<') {
+      xmls_add_str(rtext,"&lt;");
+    } else if(*s=='>') {
+      xmls_add_str(rtext,"&gt;");
+    } else if(*s=='&' && s[1]!='#') {
+      xmls_add_str(rtext,"&amp;");
+    } else {
+      xmls_add_char(rtext,*s);
+    }
+    ++s;
+  }
+}
+
 static int is_html_empty_tag(XMLSTRING name)
 {
   if(xmls_equals(name, xsl_s_img)) return 1;
@@ -55,7 +76,7 @@ void output_node_rec(XMLNODE *node, XMLSTRING rtext, TRANSFORM_CONTEXT *ctx)
           xmls_add_char(rtext,' ');
           xmls_append(rtext, attr->name);
           xmls_add_str(rtext, "=\"");
-          xmls_append(rtext, attr->content);
+          add_quoted_attribute_value(rtext, attr->content);
           xmls_add_char(rtext,'"');
         }
         if(ctx->outmode==MODE_HTML && is_html_empty_tag(node->name)) {
