@@ -16,27 +16,37 @@
 #include "ltr_xsl.h"
 #include "xsl_elements.h"
 
-typedef enum {TMATCH_NONE, TMATCH_ALWAYS, TMATCH_ROOT, TMATCH_SELECT} MATCH_TYPE;
-
 typedef struct template_ {
   XMLSTRING name;
   XMLSTRING match;
   XMLNODE *expr;
   unsigned int expression_weight;
-  MATCH_TYPE matchtype;
   XMLNODE *content;
   struct template_ *next;
 } template;
 
+typedef struct template_tree_node_ {
+    template *t;
+    XMLDICT *children;
+    struct template_tree_node_ *next;
+} template_tree_node;
+
+typedef struct template_tree_ {
+    template_tree_node *head;
+    template_tree_node *tail;
+} template_tree;
+
 typedef struct template_map_entry_ {
   template *head;
-  template *tail;
   template *root;
   template *always;
+  template_tree *direct_match;
+  struct template_map_entry_ *next;
 } template_map_entry;
 
 struct template_map_ {
   template_map_entry *empty_mode;
+  template_map_entry *head;
   XMLDICT *modes;
 };
 
@@ -44,13 +54,28 @@ template_map *template_map_create()
 {
   template_map *result = memory_allocator_new(sizeof(template_map));
   result->empty_mode = memory_allocator_new(sizeof(template_map_entry));
-  result->modes = dict_new(100);
+  result->modes = dict_new(64);
 
   return result;
 }
 
 void template_map_release(template_map *map)
 {
+  template_map_entry *entry = map->head;
+  while(entry != NULL)
+  {
+    if(entry->direct_match != NULL)
+    {
+      template_tree_node *node = entry->direct_match->head;
+      while(node != NULL)
+      {
+        dict_free(node->children);
+        node = node->next;
+      }
+    }
+    entry = entry->next;
+  }
+
   dict_free(map->modes);
 }
 
@@ -59,9 +84,12 @@ template_map_entry *template_map_get_entry(template_map *map, XMLSTRING mode)
   if(mode == NULL) return map->empty_mode;
 
   template_map_entry *entry = (template_map_entry *) dict_find(map->modes, mode);
-  if(entry == NULL) {
+  if(entry == NULL)
+  {
     entry = memory_allocator_new(sizeof(template_map_entry));
     dict_add(map->modes, mode, entry);
+    if(map->head != NULL) entry->next = map->head;
+    map->head = entry;
   }
 
   return entry;
@@ -73,31 +101,23 @@ template_map_entry *template_map_find_entry(template_map *map, XMLSTRING mode)
   return (template_map_entry *) dict_find(map->modes, mode);
 }
 
-template *template_map_add_template(template_map_entry *entry)
-{
-  template *result = memory_allocator_new(sizeof(template));
-  result->matchtype = TMATCH_NONE;
-
-  if(entry->head == NULL)
-  {
-    entry->head = result;
-    entry->tail = result;
-  }
-  else
-  {
-    entry->tail->next = result;
-    entry->tail = result;
-  }
-
-  return result;
-}
-
 template *template_map_find_template(template_map_entry *entry, XMLSTRING match)
 {
   for(template *t = entry->head; t; t = t->next)
   {
     if(xmls_equals(t->match, match)) return t;
   }
+
+  if(entry->direct_match != NULL)
+  {
+    template_tree_node *node = entry->direct_match->head;
+    while(node != NULL)
+    {
+      if(node->t != NULL && xmls_equals(node->t->match, match)) return node->t;
+      node = node->next;
+    }
+  }
+
   return NULL;
 }
 
@@ -133,28 +153,70 @@ static void add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *mat
     return;
   }
 
-  template *t = template_map_add_template(entry);
+  template *t = memory_allocator_new(sizeof(template));
   t->match = match_string;
   t->content = content;
 
   if(match[0] == '/' && match[1] == 0)
   {
-    t->matchtype = TMATCH_ROOT;
     entry->root = t;
   }
   else if(match[0] == '*' && match[1] == 0)
   {
-    t->matchtype = TMATCH_ALWAYS;
     entry->always = t;
   }
   else
   {
-    t->matchtype = TMATCH_SELECT;
-    t->expr = xpath_find_expr(pctx, match_string);
+    XMLNODE *expression = xpath_find_expr(pctx, match_string);
 
-    for(XMLNODE *n = t->expr; n; n = n->children)
+    int is_direct_match = 1;
+    unsigned int weight = 0;
+    for(XMLNODE *n = expression; n; n = n->children)
     {
-      t->expression_weight += 1;
+      if(expression->type != XPATH_NODE_ROOT && expression->type != XPATH_NODE_SELECT) is_direct_match = 0;
+      weight += 1;
+    }
+    t->expression_weight = weight;
+
+    if(is_direct_match)
+    {
+      if(entry->direct_match == NULL)
+      {
+        entry->direct_match = memory_allocator_new(sizeof(template_tree));
+        template_tree_node *node = memory_allocator_new(sizeof(template_tree_node));
+        entry->direct_match->head = node;
+        entry->direct_match->tail = node;
+      }
+
+      template_tree_node *node = entry->direct_match->head;
+      for(XMLNODE *n = expression; n; n = n->children)
+      {
+        if(n->type != XPATH_NODE_SELECT && n->type != XPATH_NODE_ROOT) continue;
+
+        if(node->children == NULL) node->children = dict_new(16);
+
+        XMLSTRING name = n->type == XPATH_NODE_SELECT ? n->name : xsl_s_root;
+
+        template_tree_node *child = dict_find(node->children, name);
+        if(child == NULL)
+        {
+          child = memory_allocator_new(sizeof(template_tree_node));
+          entry->direct_match->tail->next = child;
+          entry->direct_match->tail = child;
+
+          dict_add(node->children, name, child);
+        }
+        node = child;
+      }
+      node->t = t;
+
+    }
+    else
+    {
+      t->expr = expression;
+
+      if(entry->head != NULL) t->next = entry->head;
+      entry->head = t;
     }
   }
 }
@@ -376,9 +438,26 @@ template *find_select_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, template_
   template *result = NULL;
   unsigned int expression_weight = 0;
 
+  if(entry->direct_match != NULL)
+  {
+    template_tree_node *parent = entry->direct_match->head;
+    for(XMLNODE *n = node; n; n = n->parent)
+    {
+      template_tree_node *child = dict_find(parent->children, n->name);
+      if(child == NULL) break;
+      parent = child;
+    }
+
+    if(parent->t != NULL)
+    {
+      result = parent->t;
+      expression_weight = parent->t->expression_weight;
+    }
+  }
+
   for(template *t = entry->head; t; t = t->next)
   {
-    if(t->matchtype == TMATCH_SELECT && select_match(pctx, node, t->expr))
+    if(select_match(pctx, node, t->expr))
     {
       if(t->expression_weight > expression_weight)
       {
