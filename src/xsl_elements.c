@@ -74,6 +74,7 @@ void xsl_elements_setup()
     xsl_s_node = xmls_new_string_literal("node");
     xsl_s_root = xmls_new_string_literal("root");
     xsl_s_deny = xmls_new_string_literal("deny");
+    xsl_s_slash = xmls_new_string_literal("/");
 
     xsl_s_head = xmls_new_string_literal("head");
     xsl_s_img = xmls_new_string_literal("img");

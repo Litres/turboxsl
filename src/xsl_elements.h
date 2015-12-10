@@ -74,6 +74,7 @@ XMLSTRING xsl_s_script;
 XMLSTRING xsl_s_node;
 XMLSTRING xsl_s_root;
 XMLSTRING xsl_s_deny;
+XMLSTRING xsl_s_slash;
 
 XMLSTRING xsl_s_head;
 XMLSTRING xsl_s_img;

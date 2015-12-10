@@ -195,8 +195,7 @@ static void add_templ_match(TRANSFORM_CONTEXT *pctx, XMLNODE *content, char *mat
 
         if(node->children == NULL) node->children = dict_new(16);
 
-        XMLSTRING name = n->type == XPATH_NODE_SELECT ? n->name : xsl_s_root;
-
+        XMLSTRING name = n->type == XPATH_NODE_SELECT ? n->name : xsl_s_slash;
         template_tree_node *child = dict_find(node->children, name);
         if(child == NULL)
         {
@@ -443,7 +442,8 @@ template *find_select_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, template_
     template_tree_node *parent = entry->direct_match->head;
     for(XMLNODE *n = node; n; n = n->parent)
     {
-      template_tree_node *child = dict_find(parent->children, n->name);
+      XMLSTRING name = n->type == ELEMENT_NODE ? n->name : xsl_s_slash;
+      template_tree_node *child = dict_find(parent->children, name);
       if(child == NULL) break;
       parent = child;
     }
