@@ -44,6 +44,14 @@ XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
   return newnode;
 }
 
+void reject_text_node_escape(XMLNODE *root)
+{
+  for(XMLNODE *n = root; n; n = n->next) {
+    if (n->type == TEXT_NODE) n->flags |= XML_FLAG_NOESCAPE;
+    if (n->children != NULL) reject_text_node_escape(n->children);
+  }
+}
+
 void copy_node_to_result_rec(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, XMLNODE *parent, XMLNODE *src)
 {
   XMLNODE *r, *c;
@@ -76,6 +84,7 @@ XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *sou
 
   apply_xslt_template(new_context);
 
+  reject_text_node_escape(tmp);
   XMLSTRING res = xmls_new(200);
   output_node_rec(tmp, res, pctx);
 
