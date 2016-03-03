@@ -169,7 +169,6 @@ void process_one_node(template_context *context);
 XMLNODE *find_first_node(XMLNODE *n);
 XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *source, XMLNODE *foreval);
 
-void xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, XMLSTRING name, char *value);
 void copy_node_to_result_rec(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *context, XMLNODE *parent, XMLNODE *src);
 
 XMLSTRING xml_get_attr(XMLNODE *node, XMLSTRING name);

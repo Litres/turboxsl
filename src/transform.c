@@ -31,7 +31,11 @@ XMLNODE *copy_node_to_result(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *
     for(XMLNODE *a = src->attributes; a; a = a->next) {
       XMLNODE *t = xml_new_node(pctx,NULL,ATTRIBUTE_NODE);
       t->name = a->name;
-      t->content = xml_process_string(pctx, locals, context, a->content);
+      if(a->flags == XML_FLAG_NOESCAPE) {
+        t->content = xmls_new_string(a->content->s, a->content->len);
+      } else {
+        t->content = xml_process_string(pctx, locals, context, a->content);
+      }
       t->next = newnode->attributes;
       newnode->attributes = t;
     }
@@ -90,27 +94,6 @@ XMLSTRING xml_eval_string(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *sou
 
   return res;
 }
-
-void xml_add_attribute(TRANSFORM_CONTEXT *pctx, XMLNODE *parent, XMLSTRING name, char *value)
-{
-  while(parent && parent->type == EMPTY_NODE) {
-    parent = parent->parent;
-  }
-  if(!parent) return;
-
-  XMLNODE *tmp;
-  for(tmp = parent->attributes; tmp; tmp = tmp->next) {
-    if(xmls_equals(tmp->name, name)) break;
-  }
-
-  if(!tmp) {
-    tmp = xml_new_node(pctx, NULL, ATTRIBUTE_NODE);
-    tmp->name = name;
-    tmp->next = parent->attributes;
-    parent->attributes = tmp;
-  }
-  tmp->content = xmls_new_string_literal(value);
-}  
 
 void apply_xslt_template(template_context *context)
 {

@@ -153,9 +153,27 @@ void instruction_attribute(template_context *context, XMLNODE *instruction)
     char *p;
     for(p = attribute_value->s; *p && x_is_ws(*p); ++p)  
         ;
-    p = xml_strdup(p);
-    
-    xml_add_attribute(context->context, context->result, attribute_name, p);
+
+    XMLNODE *parent = context->result;
+    while(parent && parent->type == EMPTY_NODE) {
+        parent = parent->parent;
+    }
+    if(!parent) return;
+
+    XMLNODE *tmp;
+    for(tmp = parent->attributes; tmp; tmp = tmp->next) {
+        if(xmls_equals(tmp->name, attribute_name)) break;
+    }
+
+    if(!tmp) {
+        tmp = xml_new_node(context->context, NULL, ATTRIBUTE_NODE);
+        tmp->name = attribute_name;
+        tmp->next = parent->attributes;
+        // here means we don't need processing
+        tmp->flags = XML_FLAG_NOESCAPE;
+        parent->attributes = tmp;
+    }
+    tmp->content = xmls_new_string_literal(p);
 }
 
 void instruction_element(template_context *context, XMLNODE *instruction)
