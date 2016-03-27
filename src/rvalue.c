@@ -91,7 +91,13 @@ char *rval2string(RVALUE *rv) {
 
     case VAL_NUMBER:
       rv->type=VAL_NULL;
-      sprintf(s,"%g",rv->v.number);
+      double t = 0;
+      double fractional = modf(fabs(rv->v.number), &t);
+      if(fractional == 0) {
+        sprintf(s,"%ld",(long)round(rv->v.number));
+      } else {
+        sprintf(s,"%f",rv->v.number);
+      }
       return xml_strdup(s);
 
     case VAL_STRING:
