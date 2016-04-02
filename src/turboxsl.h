@@ -23,6 +23,7 @@ void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);
 void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);
 void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, int group_count);
 void XSLTAddURLCodeParameter(TRANSFORM_CONTEXT *ctx, char *name, char *value);
+void ResetURLCodeParameters(TRANSFORM_CONTEXT *ctx);
 void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename);
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *ctx);

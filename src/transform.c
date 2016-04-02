@@ -591,6 +591,12 @@ void XSLTAddURLCodeParameter(TRANSFORM_CONTEXT *ctx, char *name, char *value)
   dict_add(ctx->url_code_parameters, xmls_new_string_literal(name), xml_strdup(value));
 }
 
+void ResetURLCodeParameters(TRANSFORM_CONTEXT *ctx)
+{
+  dict_free(ctx->url_code_parameters);
+  ctx->url_code_parameters = dict_new(32);
+}
+
 void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename)
 {
   memory_allocator_set_current(ctx->allocator);
