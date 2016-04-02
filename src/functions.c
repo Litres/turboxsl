@@ -909,8 +909,20 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     RVALUE rv;
     xpath_execute_scalar(pctx, locals, parg, current, &rv);
     char *str = rval2string(&rv);
-    xmls_add_str(buffer, str);
-    if(parg->next) xmls_add_char(buffer,',');
+    if(str[0] == '-') {
+      // search for parameter without lead prefix
+      char *name = str + 1;
+      char *value = dict_find(pctx->url_code_parameters, xmls_new_string_literal(name));
+      if(value != NULL) {
+        xmls_add_str(buffer, name);
+        xmls_add_char(buffer,',');
+        xmls_add_str(buffer, value);
+        if(parg->next) xmls_add_char(buffer,',');
+      }
+    } else {
+      xmls_add_str(buffer, str);
+      if(parg->next) xmls_add_char(buffer,',');
+    }
   }
 
   if(buffer->len == 0) {

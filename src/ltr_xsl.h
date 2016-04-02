@@ -109,6 +109,7 @@ struct _context {
   char *url_local_prefix;
   XMLDICT *user_rights;
   XMLDICT *parallel_instructions;
+  XMLDICT *url_code_parameters;
   void *task_graph; // TODO fix dependency graph
   template_map *templates;
   XMLDICT *named_templ; // templates for call'ing

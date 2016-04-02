@@ -455,6 +455,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   template_map_release(pctx->templates);
   dict_free(pctx->named_templ);
   dict_free(pctx->parallel_instructions);
+  dict_free(pctx->url_code_parameters);
   template_task_graph_release(pctx->task_graph);
   threadpool_free(pctx->pool);
 
@@ -507,6 +508,7 @@ TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *gctx, char *stylesheet)
   ret->templates = template_map_create();
   ret->named_templ = dict_new(300);
   ret->expressions = concurrent_dictionary_create();
+  ret->url_code_parameters = dict_new(32);
 
   xpath_setup_functions(ret);
   instructions_set_parallel(ret);
@@ -581,6 +583,12 @@ void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix)
 {
   memory_allocator_set_current(ctx->allocator);
   ctx->url_local_prefix = xml_strdup(prefix);
+}
+
+void XSLTAddURLCodeParameter(TRANSFORM_CONTEXT *ctx, char *name, char *value)
+{
+  memory_allocator_set_current(ctx->allocator);
+  dict_add(ctx->url_code_parameters, xmls_new_string_literal(name), xml_strdup(value));
 }
 
 void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename)
