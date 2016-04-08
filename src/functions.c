@@ -635,6 +635,8 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
     // rounding
     if (number_string[number_string_position - 1] >= '5')
     {
+      int has_overflow = 0;
+
       number_string[number_string_position - 1] = 0;
       for (int i = number_string_position - 2; i >= 0; i--)
       {
@@ -643,6 +645,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
         if (digit == '9')
         {
           number_string[i] = '0';
+          if (i == 0) has_overflow = 1;
         }
         else
         {
@@ -652,7 +655,7 @@ void xf_format(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
       }
 
       // top digit correction
-      if (number_string[0] == '0')
+      if (has_overflow)
       {
         for (int i = number_string_position; i > 0; i--)
         {
