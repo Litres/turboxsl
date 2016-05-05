@@ -1039,8 +1039,7 @@ void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 {
   RVALUE rv;
   XMLSTRING url;
-  char *str,*tofree;
-  char c;
+  char *str;
 
   res->type = VAL_STRING;
 
@@ -1051,10 +1050,10 @@ void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
 
   url = xmls_new(100);
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  tofree = str = rval2string(&rv);
-
+  str = rval2string(&rv);
   if (str != NULL) {
-    for(; c = *str; ++str) {
+    for(; *str; ++str) {
+      int c = *str & 0xFF;
       if(c=='?'){
         xmls_add_str(url,"%3F");
       }
@@ -1064,8 +1063,21 @@ void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
       else if(c=='&') {
         xmls_add_str(url,"%26");
       }
+      else if(c=='%') {
+        xmls_add_str(url,"%25");
+      }
       else {
-        xmls_add_char(url,c);
+        if(c>0x7F){
+          for(int i=0; i<2; i++) {
+            char buffer[] = {0, 0, 0, 0};
+            sprintf(buffer,"%%%02X",*(str + i) & 0xFF);
+            xmls_add_str(url,buffer);
+          }
+          str++;
+        }
+        else {
+          xmls_add_char(url,(char)c);
+        }
       }
     }
   }
