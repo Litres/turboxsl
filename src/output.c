@@ -158,9 +158,7 @@ char *XMLOutput(TRANSFORM_CONTEXT *ctx, XMLNODE *tree)
     t = find_first_node(tree);
     if (t != NULL)
     {
-      xmls_add_str(rtext, "<!DOCTYPE ");
-      xmls_append(rtext, t->name);
-      xmls_add_str(rtext, " PUBLIC \"");
+      xmls_add_str(rtext, "<!DOCTYPE html PUBLIC \"");
       xmls_add_str(rtext, ctx->doctype_public ? ctx->doctype_public->s : "-//W3C//DTD XHTML+RDFa 1.0//EN");
       xmls_add_str(rtext, "\" \"");
       xmls_add_str(rtext, ctx->doctype_system ? ctx->doctype_system->s : "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd");
