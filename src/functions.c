@@ -14,6 +14,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <ctype.h>
 
 #include "ltr_xsl.h"
 #include "md5.h"
@@ -1052,32 +1053,14 @@ void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE 
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   str = rval2string(&rv);
   if (str != NULL) {
-    for(; *str; ++str) {
+    for (; *str; ++str) {
       int c = *str & 0xFF;
-      if(c=='?'){
-        xmls_add_str(url,"%3F");
-      }
-      else if(c==' ') {
-        xmls_add_str(url,"%20");
-      }
-      else if(c=='&') {
-        xmls_add_str(url,"%26");
-      }
-      else if(c=='%') {
-        xmls_add_str(url,"%25");
-      }
-      else {
-        if(c>0x7F){
-          for(int i=0; i<2; i++) {
-            char buffer[] = {0, 0, 0, 0};
-            sprintf(buffer,"%%%02X",*(str + i) & 0xFF);
-            xmls_add_str(url,buffer);
-          }
-          str++;
-        }
-        else {
-          xmls_add_char(url,(char)c);
-        }
+      if (isalnum(c) || c == '-' || c == '.' || c == '_'  || c == '~') {
+        xmls_add_char(url,(char)c);
+      } else {
+        char buffer[] = {0, 0, 0, 0};
+        sprintf(buffer,"%%%02X",c);
+        xmls_add_str(url,buffer);
       }
     }
   }
