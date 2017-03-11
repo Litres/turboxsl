@@ -36,46 +36,68 @@ char *call_perl_function(TRANSFORM_CONTEXT *pctx, void *function, char **args)
   return result;
 }
 
+XMLSTRING url_encode(const char *url) {
+  XMLSTRING result = xmls_new(100);
+  for (; *url; ++url) {
+    int c = *url & 0xFF;
+    if (isalnum(c) || c == '-' || c == '.' || c == '_'  || c == '~') {
+      xmls_add_char(result, (char)c);
+    } else {
+      char buffer[] = {0, 0, 0, 0};
+      sprintf(buffer, "%%%02X", c);
+      xmls_add_str(result, buffer);
+    }
+  }
+  return result;
+}
+
 void xf_strescape(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
-  char *str;
-  char *p;
-  int js = 1;
+  res->type = VAL_STRING;
+  res->v.string = NULL;
 
+  RVALUE rv;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  str = rval2string(&rv);
+  char *str = rval2string(&rv);
+  if(!str) {
+    return;
+  }
+
+  char *mode;
   if(args->next) {
-    char *mode;
     xpath_execute_scalar(pctx, locals, args->next, current, &rv);
     mode = rval2string(&rv);
-    if(xml_strcmp(mode,"js"))
-      js = 0;
+  } else {
+    mode = "js";
   }
-  res->type = VAL_STRING;
-  if(js && str) {
+
+  if(xml_strcmp(mode, "js") == 0) {
     XMLSTRING s = xmls_new(200);
-    for(p=str;*p;++p) {
+    for(char *p = str; *p; ++p) {
       switch(*p) {
         case '\'':
         case '\"':
         case '\\':
         case '/':
-          xmls_add_char(s,'\\');
-          xmls_add_char(s,*p);
+          xmls_add_char(s, '\\');
+          xmls_add_char(s, *p);
           break;
+
         case '\r':
         case '\n':
-          xmls_add_char(s,'\\');
-          xmls_add_char(s,'n');
+          xmls_add_char(s, '\\');
+          xmls_add_char(s, 'n');
           break;
+
         default:
-          xmls_add_char(s,*p);
+          xmls_add_char(s, *p);
       }
     }
     res->v.string = xmls_detach(s);
-  } else {
-    res->v.string = str;
+  }
+
+  if(xml_strcmp(mode, "url") == 0) {
+    res->v.string = xmls_detach(url_encode(str));
   }
 }
 
@@ -1038,34 +1060,19 @@ void xf_veristat_local(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, 
 
 void xf_urlenc(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
 {
-  RVALUE rv;
-  XMLSTRING url;
-  char *str;
-
   res->type = VAL_STRING;
+  res->v.string = NULL;
 
-  if (args == NULL) {
-    res->v.string = NULL;
+  if(args == NULL) {
     return;
   }
 
-  url = xmls_new(100);
+  RVALUE rv;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
-  str = rval2string(&rv);
-  if (str != NULL) {
-    for (; *str; ++str) {
-      int c = *str & 0xFF;
-      if (isalnum(c) || c == '-' || c == '.' || c == '_'  || c == '~') {
-        xmls_add_char(url,(char)c);
-      } else {
-        char buffer[] = {0, 0, 0, 0};
-        sprintf(buffer,"%%%02X",c);
-        xmls_add_str(url,buffer);
-      }
-    }
+  char *str = rval2string(&rv);
+  if(str != NULL) {
+    res->v.string = xmls_detach(url_encode(str));
   }
-
-  res->v.string = xmls_detach(url);
 }
 
 void xf_banner(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res) // XXX stub for banner!
