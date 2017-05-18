@@ -5,6 +5,7 @@
 
 #include "logger.h"
 #include "allocator.h"
+#include "md5.h"
 
 typedef struct external_cache_entry {
     pthread_t thread;
@@ -16,6 +17,20 @@ struct external_cache_ {
     char *server_list;
     struct external_cache_entry *entry;
 };
+
+char *external_cache_normalize_key(char *key, char *key_hash)
+{
+    size_t key_length = strlen(key);
+    if (key_length > 200)
+    {
+        char signature[16];
+        md5_buffer(key, key_length, signature);
+        md5_sig_to_string(signature, key_hash, 34);
+        debug("external_cache_normalize_key:: key is too long, hash used: %s", key_hash);
+        return key_hash;
+    }
+    return key;
+}
 
 external_cache *external_cache_create(char *server_list)
 {
@@ -89,6 +104,9 @@ int external_cache_set(external_cache *cache, char *key, char *value)
         return 0;
     }
 
+    char key_hash[34];
+    key = external_cache_normalize_key(key, key_hash);
+
     size_t key_length = strlen(key);
     size_t value_length = strlen(value);
     memcached_return_t r = memcached_set(t->object, key, key_length, value, value_length, 20 * 60, 0);
@@ -120,6 +138,9 @@ char *external_cache_get(external_cache *cache, char *key)
         error("external_cache_get:: unknown thread");
         return NULL;
     }
+
+    char key_hash[34];
+    key = external_cache_normalize_key(key, key_hash);
 
     size_t key_length = strlen(key);
     size_t value_length = 0;
