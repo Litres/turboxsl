@@ -71,6 +71,8 @@ libturboxsl_la_SOURCES = \
   template_task_graph.h \
   threadpool.c \
   threadpool.h \
+  localization.c \
+  localization.h \
   parse.c \
   output.c \
   templates.c \
@@ -101,7 +103,7 @@ libturboxsl_la_SOURCES = \
   turboxsl.h \
   ltr_xsl.h
 
-libturboxsl_la_LIBADD = -lpthread -lm -lmemcached -lck
+libturboxsl_la_LIBADD = -lpthread -lm -lmemcached -lck -lgettextpo
 
 libturboxslincdir=$(includedir)/turboxsl
 libturboxslinc_HEADERS = turboxsl.h

@@ -457,6 +457,7 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   dict_free(pctx->parallel_instructions);
   dict_free(pctx->url_code_parameters);
   template_task_graph_release(pctx->task_graph);
+  localization_release(pctx->localization);
   threadpool_free(pctx->pool);
 
   xml_free_document(pctx->stylesheet);
@@ -601,6 +602,13 @@ void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename)
 {
   memory_allocator_set_current(ctx->allocator);
   ctx->task_graph = template_task_graph_create(xmls_new_string_literal(filename));
+}
+
+int XSLTSetLocalization(TRANSFORM_CONTEXT *ctx, char *filename)
+{
+  memory_allocator_set_current(ctx->allocator);
+  ctx->localization = localization_create(filename);
+  return ctx->localization != NULL;
 }
 
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)

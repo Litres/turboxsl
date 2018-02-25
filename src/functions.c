@@ -1172,6 +1172,118 @@ void xf_thread_id(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNO
   res->v.string = xml_strdup(buffer);
 }
 
+void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res, int mode)
+{
+  res->type = VAL_STRING;
+  res->v.string = NULL;
+
+  if (pctx->localization == NULL)
+  {
+    error("xf_localization:: localization not set");
+    return;
+  }
+
+  RVALUE rv;
+  xpath_execute_scalar(pctx, locals, args, current, &rv);
+  char *id = rval2string(&rv);
+  if (id == NULL)
+  {
+    error("xf_localization:: string is NULL");
+    return;
+  }
+
+  XMLNODE *p = args->next;
+  const char *string = NULL;
+
+  if (mode == 0)
+  {
+    string = localization_get(pctx->localization, id);
+  }
+  if (mode == 1)
+  {
+    // skip second string argument
+    p = p->next;
+
+    // get plural value
+    xpath_execute_scalar(pctx, locals, p, current, &rv);
+    int n = (int)rval2number(&rv);
+    string = localization_get_plural(pctx->localization, id, n);
+
+    p = p->next;
+  }
+
+  if (string == NULL)
+  {
+    error("xf_localization:: unknown string %s", id);
+    res->v.string = xml_strdup(id);
+    return;
+  }
+
+  if (p == NULL)
+  {
+    res->v.string = xml_strdup(string);
+    return;
+  }
+
+  const char *format = "{%s}";
+  while (p != NULL)
+  {
+    xpath_execute_scalar(pctx, locals, p, current, &rv);
+    const char *name = rval2string(&rv);
+
+    p = p->next;
+    xpath_execute_scalar(pctx, locals, p, current, &rv);
+    const char *value = rval2string(&rv);
+    
+    int size = snprintf(NULL, 0, format, name);
+    if (size == 0)
+    {
+      error("xf_localization:: allocator");
+      return;
+    }
+
+    size_t buffer_size = size + 1;
+    char *buffer = memory_allocator_new(buffer_size);
+    if (snprintf(buffer, buffer_size, format, name) != size)
+    {
+      error("xf_localization:: wrong size");
+      return;
+    }
+
+    XMLSTRING result = xmls_new(64);
+    const char *last = string;
+    char *s = strstr(last, buffer);
+    while (s != NULL)
+    {
+      xmls_append(result, xmls_new_string(last, s - last));
+      xmls_add_str(result, value);
+      
+      last = s + size;
+      s = strstr(last, buffer);
+    }
+
+    if (*last != 0)
+    {
+      xmls_add_str(result, last);
+    }
+
+    string = xmls_detach(result);
+    p = p->next;
+  }
+
+  res->v.string = string;
+}
+
+void xf_localization(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+{
+  xf_localization_base(pctx, locals, args, current, res, 0);
+}
+
+void xf_localization_plural(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
+{
+  xf_localization_base(pctx, locals, args, current, res, 1);
+}
+
 /*******************************************************************************/
 
 void xf_stub(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE *current, RVALUE *res)
@@ -1275,6 +1387,8 @@ void xpath_setup_functions(TRANSFORM_CONTEXT *pctx)
   add_function(pctx,"system-property",xf_stub); // 0
   add_function(pctx,"ltr:existsOnHost",xf_exists); // 0
   add_function(pctx,"ltr:thread-id",xf_thread_id);
+  add_function(pctx,"ltr:__l",xf_localization);
+  add_function(pctx,"ltr:__ln",xf_localization_plural);
 }
 
 void xpath_call_dispatcher(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, char *fname, XMLNODE *args, XMLNODE *current, RVALUE *res)

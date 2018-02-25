@@ -23,6 +23,7 @@
 #include "external_cache.h"
 #include "concurrent_dictionary.h"
 #include "shared_variable.h"
+#include "localization.h"
 #include "logger.h"
 
 typedef enum {VAL_NULL=0, VAL_BOOL, VAL_INT, VAL_NUMBER, VAL_STRING, VAL_NODESET} RVALUE_TYPE;
@@ -111,6 +112,7 @@ struct _context {
   XMLDICT *parallel_instructions;
   XMLDICT *url_code_parameters;
   void *task_graph; // TODO fix dependency graph
+  localization_t *localization;
   template_map *templates;
   XMLDICT *named_templ; // templates for call'ing
   XMLNODE *root_node;

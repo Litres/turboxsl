@@ -25,6 +25,7 @@ void XSLTSetUserContext(TRANSFORM_CONTEXT *ctx, char *library, char **groups, in
 void XSLTAddURLCodeParameter(TRANSFORM_CONTEXT *ctx, char *name, char *value);
 void XSLTResetURLCodeParameters(TRANSFORM_CONTEXT *ctx);
 void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename);
+int XSLTSetLocalization(TRANSFORM_CONTEXT *ctx, char *filename);
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *ctx, XMLNODE *xml);
 void XSLTFreeProcessor(TRANSFORM_CONTEXT *ctx);
 

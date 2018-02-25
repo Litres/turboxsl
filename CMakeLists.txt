@@ -29,7 +29,7 @@ file(GLOB ZLOG_LIB_HEADERS src/zlog/src/*.h)
 file(GLOB TURBOXSL_LIB_SOURCES src/*.c)
 file(GLOB TURBOXSL_LIB_HEADERS src/*.h)
 add_library(turboxsl ${TURBOXSL_LIB_SOURCES} ${TURBOXSL_LIB_HEADERS} ${ZLOG_LIB_SOURCES} ${ZLOG_LIB_HEADERS})
-target_link_libraries(turboxsl memcached ck)
+target_link_libraries(turboxsl pthread m memcached ck gettextpo)
 
 target_link_libraries(xsltproc turboxsl)
 target_link_libraries(AllocatorTest turboxsl)
