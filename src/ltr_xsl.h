@@ -87,6 +87,7 @@ struct _globaldata {
   concurrent_dictionary *urldict;
   XMLDICT *revisions;
   XMLDICT *group_rights;
+  localization_t *localization;
   CB_TABLE *perl_functions;  // linear search for functions - small number and sorted by usage statistics
   unsigned perl_cb_max;
   unsigned perl_cb_ptr;
@@ -112,7 +113,7 @@ struct _context {
   XMLDICT *parallel_instructions;
   XMLDICT *url_code_parameters;
   void *task_graph; // TODO fix dependency graph
-  localization_t *localization;
+  localization_entry_t *localization_entry;
   template_map *templates;
   XMLDICT *named_templ; // templates for call'ing
   XMLNODE *root_node;

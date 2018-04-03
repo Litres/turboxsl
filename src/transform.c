@@ -379,6 +379,7 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 {
   info("XSLTEnd");
 
+  localization_release(data->localization);
   memory_allocator_release(data->allocator);
   dict_free(data->revisions);
   dict_free(data->group_rights);
@@ -412,6 +413,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
   ret->urldict = concurrent_dictionary_create();
   ret->revisions = dict_new(300);
   ret->group_rights = dict_new(300);
+  ret->localization = localization_create();
   ret->interpreter = interpreter;
 
   return ret;
@@ -457,7 +459,6 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   dict_free(pctx->parallel_instructions);
   dict_free(pctx->url_code_parameters);
   template_task_graph_release(pctx->task_graph);
-  localization_release(pctx->localization);
   threadpool_free(pctx->pool);
 
   xml_free_document(pctx->stylesheet);
@@ -606,9 +607,9 @@ void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename)
 
 int XSLTSetLocalization(TRANSFORM_CONTEXT *ctx, char *filename)
 {
-  memory_allocator_set_current(ctx->allocator);
-  ctx->localization = localization_create(filename);
-  return ctx->localization != NULL;
+  memory_allocator_set_current(ctx->gctx->allocator);
+  ctx->localization_entry = localization_entry_create(ctx->gctx->localization, filename);
+  return ctx->localization_entry != NULL;
 }
 
 XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)

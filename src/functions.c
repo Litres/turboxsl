@@ -1177,7 +1177,7 @@ void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *arg
   res->type = VAL_STRING;
   res->v.string = NULL;
 
-  if (pctx->localization == NULL)
+  if (pctx->localization_entry == NULL)
   {
     error("xf_localization:: localization not set");
     return;
@@ -1197,7 +1197,7 @@ void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *arg
 
   if (mode == 0)
   {
-    string = localization_get(pctx->localization, id);
+    string = localization_entry_get(pctx->localization_entry, id);
   }
   if (mode == 1)
   {
@@ -1207,7 +1207,7 @@ void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *arg
     // get plural value
     xpath_execute_scalar(pctx, locals, p, current, &rv);
     int n = (int)rval2number(&rv);
-    string = localization_get_plural(pctx->localization, id, n);
+    string = localization_entry_get_plural(pctx->localization_entry, id, n);
 
     p = p->next;
   }
