@@ -42,6 +42,21 @@ int localization_get_plural_en(int n)
     return n != 1;
 }
 
+int localization_get_plural_pl(int n)
+{
+    return n == 1 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
+}
+
+int localization_get_plural_et(int n)
+{
+    return n != 1;
+}
+
+int localization_get_plural_de(int n)
+{
+    return n != 1;
+}
+
 localization_t *localization_create()
 {
     localization_t *result = memory_allocator_new(sizeof(localization_t));
@@ -106,6 +121,18 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
     else if (strcmp(field, "en_US") == 0)
     {
         entry->get_plural = localization_get_plural_en;
+    }
+    else if (strcmp(field, "et_EE") == 0)
+    {
+        entry->get_plural = localization_get_plural_et;
+    }
+    else if (strcmp(field, "pl_PL") == 0)
+    {
+        entry->get_plural = localization_get_plural_pl;
+    }
+    else if (strcmp(field, "de") == 0)
+    {
+        entry->get_plural = localization_get_plural_de;
     }
     else
     {
