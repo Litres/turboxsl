@@ -61,7 +61,7 @@ void memory_cache_release_data(memory_allocator_data *data)
         free(current);
         current = next;
     }
-    debug("memory_allocator_release_data:: free memory: %lu bytes", total_data_size);
+    info("memory_allocator_release_data:: free memory: %lu bytes", total_data_size);
 }
 
 size_t memory_allocator_entry_size(memory_allocator_entry *entry)
@@ -139,7 +139,7 @@ void memory_allocator_set_custom(memory_allocator *allocator, MEMORY_ALLOCATOR_M
 
 void memory_allocator_release(memory_allocator *allocator)
 {
-    debug("memory_allocator_release:: total size: %lu bytes", memory_allocator_size(allocator));
+    info("memory_allocator_release:: total size: %lu bytes", memory_allocator_size(allocator));
     memory_allocator_entry *current = allocator->head_entry;
     while (current != NULL)
     {
