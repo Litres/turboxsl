@@ -11,7 +11,8 @@ void instruction_call_template(template_context *context, XMLNODE *instruction)
     XMLNODE *template = template_byname(context->context, template_name);
     if (template == NULL)
     {
-        error("instruction_call_template:: unknown template: %s", template_name->s);
+        error("instruction_call_template:: unknown template: %s, stylesheet: %s", template_name->s,
+              context->context->stylesheet->file);
         return;
     }
 
