@@ -57,6 +57,11 @@ int localization_get_plural_de(int n)
     return n != 1;
 }
 
+int localization_get_plural_es(int n)
+{
+    return n != 1;
+}
+
 localization_t *localization_create()
 {
     localization_t *result = memory_allocator_new(sizeof(localization_t));
@@ -130,9 +135,13 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
     {
         entry->get_plural = localization_get_plural_pl;
     }
-    else if (strcmp(field, "de") == 0)
+    else if (strcmp(field, "de_DE") == 0)
     {
         entry->get_plural = localization_get_plural_de;
+    }
+    else if (strcmp(field, "es_ES") == 0)
+    {
+        entry->get_plural = localization_get_plural_es;
     }
     else
     {
