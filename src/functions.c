@@ -957,30 +957,30 @@ void xf_urlcode(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *args, XMLNODE
     return;
   }
 
-  char *key = xmls_detach(buffer);
-  char *p = concurrent_dictionary_find(pctx->gctx->urldict, key);
-  if(!p) {
-    char *cache_key = key;
-    if(pctx->cache_key_prefix != NULL) {
-      size_t prefix_length = strlen(pctx->cache_key_prefix);
-      size_t key_length = strlen(key);
-      char *t = memory_allocator_new(prefix_length + key_length + 1);
-      memcpy(t, pctx->cache_key_prefix, prefix_length);
-      memcpy(t + prefix_length, key, key_length);
-      cache_key = t;
-    }
+  char *cache_key = xmls_detach(buffer);
 
+  if(pctx->cache_key_prefix != NULL) {
+    size_t prefix_length = strlen(pctx->cache_key_prefix);
+    size_t key_length = strlen(cache_key);
+    char *t = memory_allocator_new(prefix_length + key_length + 1);
+    memcpy(t, pctx->cache_key_prefix, prefix_length);
+    memcpy(t + prefix_length, cache_key, key_length);
+    cache_key = t;
+  }
+
+  char *p = concurrent_dictionary_find(pctx->gctx->urldict, cache_key);
+  if(!p) {
     p = external_cache_get(pctx->gctx->cache, cache_key);
     if(!p) {
       char *p_args[2];
-      p_args[0] = key;
+      p_args[0] = xmls_detach(buffer);
       p_args[1] = NULL;
       p = call_perl_function(pctx, pctx->gctx->perl_urlcode, p_args);
       external_cache_set(pctx->gctx->cache, cache_key, p);
     }
 
     int allocator_activated = memory_allocator_activate_mode(MEMORY_ALLOCATOR_MODE_GLOBAL);
-    char *key_copy = xml_strdup(key);
+    char *key_copy = xml_strdup(cache_key);
     char *p_copy = xml_strdup(p);
     concurrent_dictionary_add(pctx->gctx->urldict, key_copy, p_copy);
     if (allocator_activated) memory_allocator_activate_mode(MEMORY_ALLOCATOR_MODE_SELF);
