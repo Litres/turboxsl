@@ -119,9 +119,10 @@ memory_allocator *memory_allocator_create()
 
     memset(allocator, 0, sizeof(memory_allocator));
 
-    if (pthread_key_create(&(allocator->entry_key), NULL))
+    int e = pthread_key_create(&(allocator->entry_key), NULL);
+    if (e)
     {
-        error("memory_allocator_create:: key");
+        error("memory_allocator_create:: pthread_key_create (%d)", e);
         return NULL;
     }
 

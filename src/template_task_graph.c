@@ -115,9 +115,10 @@ template_task_graph_t *template_task_graph_create(XMLSTRING filename)
 
     thread_lock_create_recursive(&(result->lock));
 
-    if (pthread_key_create(&(result->vertex_key), NULL))
+    int e = pthread_key_create(&(result->vertex_key), NULL);
+    if (e)
     {
-        error("template_task_graph_create:: key");
+        error("template_task_graph_create:: pthread_key_create (%d)", e);
         return NULL;
     }
 
