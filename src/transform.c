@@ -421,12 +421,16 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
 
 void XSLTAddURLRevision(XSLTGLOBALDATA *data, char *url, char *revision)
 {
+  info("XSLTAddURLRevision:: url: %s, revision: %s", url, revision);
+
   memory_allocator_set_current(data->allocator);
   dict_add(data->revisions, xmls_new_string_literal(url), xml_strdup(revision));
 }
 
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)
 {
+  info("XSLTEnableExternalCache:: server list: %s", server_list);
+
   memory_allocator_set_current(data->allocator);
   data->cache = external_cache_create(xml_strdup(server_list));
 }

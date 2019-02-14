@@ -82,8 +82,10 @@ void dict_free(XMLDICT *dict)
 
 const void *dict_find(XMLDICT *dict, XMLSTRING name)
 {
-  if(!dict || !name)
+  if(!dict || !name) {
+    error("dict_find:: dictionary is NULL");
     return NULL;
+  }
 
   unsigned h = bucket_number(name);
   for(h=dict->hash[h];h;) {
@@ -98,7 +100,10 @@ int dict_add(XMLDICT *dict, XMLSTRING name, const void *data)
 {
   unsigned h,d;
 
-  if(!dict || !name) return 0;
+  if(!dict || !name) {
+    error("dict_add:: dictionary is NULL");
+    return 0;
+  }
   
   if(dict->used >= dict->allocated) {
     dict->allocated += 100;
@@ -120,8 +125,10 @@ int dict_add(XMLDICT *dict, XMLSTRING name, const void *data)
 
 void dict_replace(XMLDICT *dict, XMLSTRING name, const void *data)
 {
-  if(!dict || !name)
+  if(!dict || !name) {
+    error("dict_replace:: dictionary is NULL");
     return;
+  }
 
   if(dict->used >= dict->allocated) {
     dict->allocated += 100;

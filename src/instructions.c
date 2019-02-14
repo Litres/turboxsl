@@ -484,6 +484,8 @@ void instruction_add(XMLSTRING name, void(*function)(template_context *, XMLNODE
 
 void instructions_create()
 {
+    info("instructions_create");
+
     instructions = dict_new(32);
 
     instruction_add(xsl_call, instruction_call_template);
@@ -507,7 +509,10 @@ void instructions_create()
 
 void instructions_release()
 {
+    info("instructions_release");
+
     dict_free(instructions);
+    instructions = NULL;
 }
 
 int instructions_is_xsl(XMLNODE *instruction)
