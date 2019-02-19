@@ -83,7 +83,7 @@ void dict_free(XMLDICT *dict)
 const void *dict_find(XMLDICT *dict, XMLSTRING name)
 {
   if(!dict || !name) {
-    error("dict_find:: dictionary is NULL");
+    error("dict_find:: dictionary is NULL, key is %s", name == NULL ? NULL : name->s);
     return NULL;
   }
 
@@ -101,7 +101,7 @@ int dict_add(XMLDICT *dict, XMLSTRING name, const void *data)
   unsigned h,d;
 
   if(!dict || !name) {
-    error("dict_add:: dictionary is NULL");
+    error("dict_add:: dictionary is NULL, key is %s", name == NULL ? NULL : name->s);
     return 0;
   }
   
@@ -126,7 +126,7 @@ int dict_add(XMLDICT *dict, XMLSTRING name, const void *data)
 void dict_replace(XMLDICT *dict, XMLSTRING name, const void *data)
 {
   if(!dict || !name) {
-    error("dict_replace:: dictionary is NULL");
+    error("dict_replace:: dictionary is NULL, key is %s", name == NULL ? NULL : name->s);
     return;
   }
 

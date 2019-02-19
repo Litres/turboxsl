@@ -61,6 +61,8 @@ XMLSTRING xml_get_attr(XMLNODE *node, XMLSTRING name)
 
 XMLNODE *XMLFindNodes(TRANSFORM_CONTEXT *pctx, XMLNODE *xml, char *expression)
 {
+  debug("XMLFindNodes:: expression: %s", expression);
+
   XMLNODE *root_node = pctx->root_node;
 
   XMLNODE *locals = xml_new_node(pctx,NULL,EMPTY_NODE);

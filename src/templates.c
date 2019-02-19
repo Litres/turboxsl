@@ -442,6 +442,7 @@ template *find_select_template(TRANSFORM_CONTEXT *pctx, XMLNODE *node, template_
     template_tree_node *parent = entry->direct_match->head;
     for(XMLNODE *n = node; n; n = n->parent)
     {
+      if (parent->children == NULL) break;
       XMLSTRING name = n->type == ELEMENT_NODE ? n->name : xsl_s_slash;
       template_tree_node *child = dict_find(parent->children, name);
       if(child == NULL) break;

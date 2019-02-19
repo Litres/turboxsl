@@ -421,7 +421,7 @@ XSLTGLOBALDATA *XSLTInit(void *interpreter)
 
 void XSLTAddURLRevision(XSLTGLOBALDATA *data, char *url, char *revision)
 {
-  info("XSLTAddURLRevision:: url: %s, revision: %s", url, revision);
+  debug("XSLTAddURLRevision:: url: %s, revision: %s", url, revision);
 
   memory_allocator_set_current(data->allocator);
   dict_add(data->revisions, xmls_new_string_literal(url), xml_strdup(revision));
@@ -447,7 +447,7 @@ void xml_free_document(XMLNODE *doc)
 
 void XMLFreeDocument(XMLNODE *doc)
 {
-  info("XMLFreeDocument:: file: %s", doc->file);
+  debug("XMLFreeDocument:: file: %s", doc->file);
   xml_free_document(doc);
 }
 
@@ -550,6 +550,8 @@ XMLNODE *find_node_by_name(XMLNODE *root, XMLSTRING name)
 
 void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
 {
+  info("XSLTCreateThreadPool:: size %d", size);
+
   if (pctx->pool != NULL)
   {
     error("XSLTCreateThreadPool:: thread pool exists");
