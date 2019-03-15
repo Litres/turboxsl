@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "allocator.h"
 #include "xmldict.h"
+#include "ltr_xsl.h"
 
 struct localization_ {
     XMLDICT *cache;
@@ -156,7 +157,8 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
     po_message_t message = po_next_message(iterator);
     while (message != NULL)
     {
-        dict_add(entry->table, xmls_new_string_literal(po_message_msgid(message)), message);
+        XMLSTRING id = unescape_string(po_message_msgid(message));
+        dict_add(entry->table, id, message);
         message = po_next_message(iterator);
     }
     po_message_iterator_free(iterator);

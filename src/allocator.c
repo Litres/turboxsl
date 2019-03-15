@@ -150,7 +150,11 @@ void memory_allocator_release(memory_allocator *allocator)
         current = next;
     }
 
-    pthread_key_delete(allocator->entry_key);
+    int e = pthread_key_delete(allocator->entry_key);
+    if (e)
+    {
+        error("memory_allocator_release:: pthread_key_delete (%d)", e);
+    }
 
     free(allocator);
 }

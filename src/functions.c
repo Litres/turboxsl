@@ -1177,12 +1177,6 @@ void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *arg
   res->type = VAL_STRING;
   res->v.string = NULL;
 
-  if (pctx->localization_entry == NULL)
-  {
-    error("xf_localization:: localization not set");
-    return;
-  }
-
   RVALUE rv;
   xpath_execute_scalar(pctx, locals, args, current, &rv);
   char *id = rval2string(&rv);
@@ -1195,28 +1189,34 @@ void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *arg
   XMLNODE *p = args->next;
   const char *string = NULL;
 
-  if (mode == 0)
+  if (pctx->localization_entry != NULL)
   {
-    string = localization_entry_get(pctx->localization_entry, id);
+    if (mode == 0)
+    {
+      string = localization_entry_get(pctx->localization_entry, id);
+    }
+    if (mode == 1)
+    {
+      // skip second string argument
+      p = p->next;
+
+      // get plural value
+      xpath_execute_scalar(pctx, locals, p, current, &rv);
+      int n = (int)rval2number(&rv);
+      string = localization_entry_get_plural(pctx->localization_entry, id, n);
+
+      p = p->next;
+    }
+
+    if (string == NULL)
+    {
+      string = id;
+    }
   }
-  if (mode == 1)
+  else
   {
-    // skip second string argument
-    p = p->next;
-
-    // get plural value
-    xpath_execute_scalar(pctx, locals, p, current, &rv);
-    int n = (int)rval2number(&rv);
-    string = localization_entry_get_plural(pctx->localization_entry, id, n);
-
-    p = p->next;
-  }
-
-  if (string == NULL)
-  {
-    error("xf_localization:: unknown string %s", id);
-    res->v.string = xml_strdup(id);
-    return;
+    error("xf_localization:: localization not set");
+    string = id;
   }
 
   if (p == NULL)

@@ -83,6 +83,12 @@ XMLSTRING make_unescaped_string(char *p, char *s)
   return buf;
 }
 
+XMLSTRING unescape_string(const char *s)
+{
+  char *b = (char *)s;
+  char *e = b + strlen(b);
+  return make_unescaped_string(b, e);
+}
 
 static
 int can_name(char c)
