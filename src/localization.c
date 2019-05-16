@@ -24,8 +24,8 @@ void po_xerror(int severity, po_message_t message, const char *filename, size_t 
 
 }
 
-void po_xerror2(int severity, po_message_t message1, const char *filename1, size_t lineno1, size_t column1, int multiline_p1, 
-    const char *message_text1, po_message_t message2, const char *filename2, size_t lineno2, size_t column2, int multiline_p2, 
+void po_xerror2(int severity, po_message_t message1, const char *filename1, size_t lineno1, size_t column1, int multiline_p1,
+    const char *message_text1, po_message_t message2, const char *filename2, size_t lineno2, size_t column2, int multiline_p2,
     const char *message_text2)
 {
 
@@ -34,6 +34,11 @@ void po_xerror2(int severity, po_message_t message1, const char *filename1, size
 static const struct po_xerror_handler po_handler = {po_xerror, po_xerror2};
 
 int localization_get_plural_ru(int n)
+{
+    return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
+}
+
+int localization_get_plural_uk(int n)
 {
     return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
 }
@@ -144,6 +149,10 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
     {
         entry->get_plural = localization_get_plural_es;
     }
+    else if (strcmp(field, "uk_UA") == 0)
+    {
+        entry->get_plural = localization_get_plural_uk;
+    }
     else
     {
         error("localization_entry_create:: unknown language: %s", field);
@@ -152,7 +161,7 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
 
     entry->table = dict_new(32);
     entry->next_entry = NULL;
-    
+
     po_message_iterator_t iterator = po_message_iterator(entry->file, NULL);
     po_message_t message = po_next_message(iterator);
     while (message != NULL)
