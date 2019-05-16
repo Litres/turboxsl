@@ -12,12 +12,12 @@ typedef struct _context TRANSFORM_CONTEXT;
 
 XSLTGLOBALDATA *XSLTInit(void *interpreter);
 void XSLTAddURLRevision(XSLTGLOBALDATA *data, char *url, char *revision);
+void XSLTCreateThreadPool(XSLTGLOBALDATA *data, unsigned int size);
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list);
 void XSLTDefineGroupRights(XSLTGLOBALDATA *data, char *library, char *group, char **actions, int action_count);
 void XSLTEnd(XSLTGLOBALDATA *data);
 
 TRANSFORM_CONTEXT *XSLTNewProcessor(XSLTGLOBALDATA *data, char *stylesheet);
-void XSLTCreateThreadPool(TRANSFORM_CONTEXT *ctx, unsigned int size);
 void XSLTSetParallelInstructions(TRANSFORM_CONTEXT *ctx, char **tags, int tag_count);
 void XSLTSetCacheKeyPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);
 void XSLTSetURLLocalPrefix(TRANSFORM_CONTEXT *ctx, char *prefix);

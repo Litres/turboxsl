@@ -384,7 +384,16 @@ void XSLTEnd(XSLTGLOBALDATA *data)
   dict_free(data->revisions);
   dict_free(data->group_rights);
   concurrent_dictionary_release(data->urldict);
-  if (data->cache != NULL) external_cache_release(data->cache);
+  
+  if (data->pool != NULL)
+  {
+    threadpool_free(data->pool);
+  }
+
+  if (data->cache != NULL)
+  {
+    external_cache_release(data->cache);
+  }
 
   free(data->perl_functions);
   free(data);
@@ -427,6 +436,27 @@ void XSLTAddURLRevision(XSLTGLOBALDATA *data, char *url, char *revision)
   dict_add(data->revisions, xmls_new_string_literal(url), xml_strdup(revision));
 }
 
+void XSLTCreateThreadPool(XSLTGLOBALDATA *data, unsigned int size)
+{
+  info("XSLTCreateThreadPool:: size %d", size);
+
+  if (data->pool != NULL)
+  {
+    error("XSLTCreateThreadPool:: thread pool exists");
+    return;
+  }
+
+  memory_allocator_set_current(data->allocator);
+
+  data->pool = threadpool_init(size);
+  threadpool_set_allocator(data->allocator, data->pool);
+
+  if (data->cache != NULL)
+  {
+    threadpool_set_external_cache(data->cache, data->pool);
+  }
+}
+
 void XSLTEnableExternalCache(XSLTGLOBALDATA *data, char *server_list)
 {
   info("XSLTEnableExternalCache:: server list: %s", server_list);
@@ -463,7 +493,6 @@ void XSLTFreeProcessor(TRANSFORM_CONTEXT *pctx)
   dict_free(pctx->parallel_instructions);
   dict_free(pctx->url_code_parameters);
   template_task_graph_release(pctx->task_graph);
-  threadpool_free(pctx->pool);
 
   xml_free_document(pctx->stylesheet);
 
@@ -548,25 +577,6 @@ XMLNODE *find_node_by_name(XMLNODE *root, XMLSTRING name)
   return NULL;
 }
 
-void XSLTCreateThreadPool(TRANSFORM_CONTEXT *pctx, unsigned int size)
-{
-  info("XSLTCreateThreadPool:: size %d", size);
-
-  if (pctx->pool != NULL)
-  {
-    error("XSLTCreateThreadPool:: thread pool exists");
-    return;
-  }
-
-  memory_allocator_set_current(pctx->allocator);
-
-  pctx->pool = threadpool_init(size);
-  threadpool_set_allocator(pctx->gctx->allocator, pctx->pool);
-  threadpool_set_allocator(pctx->allocator, pctx->pool);
-
-  if (pctx->gctx->cache != NULL) threadpool_set_external_cache(pctx->gctx->cache, pctx->pool);
-}
-
 void XSLTSetParallelInstructions(TRANSFORM_CONTEXT *ctx, char **tags, int tag_count)
 {
   memory_allocator_set_current(ctx->allocator);
@@ -644,15 +654,21 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
 
   pctx->root_node = document;
   // temporary turn off pool
-  threadpool *pool = pctx->pool;
-  pctx->pool = NULL;
+  threadpool *pool = pctx->gctx->pool;
+  pctx->gctx->pool = NULL;
 
   precompile_variables(pctx, pctx->stylesheet->children, document);
-  preformat_document(pctx,document);
+  preformat_document(pctx, document);
 
   // turn on pool
-  pctx->pool = pool;
-  threadpool_set_allocator(allocator, pctx->pool);
+  pctx->gctx->pool = pool;
+  threadpool_set_allocator(allocator, pctx->gctx->pool);
+
+  if (!pctx->has_pool_memory)
+  {
+    pctx->has_pool_memory = 1;
+    threadpool_set_allocator(pctx->allocator, pctx->gctx->pool);
+  }
 
   template_context *new_context = memory_allocator_new(sizeof(template_context));
   new_context->context = pctx;

@@ -20,7 +20,7 @@ void template_task_function(void *data)
 
 void template_task_run(XMLNODE *instruction, template_context *context, void (*function)(template_context *))
 {
-    if (context->context->pool == NULL)
+    if (context->context->gctx->pool == NULL)
     {
         function(context);
         return;
@@ -92,18 +92,18 @@ void template_task_run(XMLNODE *instruction, template_context *context, void (*f
     }
 
     template_task_graph_add_parallel(context->context->task_graph, instruction, context);
-    threadpool_start(context->context->pool, template_task_function, task);
+    threadpool_start(context->context->gctx->pool, template_task_function, task);
 }
 
 void template_task_run_and_wait(template_context *context, void (*function)(template_context *))
 {
-    if (context->context->pool == NULL)
+    if (context->context->gctx->pool == NULL)
     {
         function(context);
         return;
     }
 
-    if (!thread_pool_try_wait(context->context->pool))
+    if (!thread_pool_try_wait(context->context->gctx->pool))
     {
         function(context);
         return;
@@ -118,10 +118,10 @@ void template_task_run_and_wait(template_context *context, void (*function)(temp
     task->workers = context->workers;
 
     template_task_graph_add_parallel(context->context->task_graph, NULL, context);
-    threadpool_start(context->context->pool, template_task_function, task);
+    threadpool_start(context->context->gctx->pool, template_task_function, task);
 
     shared_variable_wait(task->workers);
     shared_variable_release(task->workers);
 
-    thread_pool_finish_wait(context->context->pool);
+    thread_pool_finish_wait(context->context->gctx->pool);
 }
