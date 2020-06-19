@@ -15,7 +15,10 @@ void template_task_function(void *data)
     template_task_graph_set_current(task->context->context->task_graph, task->context);
     task->function(task->context);
 
-    if (task->workers != NULL) shared_variable_decrease(task->workers);
+    if (task->workers != NULL)
+    {
+        shared_variable_decrease(task->workers);
+    }
 }
 
 void template_task_run(XMLNODE *instruction, template_context *context, void (*function)(template_context *))

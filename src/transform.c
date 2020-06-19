@@ -379,12 +379,6 @@ void XSLTEnd(XSLTGLOBALDATA *data)
 {
   info("XSLTEnd");
 
-  localization_release(data->localization);
-  memory_allocator_release(data->allocator);
-  dict_free(data->revisions);
-  dict_free(data->group_rights);
-  concurrent_dictionary_release(data->urldict);
-  
   if (data->pool != NULL)
   {
     threadpool_free(data->pool);
@@ -394,6 +388,12 @@ void XSLTEnd(XSLTGLOBALDATA *data)
   {
     external_cache_release(data->cache);
   }
+
+  localization_release(data->localization);
+  memory_allocator_release(data->allocator);
+  dict_free(data->revisions);
+  dict_free(data->group_rights);
+  concurrent_dictionary_release(data->urldict);
 
   free(data->perl_functions);
   free(data);

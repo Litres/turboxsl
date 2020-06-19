@@ -11,7 +11,7 @@ struct shared_variable_ {
 
 shared_variable *shared_variable_create()
 {
-    shared_variable *result = memory_allocator_new(sizeof(shared_variable));
+    shared_variable *result = malloc(sizeof(shared_variable));
 
     if (pthread_mutex_init(&(result->mutex), NULL))
     {
@@ -33,29 +33,51 @@ void shared_variable_release(shared_variable *variable)
 {
     pthread_cond_destroy(&(variable->condition));
     pthread_mutex_destroy(&(variable->mutex));
+    free(variable);
 }
 
 void shared_variable_increase(shared_variable *variable)
 {
-    pthread_mutex_lock(&(variable->mutex));
+    if (pthread_mutex_lock(&(variable->mutex)))
+    {
+        error("shared_variable_increase:: mutex lock");
+        return;
+    }
+
     variable->value += 1;
     pthread_mutex_unlock(&(variable->mutex));
 }
 
 void shared_variable_decrease(shared_variable *variable)
 {
-    pthread_mutex_lock(&(variable->mutex));
+    if (pthread_mutex_lock(&(variable->mutex)))
+    {
+        error("shared_variable_decrease:: mutex lock");
+        return;
+    }
+
     variable->value -= 1;
-    if (variable->value == 0) pthread_cond_broadcast(&(variable->condition));
+    if (variable->value == 0)
+    {
+        pthread_cond_broadcast(&(variable->condition));
+    }
     pthread_mutex_unlock(&(variable->mutex));
 }
 
 void shared_variable_wait(shared_variable *variable)
 {
-    pthread_mutex_lock(&(variable->mutex));
+    if (pthread_mutex_lock(&(variable->mutex)))
+    {
+        error("shared_variable_wait:: mutex lock");
+        return;
+    }
+
     while (variable->value != 0)
     {
-        pthread_cond_wait(&(variable->condition), &(variable->mutex));
+        if (pthread_cond_wait(&(variable->condition), &(variable->mutex)))
+        {
+            error("shared_variable_wait:: condition wait");
+        }
     }
     pthread_mutex_unlock(&(variable->mutex));
 }
