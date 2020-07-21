@@ -21,14 +21,14 @@ struct localization_entry_ {
 
 void po_xerror(int severity, po_message_t message, const char *filename, size_t lineno, size_t column, int multiline_p, const char *message_text)
 {
-
+    error("po_xerror:: %s", message_text);
 }
 
 void po_xerror2(int severity, po_message_t message1, const char *filename1, size_t lineno1, size_t column1, int multiline_p1,
     const char *message_text1, po_message_t message2, const char *filename2, size_t lineno2, size_t column2, int multiline_p2,
     const char *message_text2)
 {
-
+    error("po_xerror2:: %s, %s", message_text1, message_text2);
 }
 
 static const struct po_xerror_handler po_handler = {po_xerror, po_xerror2};
@@ -94,6 +94,8 @@ void localization_release(localization_t *object)
 
 localization_entry_t *localization_entry_create(localization_t *object, const char *filename)
 {
+    info("localization_entry_create:: file %s", filename);
+
     XMLSTRING key = xmls_new_string_literal(filename);
 
     localization_entry_t *entry = (localization_entry_t *)dict_find(object->cache, key);

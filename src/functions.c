@@ -1210,6 +1210,7 @@ void xf_localization_base(TRANSFORM_CONTEXT *pctx, XMLNODE *locals, XMLNODE *arg
 
     if (string == NULL)
     {
+      error("xf_localization:: localized string is NULL");
       string = id;
     }
   }
