@@ -195,7 +195,7 @@ const char *localization_entry_get(localization_entry_t *entry, const char *id)
     po_message_t message = (po_message_t)dict_find(entry->table, xmls_new_string_literal(id));
     if (message == NULL)
     {
-        error("localization_entry_get:: unknown message id: %s", id);
+        debug("localization_entry_get:: unknown message id: %s", id);
         return NULL;
     }
 
@@ -207,7 +207,7 @@ const char *localization_entry_get_plural(localization_entry_t *entry, const cha
     po_message_t message = (po_message_t)dict_find(entry->table, xmls_new_string_literal(id));
     if (message == NULL)
     {
-        error("localization_entry_get_plural:: unknown message id: %s", id);
+        debug("localization_entry_get_plural:: unknown message id: %s", id);
         return NULL;
     }
 
