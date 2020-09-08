@@ -623,6 +623,8 @@ void XSLTEnableTaskGraph(TRANSFORM_CONTEXT *ctx, char *filename)
 
 int XSLTSetLocalization(TRANSFORM_CONTEXT *ctx, char *filename)
 {
+  info("XSLTSetLocalization:: context: %p", ctx);
+
   memory_allocator_set_current(ctx->gctx->allocator);
   ctx->localization_entry = localization_entry_create(ctx->gctx->localization, filename);
   return ctx->localization_entry != NULL;
@@ -639,6 +641,9 @@ XMLNODE *XSLTProcess(TRANSFORM_CONTEXT *pctx, XMLNODE *document)
     error("XSLTProcess:: document is NULL");
     return NULL;
   }
+
+  info("XSLTProcess:: context object: %p, document object: %p, document file: %s", 
+    pctx, document, pctx->stylesheet == NULL ? "NULL" : pctx->stylesheet->file);
 
   // memory allocator for output document
   memory_allocator *allocator = memory_allocator_create();

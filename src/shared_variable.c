@@ -1,5 +1,7 @@
 #include "shared_variable.h"
 
+#include <stdlib.h>
+
 #include "allocator.h"
 #include "logger.h"
 

@@ -14,6 +14,7 @@ struct localization_ {
 
 struct localization_entry_ {
     po_file_t file;
+    char *language;
     int (*get_plural)(int);
     XMLDICT *table;
     struct localization_entry_ *next_entry;
@@ -85,6 +86,7 @@ void localization_release(localization_t *object)
     {
         localization_entry_t *next = current->next_entry;
         po_file_free(current->file);
+        free(current->language);
         dict_free(current->table);
         current = next;
     }
@@ -94,13 +96,14 @@ void localization_release(localization_t *object)
 
 localization_entry_t *localization_entry_create(localization_t *object, const char *filename)
 {
-    info("localization_entry_create:: file %s", filename);
+    info("localization_entry_create:: object: %p, file: %s", object, filename);
 
     XMLSTRING key = xmls_new_string_literal(filename);
 
     localization_entry_t *entry = (localization_entry_t *)dict_find(object->cache, key);
     if (entry != NULL)
     {
+        debug("localization_entry_create:: entry from cache: %p", entry);
         return entry;
     }
 
@@ -109,7 +112,7 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
     entry->file = po_file_read(filename, &po_handler);
     if (entry->file == NULL)
     {
-        error("localization_entry_create:: couldn't open the PO file %s", filename);
+        error("localization_entry_create:: couldn't open the PO file: %s", filename);
         return NULL;
     }
 
@@ -161,6 +164,7 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
         return NULL;
     }
 
+    entry->language = strdup(field);
     entry->table = dict_new(32);
     entry->next_entry = NULL;
 
@@ -192,6 +196,8 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
 
 const char *localization_entry_get(localization_entry_t *entry, const char *id)
 {
+    debug("localization_entry_get:: entry: %p, language: %s", entry, entry->language);
+
     po_message_t message = (po_message_t)dict_find(entry->table, xmls_new_string_literal(id));
     if (message == NULL)
     {
@@ -204,6 +210,8 @@ const char *localization_entry_get(localization_entry_t *entry, const char *id)
 
 const char *localization_entry_get_plural(localization_entry_t *entry, const char *id, int n)
 {
+    debug("localization_entry_get_plural:: language: %s", entry->language);
+
     po_message_t message = (po_message_t)dict_find(entry->table, xmls_new_string_literal(id));
     if (message == NULL)
     {
