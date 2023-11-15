@@ -79,6 +79,11 @@ int localization_get_plural_uz(int n)
     return n != 1;
 }
 
+int localization_get_plural_tr(int n)
+{
+    return n != 1;
+}
+
 
 localization_t *localization_create()
 {
@@ -176,7 +181,11 @@ localization_entry_t *localization_entry_create(localization_t *object, const ch
     else if (strcmp(field, "uz_UZ") == 0)
     {
         entry->get_plural = localization_get_plural_uz;
-    } 
+    }
+    else if (strcmp(field, "tr_TR") == 0)
+    {
+        entry->get_plural = localization_get_plural_tr;
+    }
     else
     {
         error("localization_entry_create:: unknown language: %s", field);
